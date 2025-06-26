@@ -1,0 +1,207 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply font-inter;
+}
+@layer base {
+  /* default theme */
+  :root {
+    /* 
+       - gray/natural colors for texts, borders and disabled elements. 
+       - If required we can use as background too. 
+       */
+
+    /* primary/brand color */
+    /* ----------------------------------- */
+    /* For rgb(17 17 17 / <alpha-value>) = #111111 */
+    --primary: 17 17 17;
+    /* For rgb(34 34 34 / <alpha-value>) = #222222 */
+    --secondary: 34 34 34;
+
+    /* gray/text color */
+    /* ----------------------------------- */
+    --gray-main: 243 243 243;
+    /* For rgb(75 85 99 / <alpha-value>) = #4B5563 */
+    --gray-light: 75 85 99;
+    /* For rgb(221 221 221 / <alpha-value>) = #dddddd */
+    --gray-lighter: 221 221 221;
+    /* For rgb(241 241 241 / <alpha-value>) = #F1F1F1 */
+    --gray-lightest: 241 241 241;
+    /* For rgb(59 80 90 / <alpha-value>) = #3B505A */
+    --gray-default: 59 80 90;
+    /* For rgb(17 17 17 / <alpha-value>) = #111111 */
+    --gray-dark: 17 17 17;
+
+    --gray-1000: 0 0 0;
+
+    /* red/error colors */
+    /* ----------------------------------- */
+    /* For rgb(247 212 214 / <alpha-value>) = #f7d4d6 */
+    --red-lighter: 247 212 214;
+    /* For rgb(255 26 26 / <alpha-value>) = #ff1a1a */
+    --red-light: 255 26 26;
+    /* For rgb(238 0 0 / <alpha-value>) = #e00 */
+    --red-default: 238 0 0;
+    /* For rgb(197 0 0 / <alpha-value>) = #c50000 */
+    --red-dark: 197 0 0;
+
+    /* orange/warning colors */
+    /* ----------------------------------- */
+    /* For rgb(255 239 207 / <alpha-value>) = #ffefcf */
+    --orange-lighter: 255 239 207;
+    /* For rgb(247 185 85 / <alpha-value>) = #f7b955 */
+    --orange-light: 247 185 85;
+    /* For rgb(245 166 35 / <alpha-value>) = #f5a623 */
+    --orange-default: 245 166 35;
+    /* For rgb(171 87 10 / <alpha-value>) = #ab570a */
+    --orange-dark: 171 87 10;
+
+    /* green/success colors */
+    /* ----------------------------------- */
+    /* For rgb(185 249 207 / <alpha-value>) = #b9f9cf */
+    --green-lighter: 185 249 207;
+    /* For rgb(28 203 92 / <alpha-value>) = #1ccb5c */
+    --green-light: 28 203 92;
+    /* For rgb(17 168 73 / <alpha-value>) = #11a849 */
+    --green-default: 17 168 73;
+    /* For rgb(17 132 60 / <alpha-value>) = #11843c */
+    --green-dark: 17 132 60;
+
+    /* indigo/hover colors */
+    /* ----------------------------------- */
+    /* For rgb(182 153, 202 / <alpha-value>) = #b9f9cf */
+    --indigo-lighter: 182 153 202;
+
+    /* write here box shadow variation */
+    /* --card-shadow-100: 0 0 0 1px rgb(35 38 59 / 5%), 0 1px 3px 0 rgb(35 38 59 / 15%);
+       --card-shadow-500: 0 0 0 1px rgb(35 38 59 / 5%), 0 20px 32px -8px rgb(35 38 59 / 25%); */
+    --radius: 0.5rem;
+  }
+}
+
+@layer utilities {
+  .container-fluid {
+    @apply mx-auto max-w-[1920px] px-4 sm:px-6 2xl:px-7 3xl:px-8 4xl:px-16;
+  }
+
+  .card-gradient {
+    background-image: linear-gradient(120deg, #fff 45%, #f5f5f5);
+  }
+
+  .header-slide-active {
+    @apply shadow-card bg-white !text-black;
+  }
+
+  /* TODO: use good approad for this */
+  .header-slide-active a {
+    @apply !text-black;
+  }
+}
+
+.step-form-phone-input .selected-flag {
+  @apply !left-2;
+}
+
+.swiper-pagination-bullet {
+  @apply !w-1.5 !h-1.5 !opacity-60;
+  background-color: rgba(241, 241, 241, 1) !important;
+  box-shadow: 0px 2px 4px 0px rgba(35, 38, 59, 0.1);
+}
+
+.navbar {
+  box-shadow: 0px 4px 23px 0px #0000001f;
+}
+.backdrop-blur {
+  backdrop-filter: blur(25px);
+}
+.mobileLogo {
+  width: 150px;
+  height: 48px;
+}
+.filters {
+  @apply rounded-full px-2.5 py-2.5;
+  box-shadow: 0px 4px 27px 0px rgba(0, 0, 0, 0.13);
+}
+.pawIcon {
+  background-image: url("/images/paws/image.png");
+  background-position-x: calc(100% - 6px);
+  background-position-y: center;
+  background-size: 16px;
+  background-repeat: no-repeat;
+}
+.promotion-banner {
+  background-image: url("/images/banner/banner.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+}
+.backgroundBanner {
+  background-image: url("/images/banner/rounded-banner.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
+}
+.yellowBanner {
+  background-image: url("/images/comman/watermark.png");
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: top center;
+}
+.swiper-pagination-bullet-active {
+  @apply !bg-white !opacity-100;
+  box-shadow: 0px 2px 4px 0px rgba(35, 38, 59, 0.1);
+}
+.tracking-tighter {
+  letter-spacing: -0.036em;
+}
+
+body {
+  position: relative;
+  letter-spacing: -0.75px;
+}
+
+.confidenceform .form-control {
+  height: 67px;
+}
+
+body:before {
+  /* background-image: url(/_next/static/media/Pups4sale.a40f786b.jpg); */
+  content: "";
+  position: absolute;
+  width: 100%;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background-size: 100% auto !important;
+  z-index: 99;
+  pointer-events: none;
+  opacity: 0.5;
+  background-position: center top;
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+
+/* For the curved background */
+.cta-curve-mobile {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 120px;
+  background: #f8f8f8;
+  border-bottom-left-radius: 50% 20%;
+  border-bottom-right-radius: 50% 20%;
+  z-index: 0;
+}
+::-webkit-scrollbar {width: 5px;height: 5px;}
+::-webkit-scrollbar-track {background: 0 0;background: transparent;}
+::-webkit-scrollbar-thumb {background: rgba(0, 0, 0, 0.3);}
+::-webkit-scrollbar-thumb:hover {background: rgba(0, 0, 0, 0.5);}
