@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Loader from "../ui/loader/loader";
 
@@ -93,5 +93,13 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
         </>
       )}
     </LoadingContext.Provider>
+  );
+}
+
+export default function LoadingProviderWithSuspense({ children }: LoadingProviderProps) {
+  return (
+    <Suspense fallback={null}>
+      <LoadingProvider>{children}</LoadingProvider>
+    </Suspense>
   );
 } 

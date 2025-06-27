@@ -41,3 +41,12 @@ export function FindForm() {
     </form>
   );
 }
+
+// NOTE: This component uses useSearchParams and must be wrapped in <Suspense> by the parent.
+// export default function FindFormWithSuspense(props: React.ComponentProps<typeof FindForm>) {
+//   return (
+//     <Suspense fallback={null}>
+//       <FindForm {...props} />
+//     </Suspense>
+//   );
+// }

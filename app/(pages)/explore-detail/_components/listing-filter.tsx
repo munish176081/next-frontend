@@ -20,6 +20,7 @@ import { ListingTypeEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
 import { optionalLocationSchema } from "@/_config/validate-schema";
 import { Routes } from "@/_config/routes";
+import { Suspense } from "react";
 
 export const listingFilterSchema = z
   .object({
@@ -250,3 +251,11 @@ export const ListingFilter = () => {
     </form>
   );
 };
+
+export default function ListingFilterWithSuspense() {
+  return (
+    <Suspense fallback={null}>
+      <ListingFilter />
+    </Suspense>
+  );
+}

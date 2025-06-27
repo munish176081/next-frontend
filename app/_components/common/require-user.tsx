@@ -1,7 +1,7 @@
 "use client";
 
 import { VerifyEmailForm } from "@/(pages)/auth/verify-email/_components/verify-email-form";
-import VerifyEmailPage from "@/(pages)/auth/verify-email/page";
+import { VerifyEmailPage } from "@/(pages)/auth/verify-email/_components/verify-email-page";
 import { useUser } from "@/_services/hooks/user/use-user";
 import { useRouter, usePathname } from "next/navigation";
 import { useEffect } from "react";

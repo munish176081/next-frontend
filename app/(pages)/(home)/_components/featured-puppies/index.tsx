@@ -6,6 +6,7 @@ import { PuppiesSlider } from "./slider";
 export const FeaturedPuppies = () => {
   const listings = [
     {
+      id: "1",
       title: "Golden Retriever",
       location: "Sydney, NSW",
       description:
@@ -17,6 +18,7 @@ export const FeaturedPuppies = () => {
       image: "/images/comman/feature-puppy-1.png",
     },
     {
+      id: "2",
       title: "French Bulldog",
       location: "Melbourne, VIC",
       description:
@@ -28,6 +30,7 @@ export const FeaturedPuppies = () => {
       image: "/images/comman/feature-puppy-1.png",
     },
     {
+      id: "3",
       title: "Labrador Retriever",
       location: "Brisbane, QLD",
       description:
@@ -39,6 +42,7 @@ export const FeaturedPuppies = () => {
       image: "/images/comman/feature-puppy-1.png",
     },
     {
+      id: "4",
       title: "Cavoodle",
       location: "Adelaide, SA",
       description:
@@ -50,6 +54,7 @@ export const FeaturedPuppies = () => {
       image: "/images/comman/feature-puppy-1.png",
     },
     {
+      id: "5",
       title: "Beagle",
       location: "Perth, WA",
       description:
@@ -61,6 +66,7 @@ export const FeaturedPuppies = () => {
       image: "/images/comman/feature-puppy-1.png",
     },
     {
+      id: "6",
       title: "Pug",
       location: "Hobart, TAS",
       description:
@@ -81,7 +87,6 @@ export const FeaturedPuppies = () => {
           <h1 className="text-40 max-md:text-[32px] font-medium leading-none max-md:text-center">Discover Our Featured Puppies</h1>
           <span className="text-xl max-md:text-base text-center font-[300] max-w-[900px] mt-2 w-full leading-normal">Discover <strong className="font-semibold">Healthy, loving</strong> puppies ready to bring <strong className="font-semibold">joy</strong> and <span className="font-semibold relative">companionship <img className="absolute left-0 top-1 -z-10" src="/images/vectors/line-7.svg" /></span> into your home.</span>
           <div className="group/section relative w-full mt-4 max-md:mt-0 max-md:!-mx-4 max-md:w-[calc(100%+32px)]">
-            {/* @ts-expect-error - PuppiesSlider component expects a different type than what we're providing */}
             <PuppiesSlider listings={listings} />
           </div>
         </div>

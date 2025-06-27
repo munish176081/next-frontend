@@ -10,10 +10,15 @@ import {
   SwiperSlide,
 } from "@/_components/ui/slider";
 import { FreeMode, Thumbs } from 'swiper/modules';
+import { Suspense } from "react";
+import type { Swiper as SwiperType } from 'swiper';
 
-const exploreDetail = () => {
+export const dynamic = 'force-dynamic';
+
+function ExploreDetail() {
   const listings = [
     {
+      id: "1",
       title: "French Bulldog",
       location: "View Puppy",
       description:
@@ -25,6 +30,7 @@ const exploreDetail = () => {
       image: "/images/breed-by-type/1.png",
     },
     {
+      id: "2",
       title: "Funny Toy Poodle",
       location: "Melbourne, VIC",
       description:
@@ -36,6 +42,7 @@ const exploreDetail = () => {
       image: "/images/breed-by-type/2.png",
     },
     {
+      id: "3",
       title: "Maltese",
       location: "Brisbane, QLD",
       description:
@@ -47,6 +54,7 @@ const exploreDetail = () => {
       image: "/images/breed-by-type/4.png",
     },
     {
+      id: "4",
       title: "Shih Tzu",
       location: "Adelaide, SA",
       description:
@@ -148,7 +156,7 @@ const halfStarSvg = (
 const emptyStarSvg = (
   <svg key={Math.random()} width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#E0E0E0"/></svg>
 );
-const [thumbsSwiper, setThumbsSwiper] = useState(null);
+const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
   return (
     <>
     <section className="container relative overflow-hidden p-8 rounded-40 bg-white grid grid-cols-2 gap-8 items-start max-md:grid-cols-1 max-md:p-4 max-md:rounded-[20px]">
@@ -160,8 +168,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState(null);
             <img className="w-11 max-md:w-6 hidden peer-checked:flex" src="/images/vectors/favorite_Fill.svg" />
           </label>
           <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0"><span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">Litter Listing</span></div>
-          <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn",}} 
-          thumbs={{ swiper: thumbsSwiper }} modules={[FreeMode, Navigation, Thumbs]}>
+          <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn",}} thumbs={{ swiper: thumbsSwiper }}>
             <SwiperSlide className="group relative flex flex-col overflow-hidden">
               <img src='/images/vectors/detailSlide1.png' className="object-cover w-full h-[554px] max-md:h-[260px]"/>
             </SwiperSlide>
@@ -309,7 +316,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState(null);
       <span className="text-[40px] font-medium m-auto">Reviews</span>
       <div className="flex border-2 border-dashed border-[#B8B8B8]/50 p-6 rounded-[20px] max-md:flex-col max-md:p-4 max-md:gap-4">
         <div className="flex w-3/12 items-center gap-2 max-md:w-full max-md:justify-center">
-          <div className="relative w-24 h-24" style={{ '--rating': rating }}>
+          <div className="relative w-24 h-24" style={{ '--rating': rating } as React.CSSProperties}>
             <svg className="w-full h-full transform -rotate-45" viewBox="0 0 120 120"><circle className="text-[#E4E9EE]" strokeWidth="4" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60" /><circle className="text-[#FFA439]" strokeWidth="4" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60" strokeDasharray="314" strokeDashoffset={dashOffset} style={{ transition: 'stroke-dashoffset 0.5s ease' }} /></svg>
             <div className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-gray-800">{rating.toFixed(1)}</div>
           </div>
@@ -382,6 +389,12 @@ const [thumbsSwiper, setThumbsSwiper] = useState(null);
     <CtaBlock />
     </>
   );
-};
+}
 
-export default exploreDetail;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <ExploreDetail />
+    </Suspense>
+  );
+}

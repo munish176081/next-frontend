@@ -3,10 +3,12 @@
 import { useSearchParams, useRouter } from "next/navigation";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import { Button } from "@/_components/ui/button";
-import React from "react";
+import React, { Suspense } from "react";
 import { Routes } from "@/_config/routes";
 
-export default function SignInErrorPage() {
+export const dynamic = 'force-dynamic';
+
+function SignInErrorPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const reason = searchParams.get("reason") || "Unknown error occurred";
@@ -72,5 +74,13 @@ export default function SignInErrorPage() {
                     />
             </div>
         </section>
+    );
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={null}>
+            <SignInErrorPage />
+        </Suspense>
     );
 }

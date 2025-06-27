@@ -1,6 +1,10 @@
 "use client";
 import {Autoplay, Navigation, Swiper, SwiperSlide,} from "@/_components/ui/slider";
 import ActionIcon from "@/_components/ui/action-icon";
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
 const blogs = [
   {
     id: "123",
@@ -16,7 +20,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog2.jpg",
@@ -25,7 +29,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog3.jpg",
@@ -70,7 +74,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog8.jpg",
@@ -79,13 +83,14 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog9.jpg",
   },
 ];
-const blogDetail = () => {
+
+function BlogDetail() {
   return (
     <>
     {/* bg-blogDetails bg-no-repeat bg-top bg-contain */}
@@ -98,9 +103,9 @@ const blogDetail = () => {
         <span className="h-[750px] w-full flex rounded-40 overflow-hidden max-md:h-auto"><img className="w-full h-full object-cover object-center" src="/images/vectors/blog1.jpg" /></span>
         <span className="text-[#545454] text-2xl max-md:text-base font-medium">By Knapp Phebe • March 2, 2025</span>
         <span className="text-[40px] font-medium mt-4  max-md:text-[28px]">Introduction</span>
-        <span className="text-[#606060] text-2xl max-md:text-[18px]">Taking your pup on a boat ride can be a fun and rewarding experience, but proper preparation is key. Whether it’s a short trip or a weekend adventure, helping your dog get comfortable on the water ensures a stress-free and enjoyable time for both of you.</span>
+        <span className="text-[#606060] text-2xl max-md:text-[18px]">Taking your pup on a boat ride can be a fun and rewarding experience, but proper preparation is key. Whether it's a short trip or a weekend adventure, helping your dog get comfortable on the water ensures a stress-free and enjoyable time for both of you.</span>
         <span className="text-2xl max-md:text-lg font-medium">1. Start with Dry Land Training</span>
-        <span className="text-[#606060] text-[22px] max-md:text-base">Taking your pup on a boat ride can be a fun and rewarding experience, but proper preparation is key. Whether it’s a short trip or a weekend adventure, helping your dog get comfortable on the water ensures a stress-free and enjoyable time for both of you.</span>
+        <span className="text-[#606060] text-[22px] max-md:text-base">Taking your pup on a boat ride can be a fun and rewarding experience, but proper preparation is key. Whether it's a short trip or a weekend adventure, helping your dog get comfortable on the water ensures a stress-free and enjoyable time for both of you.</span>
         <span className="text-2xl max-md:text-lg font-medium">2. Use Positive Reinforcement</span>
         <span className="text-[#606060] text-[22px] max-md:text-base">Reward your dog with treats and praise when they calmly sit or explore the boat. Gradual exposure paired with positive reinforcement builds confidence.</span>
         <span className="text-2xl max-md:text-lg font-medium">3. Invest in a Canine Life Jacket</span>
@@ -158,6 +163,13 @@ const blogDetail = () => {
     </section>
     </>
   );
-};
+}
 
-export default blogDetail;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <BlogDetail />
+      {/* {blogDetail()} */}
+    </Suspense>
+  );
+}

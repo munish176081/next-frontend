@@ -1,7 +1,12 @@
+'use client';
+import { Suspense } from "react";
 import ForgotPasswordForm from "./_components/forgot-password-form";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import { LogoIcon } from "@/_components/icons";
-export default function ForgotPassword() {
+
+export const dynamic = 'force-dynamic';
+
+function ForgotPassword() {
   return (
     <>
       <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
@@ -29,5 +34,13 @@ export default function ForgotPassword() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <ForgotPassword />
+    </Suspense>
   );
 }

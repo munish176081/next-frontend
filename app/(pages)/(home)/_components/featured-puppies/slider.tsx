@@ -8,12 +8,23 @@ import {
   Swiper,
   SwiperSlide,
 } from "@/_components/ui/slider";
-import { UserListingType } from "@/_types/listing";
+
+export interface SimpleListing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  location?: string;
+  rating?: number;
+  reviews?: number;
+  listingType?: string;
+}
 
 export const PuppiesSlider = ({
   listings,
 }: {
-  listings: UserListingType[];
+  listings: SimpleListing[];
 }) => {
   return (
     <>

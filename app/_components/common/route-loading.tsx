@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import Loader from "../ui/loader/loader";
 
@@ -33,5 +33,13 @@ export default function RouteLoading() {
         <p className="text-sm text-gray-600 font-medium">Loading...</p>
       </div>
     </div>
+  );
+}
+
+export function RouteLoadingWithSuspense() {
+  return (
+    <Suspense fallback={null}>
+      <RouteLoading />
+    </Suspense>
   );
 } 

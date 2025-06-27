@@ -3,8 +3,11 @@ import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import { SigninForm } from "./_components/signin-form";
 import { useSearchParams } from "next/navigation";
 import { Routes } from "@/_config/routes";
+import { Suspense } from "react";
 
-export default function SignIn() {
+export const dynamic = 'force-dynamic';
+
+function SignIn() {
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect");
   return (
@@ -25,5 +28,13 @@ export default function SignIn() {
         />
       </div>
     </section>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <SignIn />
+    </Suspense>
   );
 }

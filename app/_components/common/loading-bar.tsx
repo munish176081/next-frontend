@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function LoadingBar() {
@@ -52,5 +52,13 @@ export default function LoadingBar() {
         style={{ width: `${progress}%` }}
       />
     </div>
+  );
+}
+
+export function LoadingBarWithSuspense() {
+  return (
+    <Suspense fallback={null}>
+      <LoadingBar />
+    </Suspense>
   );
 } 

@@ -1,6 +1,10 @@
+'use client';
 import { Heading } from "@/_components/ui/typegraphy";
-import { MeetingsTable } from "./_components/meetings-table";
 import SearchInput from "./_components/search-input";
+import { Suspense } from "react";
+import { MeetingsTable } from "./_components/meetings-table";
+
+export const dynamic = 'force-dynamic';
 
 const MeetingsPage = () => {
   return (
@@ -11,9 +15,15 @@ const MeetingsPage = () => {
         </Heading>
         <SearchInput />
       </div>
-      <MeetingsTable />
+      <MeetingsTable meetings={[]} isLoading={false} />
     </>
   );
 };
 
-export default MeetingsPage;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <MeetingsPage />
+    </Suspense>
+  );
+}

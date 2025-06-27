@@ -1,3 +1,4 @@
+'use client';
 import Hero from "@/_components/ui/hero";
 import { CtaBlock } from "./_components/cta-block";
 import { EthicalBreeder } from "./_components/ethical-breeder";
@@ -9,8 +10,11 @@ import { PupsForSale } from "./_components/pups-for-sale";
 import { Services } from "./_components/services";
 import { Testimonial } from "./_components/testimonial";
 import { TrustedBreeder } from "./_components/truster-breeder";
+import { Suspense } from "react";
 
-export default function Home() {
+export const dynamic = 'force-dynamic';
+
+function Home() {
   return (
     <>
       <Hero />
@@ -25,5 +29,13 @@ export default function Home() {
       <Testimonial />
       <CtaBlock />
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Home />
+    </Suspense>
   );
 }

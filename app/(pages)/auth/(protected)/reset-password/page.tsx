@@ -1,7 +1,12 @@
+'use client';
 import ResetPasswordForm from "./_components/reset-password-form";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import { LogoIcon } from "@/_components/icons";
-export default function ResetPassword() {
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
+function ResetPassword() {
   return (
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
       <div className="w-full bg-white rounded-max p-8 flex pl-0 h-full max-md:p-4 max-md:rounded-40 max-md:h-auto max-h-[900px] relative max-md:!h-full">
@@ -27,5 +32,13 @@ export default function ResetPassword() {
         />
       </div>
     </section>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPassword />
+    </Suspense>
   );
 }

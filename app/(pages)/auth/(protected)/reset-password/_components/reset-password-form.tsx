@@ -13,6 +13,7 @@ import {
 import { useResetPassword } from "@/_services/hooks/auth/use-reset-password";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Routes } from "@/_config/routes";
+import { Suspense } from "react";
 
 export default function ResetPasswordForm() {
   const {
@@ -96,5 +97,13 @@ export default function ResetPasswordForm() {
         Reset Password
       </Button>
     </form>
+  );
+}
+
+export function ResetPasswordFormWithSuspense() {
+  return (
+    <Suspense fallback={null}>
+      <ResetPasswordForm />
+    </Suspense>
   );
 }

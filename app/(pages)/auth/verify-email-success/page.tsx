@@ -2,10 +2,11 @@
 import { LogoIcon } from "@/_components/icons";
 import Link from "next/link";
 import { Routes } from "@/_config/routes";
+import { Suspense } from "react";
 
-export default function VerifyEmailSuccess() {
+export const dynamic = 'force-dynamic';
 
-
+function VerifyEmailSuccess() {
   return (
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
       <div className="w-full bg-white rounded-max p-8 flex pl-0 h-full max-md:p-4 max-md:rounded-40 max-md:h-auto max-h-[900px] relative max-md:!h-full">
@@ -42,28 +43,13 @@ export default function VerifyEmailSuccess() {
         </div>
       </div>
     </section>
-    // <div className="container mb-12 mt-8 px-4 lg:mb-16">
-    //   <div className="m-auto w-full max-w-[496px] rounded-lg border border-gray-200 p-6 pt-9 sm:p-12">
-    //     <div className="mb-8">
-    //       <h2 className="mb-3 text-3xl font-bold uppercase leading-[48px] text-primary">
-    //         Success!
-    //       </h2>
-    //       <p className="text-base leading-5 text-gray mb-6">
-    //         Your email has been verified. You can now{" "}
-    //         {user ? "go to home" : "login"} to your account.
-    //       </p>
+  );
+}
 
-    //       {user ? (
-    //         <Button asChild>
-    //           <Link href="/">Home</Link>
-    //         </Button>
-    //       ) : (
-    //         <Button asChild>
-    //           <Link href="/auth/login">Login</Link>
-    //         </Button>
-    //       )}
-    //     </div>
-    //   </div>
-    // </div>
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <VerifyEmailSuccess />
+    </Suspense>
   );
 }

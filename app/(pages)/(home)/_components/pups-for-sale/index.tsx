@@ -1,11 +1,12 @@
 "use client";
 
 import Section from "@/_components/common/section";
-import { PuppiesSlider } from "./reuseslider";
+import { PuppiesSlider } from "./slider";
 
 export const PupsForSale = () => {
   const listings = [
     {
+      id: "1",
       title: "Mini Dachshund",
       location: "Melbourne, VIC",
       description:
@@ -17,6 +18,7 @@ export const PupsForSale = () => {
       image: "/images/banner/mini-dachshund.png",
     },
     {
+      id: "2",
       title: "Border Collie",
       location: "Sydney, NSW",
       description:
@@ -28,6 +30,7 @@ export const PupsForSale = () => {
       image: "/images/banner/border-collie.png",
     },
     {
+      id: "3",
       title: "Shih Tzu",
       location: "Brisbane, QLD",
       description:
@@ -39,6 +42,7 @@ export const PupsForSale = () => {
       image: "/images/banner/shih-tzu.png",
     },
     {
+      id: "4",
       title: "Beagle",
       location: "Adelaide, SA",
       description:
@@ -60,7 +64,6 @@ export const PupsForSale = () => {
       className="mt-24  px-0 py-10 pb-8 backgroundBanner"
     >
       <div className="mt-10">
-        {/* @ts-expect-error - PuppiesSlider component expects a different type than what we're providing */}
         <PuppiesSlider listings={listings} />
       </div>
     </Section>

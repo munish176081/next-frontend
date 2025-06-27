@@ -1,4 +1,8 @@
 "use client";
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
 const listingTips = [
   {
     title: "1. Upload Clear, Bright Photos",
@@ -38,7 +42,7 @@ const listingTips = [
     alignRight: false,
   },
   {
-    title: "5. Use the “DNA Verified” Badge",
+    title: '5. Use the "DNA Verified" Badge',
     points: [
       "Adds credibility and increases trust",
       "Available for DNA-tested purebred pups",
@@ -48,7 +52,7 @@ const listingTips = [
   },
 ];
 
-const Startlistingform = () => {
+function Startlistingform() {
   return (
     <>
     <section className="container grid grid-cols-2 gap-8 max-md:p-4 max-md:gap-4 rounded-40 p-8 bg-white relative max-md:grid-cols-1">
@@ -176,6 +180,12 @@ const Startlistingform = () => {
     </section>
     </>
   );
-};
+}
 
-export default Startlistingform;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Startlistingform />
+    </Suspense>
+  );
+}

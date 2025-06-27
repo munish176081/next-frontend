@@ -1,4 +1,8 @@
 "use client";
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
 const rows = [
   {
     listing: "Golden Retriever",
@@ -71,7 +75,7 @@ const statusStyles = {
   Expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
 };
 
-const Meetings = () => {
+function Meetings() {
   return (
     <>
     <div className="flex flex-col gap-8 max-md:gap-4">
@@ -119,7 +123,7 @@ const Meetings = () => {
                       <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">{row.date}</td>
                       <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">{row.time}</td>
                       <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">{row.meetingWith}</td>
-                      <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center"><span className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[row.status]}`}>{row.status}</span></td>
+                      <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center"><span className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[row.status as keyof typeof statusStyles] || ''}`}>{row.status}</span></td>
                       <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">{row.action ? (<img className="w-6 mx-auto" src="/images/vectors/ellipses.png" alt="action" />) : ("N/A")}</td>
                     </tr>
                   ))}
@@ -132,6 +136,12 @@ const Meetings = () => {
     </div>
     </>
   );
-};
+}
 
-export default Meetings;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Meetings />
+    </Suspense>
+  );
+}

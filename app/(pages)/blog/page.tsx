@@ -1,4 +1,8 @@
 "use client";
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
 const categories = [
   { name: "Travel & Adventure", count: 6 },
   { name: "Health & Nutrition", count: 8 },
@@ -22,7 +26,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog2.jpg",
@@ -31,7 +35,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog3.jpg",
@@ -76,7 +80,7 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog8.jpg",
@@ -85,13 +89,14 @@ const blogs = [
     id: "123",
     category: "Travel & Adventure",
     title: "Adventure Cove: Lake Union Cruising",
-    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog’s essentials and set sail!",
+    description: "Explore hidden coves and scenic routes perfect for curious canines. Pack your dog's essentials and set sail!",
     author: "Sydney Writers",
     date: "February 28, 2025",
     image: "/images/vectors/blog9.jpg",
   },
 ];
-const Blogs = () => {
+
+function Blogs() {
   return (
     <>
     <section className="container rounded-40 p-8 bg-white flex flex-col relative justify-center gap-3 max-md:p-4">
@@ -167,6 +172,12 @@ const Blogs = () => {
     </section>
     </>
   );
-};
+}
 
-export default Blogs;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Blogs />
+    </Suspense>
+  );
+}

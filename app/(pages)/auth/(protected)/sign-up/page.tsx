@@ -1,7 +1,11 @@
+'use client';
+import { Suspense } from "react";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import SignUpForm from "./_components/signup-form";
 
-export default function Signup() {
+export const dynamic = 'force-dynamic';
+
+function Signup() {
   return (
     <>
       <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto">
@@ -26,5 +30,13 @@ export default function Signup() {
         </div>
       </section>
     </>
+  );
+}
+
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Signup />
+    </Suspense>
   );
 }

@@ -1,4 +1,8 @@
 "use client";
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
 const listingOptions = [
   {
     title: "Individual Puppy Listing",
@@ -32,7 +36,7 @@ const listingOptions = [
   },
 ];
 
-const Startlisting = () => {
+function Startlisting() {
   return (
     <>
     <section className="container relative overflow-hidden p-8 rounded-max bg-white max-md:p-4 max-md:rounded-40">
@@ -58,6 +62,12 @@ const Startlisting = () => {
     </section>
     </>
   );
-};
+}
 
-export default Startlisting;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Startlisting />
+    </Suspense>
+  );
+}

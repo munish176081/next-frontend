@@ -1,6 +1,10 @@
 "use client";
 
-const Contact = () => {
+import { Suspense } from "react";
+
+export const dynamic = 'force-dynamic';
+
+function Contact() {
   return (
     <>
     <div className="container flex flex-col gap-16 pt-16 max-2xl:p-4 max-md:gap-4">
@@ -73,6 +77,12 @@ const Contact = () => {
     </section>
     </>
   );
-};
+}
 
-export default Contact;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <Contact />
+    </Suspense>
+  );
+}

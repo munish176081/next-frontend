@@ -1,5 +1,13 @@
-const InboxPage = () => {
-  return <div>InboxPage</div>;
-};
+'use client';
+import { Suspense } from "react";
 
-export default InboxPage;
+export const dynamic = 'force-dynamic';
+
+  
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <div>InboxPage</div>
+    </Suspense>
+  );
+}

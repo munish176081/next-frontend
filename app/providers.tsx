@@ -7,7 +7,7 @@ import {
   QueryClientProvider,
 } from "@tanstack/react-query";
 import { parseAxiosError } from "./_utils/parse-axios-error";
-import { LoadingProvider } from "./_components/common/loading-provider";
+import LoadingProviderWithSuspense from "./_components/common/loading-provider";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -62,9 +62,9 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LoadingProvider>
+      <LoadingProviderWithSuspense>
         {children}
-      </LoadingProvider>
+      </LoadingProviderWithSuspense>
     </QueryClientProvider>
   );
 }

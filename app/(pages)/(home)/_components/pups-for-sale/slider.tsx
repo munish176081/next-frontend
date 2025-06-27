@@ -7,13 +7,24 @@ import {
   Autoplay,
 } from "@/_components/ui/slider";
 import { ListingCard } from "@/_components/common/listing-card";
-import { UserListingType } from "@/_types/listing";
 import ActionIcon from "@/_components/ui/action-icon";
+
+export interface SimpleListing {
+  id: string;
+  title: string;
+  description: string;
+  price: number;
+  image: string;
+  location?: string;
+  rating?: number;
+  reviews?: number;
+  listingType?: string;
+}
 
 export const PuppiesSlider = ({
   listings,
 }: {
-  listings: UserListingType[];
+  listings: SimpleListing[];
 }) => {
   return (
     <>

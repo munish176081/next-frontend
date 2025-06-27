@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { ListingCard } from "@/_components/common/listing-card";
 import { Text } from "@/_components/ui/typegraphy";
 import { useSearchListings } from "@/_services/hooks/listings";
@@ -9,7 +9,9 @@ import {
 } from "./_components/listing-filter";
 import { useSearchParams } from "next/navigation";
 
-const ExploreListings = () => {
+export const dynamic = 'force-dynamic';
+
+function ExploreListings() {
   const listings1 = [
     {
       title: "Golden Retriever",
@@ -147,6 +149,12 @@ const ExploreListings = () => {
       </section>
     </>
   );
-};
+}
 
-export default ExploreListings;
+export default function Page() {
+  return (
+    <Suspense fallback={null}>
+      <ExploreListings />
+    </Suspense>
+  );
+}
