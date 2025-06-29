@@ -84,11 +84,11 @@ export default function ProfileMenu({
     <Menu
       as="div"
       className={clsx(
-        "relative h-9 w-9 rounded-full bg-white shadow-card sm:h-10 sm:w-10 border 2xl:border-gray-lighter",
+        "relative h-16 w-16 rounded-full bg-white shadow-card sm:h-14 sm:w-14 border 2xl:border-gray-lighter",
         className
       )}
     >
-      <MenuButton className="relative h-full w-full rounded-full bg-white h-14 w-14 border-4 border-CSecondary">
+      <MenuButton className="relative h-full w-full rounded-full bg-white h-16 w-16 border-4 border-CSecondary">
         <Avatar
           className="cursor-pointer"
           name={user.username}

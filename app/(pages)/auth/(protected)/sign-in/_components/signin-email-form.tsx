@@ -26,7 +26,7 @@ export function SigninEmailForm({
   } = useForm<SignInType>({
     resolver: zodResolver(loginInfoSchema),
   });
-  const { mutate: login } = useLogin();
+  const { mutate: login, isPending } = useLogin();
   const router = useRouter();
 
   async function handleFormSubmit(data: SignInType) {
@@ -59,7 +59,7 @@ export function SigninEmailForm({
         inputClassName="text-sm placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-14 rounded-full border border-[#B5B5B5] max-md:h-12"
         error={errors?.usernameOrEmail?.message}
         required
-        placeholder="Enter your Email (-test)"
+        placeholder="Enter your Email"
         {...register("usernameOrEmail")}
       />
 
@@ -83,11 +83,12 @@ export function SigninEmailForm({
       </Link>
 
       <Button
+        disabled={isPending}
         type="submit"
         unstyled
-        className="w-full h-16 bg-black text-white text-lg rounded-full mt-4 max-md:h-12 max-md:text-base"
+        className="w-full h-16 bg-black text-white text-lg rounded-full mt-4 max-md:h-12 max-md:text-base disabled:opacity-50"
       >
-        Proceed
+        {isPending ? "Logging in..." : "Proceed"}
       </Button>
     </form>
   );

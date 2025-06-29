@@ -26,7 +26,7 @@ export default function SignUpForm() {
   const searchParams = useSearchParams();
   const successRedirect = searchParams.get("successRedirect");
   const router = useRouter();
-  const { mutate: signup } = useSignup();
+  const { mutate: signup, isPending } = useSignup();
 
   async function handleFormSubmit(data: SignUpType) {
     const { acceptPolicy, ...signupBody } = data;
@@ -135,9 +135,10 @@ export default function SignUpForm() {
         <Button
           unstyled
           type="submit"
-          className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
+          disabled={isPending}
+          className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base disabled:opacity-50"
         >
-          Create Account
+          {isPending ? "Creating Account..." : "Create Account"}
         </Button>
       </form>
       <div className="relative mb-8 mt-7 text-center before:absolute before:left-0 before:top-1/2 before:h-[1px] before:w-full before:bg-gray-200">

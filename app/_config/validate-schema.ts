@@ -11,6 +11,9 @@ const passwordSchema = z
   })
   .regex(/[0-9]/, {
     message: "Password must contain at least one number.",
+  })
+  .regex(/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/, {
+    message: "Password must contain at least one special character.",
   });
 
 const requiredPasswordSchema = z
@@ -43,8 +46,9 @@ export const signUpSchema = z
 export const loginInfoSchema = z.object({
   usernameOrEmail: z
     .string()
-    .min(1, { message: "Email is required." }),
-  password: requiredPasswordSchema,
+    .min(1, { message: "Email is required." })
+    .email({ message: "The email is invalid." }),
+  password: passwordSchema,
 });
 
 export const forgotPasswordSchema = z.object({
