@@ -21,9 +21,9 @@ export const signUpSchema = z
   .object({
     username: z
       .string()
-      .min(1, { message: "The username is required." })
+      .min(1, { message: "Name is required." })
       .regex(/^[a-zA-Z0-9]+$/, {
-        message: "The username must be alphanumeric.",
+        message: "Name must be alphanumeric.",
       }),
     email: z
       .string()
@@ -43,7 +43,7 @@ export const signUpSchema = z
 export const loginInfoSchema = z.object({
   usernameOrEmail: z
     .string()
-    .min(1, { message: "The username or email is required." }),
+    .min(1, { message: "Email is required." }),
   password: requiredPasswordSchema,
 });
 

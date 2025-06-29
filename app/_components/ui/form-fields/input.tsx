@@ -202,9 +202,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       startIconClickable,
       endIconClickable,
       labelClassName,
-      inputClassName,
+      inputClassName="text-success",
       helperClassName,
-      errorClassName,
+      errorClassName = "text-red-dark py-1 px-2",
       helperText,
       unstyled = false,
       ...rest

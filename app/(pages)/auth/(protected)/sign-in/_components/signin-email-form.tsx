@@ -55,8 +55,6 @@ export function SigninEmailForm({
         unstyled
         type="text"
         label="Your Email*"
-        errorClassName="text-red"
-        helperClassName="text-green"
         labelClassName="mt-4 mb-2 flex text-sm"
         inputClassName="text-sm placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-14 rounded-full border border-[#B5B5B5] max-md:h-12"
         error={errors?.usernameOrEmail?.message}

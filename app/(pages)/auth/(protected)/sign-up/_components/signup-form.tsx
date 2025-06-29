@@ -12,7 +12,6 @@ import { useSignup } from "@/_services/hooks/auth/use-signup";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { signUpSchema, SignUpType } from "@/_config/validate-schema";
 import SocialLogin from "@/_components/auth/social-login";
-import { Suspense } from "react";
 
 export default function SignUpForm() {
   const {
@@ -83,6 +82,7 @@ export default function SignUpForm() {
           type="text"
           label="Your Email*"
           labelClassName="mt-4 mb-2 flex text-sm"
+
           inputClassName="text-sm placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-14 rounded-full border border-[#B5B5B5] max-md:h-12"
           error={errors?.email?.message}
           required
@@ -159,13 +159,5 @@ export default function SignUpForm() {
         </Link>
       </p>
     </div>
-  );
-}
-
-export function SignUpFormWithSuspense() {
-  return (
-    <Suspense fallback={null}>
-      <SignUpForm />
-    </Suspense>
   );
 }
