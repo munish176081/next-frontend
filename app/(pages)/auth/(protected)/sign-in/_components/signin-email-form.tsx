@@ -59,7 +59,7 @@ export function SigninEmailForm({
         inputClassName="text-sm placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-14 rounded-full border border-[#B5B5B5] max-md:h-12"
         error={errors?.usernameOrEmail?.message}
         required
-        placeholder="Enter your Email"
+        placeholder="Enter your Email (-test)"
         {...register("usernameOrEmail")}
       />
 
