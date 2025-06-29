@@ -50,7 +50,7 @@ export default function SignUpForm() {
 
         router.push(successRedirect ?? Routes.private.profile);
       },
-      onError: (error) => {
+      onError: (error:any) => {
         const err = parseAxiosError(error);
 
         toast({

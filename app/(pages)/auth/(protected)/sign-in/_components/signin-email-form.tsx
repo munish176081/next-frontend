@@ -36,7 +36,7 @@ export function SigninEmailForm({
         router.push(successRedirect ?? Routes.private.profile);
         // router.refresh();
       },
-      onError: (error) => {
+      onError: (error:any) => {
         const err = parseAxiosError(error);
         resetField("password");
 
