@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input, Checkbox } from "@/_components/ui/form-fields";
-import { Button } from "@/_components/ui/button";
+import { LoadingButton } from "@/_components/ui/loading-button";
 import { Routes } from "@/_config/routes";
 import { toast } from "@/_hooks/use-toast";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -132,14 +132,13 @@ export default function SignUpForm() {
           error={errors?.acceptPolicy?.message}
           {...register("acceptPolicy")}
         />
-        <Button
-          unstyled
+        <LoadingButton
           type="submit"
-          disabled={isPending}
+          loading={isPending}
           className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base disabled:opacity-50"
         >
           {isPending ? "Creating Account..." : "Create Account"}
-        </Button>
+        </LoadingButton>
       </form>
       <div className="relative mb-8 mt-7 text-center before:absolute before:left-0 before:top-1/2 before:h-[1px] before:w-full before:bg-gray-200">
         <span className="relative z-10 m-auto inline-flex bg-white px-5">

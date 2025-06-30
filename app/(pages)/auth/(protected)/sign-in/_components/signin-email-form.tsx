@@ -4,8 +4,8 @@ import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Routes } from "@/_config/routes";
-import { Input } from "@/_components/ui/form-fields";
-import { Button } from "@/_components/ui/button";
+import { Input } from "@/_components/ui/form-fields/input";
+import { LoadingButton } from "@/_components/ui/loading-button";
 import { toast } from "@/_hooks/use-toast";
 import { useLogin } from "@/_services/hooks/auth/use-login";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
@@ -77,19 +77,18 @@ export function SigninEmailForm({
 
       <Link
         href={Routes.auth.forgotPassword}
-        className="underline font-semibold text-xs py-2 max-md:ml-auto max-md:ml-auto mt-4"
+        className="underline font-semibold text-xs py-2 max-md:ml-auto mt-4"
       >
         Forget Password
       </Link>
 
-      <Button
-        disabled={isPending}
+      <LoadingButton
+        loading={isPending}
         type="submit"
-        unstyled
-        className="w-full h-16 bg-black text-white text-lg rounded-full mt-4 max-md:h-12 max-md:text-base disabled:opacity-50"
+        className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
       >
-        {isPending ? "Logging in..." : "Proceed"}
-      </Button>
+        Proceed
+      </LoadingButton>
     </form>
   );
 }

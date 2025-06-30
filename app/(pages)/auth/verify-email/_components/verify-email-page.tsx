@@ -11,6 +11,9 @@ import { useForgotPassword } from "@/_services/hooks/auth/use-forgot-password";
 import { useVerifyOtp } from "@/_services/hooks/auth/use-verify-otp";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { useUser } from "@/_services/hooks/user/use-user";
+import { CountdownTimer } from "@/_components/ui/countdown-timer";
+import { useResendWithCountdown } from "@/_hooks/use-resend-with-countdown";
+import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 
 export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   const [values, setValues] = useState<string[]>(["", "", "", "", ""]);
@@ -117,25 +120,59 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   };
 
   const handleResendOtp = useCallback(async () => {
-    try {
+    return new Promise((resolve, reject) => {
       if (verificationType === 'password-reset') {
-        await forgotPassword(email);
+        forgotPassword(email, {
+          onSuccess: () => {
+            toast({
+              title: "Code Sent",
+              description: "A new password reset code has been sent to your email",
+            });
+            resolve(true);
+          },
+          onError: (error) => {
+            reject(error);
+          },
+        });
       } else {
-        await requestVerifyEmailCode();
+        requestVerifyEmailCode(undefined, {
+          onSuccess: () => {
+            toast({
+              title: "Code Sent",
+              description: "A new verification code has been sent to your email",
+            });
+            resolve(true);
+          },
+          onError: (error) => {
+            reject(error);
+          },
+        });
       }
-      toast({
-        title: "Code Sent",
-        description: "A new verification code has been sent to your email",
-      });
-    } catch (error) {
+    });
+  }, [email, verificationType, forgotPassword, requestVerifyEmailCode, toast]);
+
+  const {
+    isPending: isResendPending,
+    cooldownSeconds,
+    error: resendError,
+    handleResend,
+    resetCooldown,
+    canResend
+  } = useResendWithCountdown({
+    onResend: handleResendOtp,
+    onSuccess: () => {
+      // Success is handled in the individual handlers
+    },
+    onError: (error) => {
       const err = parseAxiosError(error);
       toast({
         title: "Error",
         description: err?.message || "Failed to send code",
         variant: "destructive",
       });
-    }
-  }, [email, verificationType, forgotPassword, requestVerifyEmailCode, toast]);
+    },
+    defaultCooldown: 60 // 1 minute default
+  });
 
   const getTitle = () => {
     return verificationType === 'password-reset' ? 'Password Reset' : 'Email Verification';
@@ -153,7 +190,7 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
 
   return (
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
-      <div className={`w-full bg-white rounded-max p-8 flex ${noshow ? '' : 'pl-0'} h-full max-md:p-4 max-md:rounded-40 max-md:h-auto max-h-[900px] relative max-md:!h-full`}>
+      <div className={`w-full bg-white rounded-max p-8 flex ${noshow ? '' : 'pl-0'} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
         {!noshow && (
           <button
             onClick={() => router.back()}
@@ -166,7 +203,7 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
           </button>
         )}
 
-        <div className={`${noshow ? 'w-full mx-auto max-w-md' : 'w-1/2'} h-full flex flex-col items-start text-xs px-10 h-full max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
+        <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2'} h-full flex flex-col items-start text-xs max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
           <div className="flex flex-col w-full my-auto">
             <span className="w-[70px] h-[70px] rounded-full bg-[#F3F3F3] flex items-center justify-center">
               <img src="/images/vectors/mail.svg" alt="Email icon" />
@@ -196,22 +233,43 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
 
             <LoadingButton
               onClick={handleVerifyOtp}
-              loading={isEmailVerificationPending}
+              loading={isEmailVerificationPending || isForgotPasswordPending}
               className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
             >
               {getButtonText()}
             </LoadingButton>
 
-            <span className="text-[#999999] text-lg font-medium flex items-center w-full justify-center text-center mt-4">
-              I didn't receive a code&nbsp;
+            <span className="text-gray-500 text-lg font-medium flex items-center justify-center text-center mt-4 space-x-1">
+            
+            {cooldownSeconds >0 ? (
+              <span className="text-gray-600 ml-1">
+                (Resend available in <CountdownTimer 
+                  seconds={cooldownSeconds} 
+                  onComplete={resetCooldown}
+                  className="text-gray-800 font-semibold"
+                />)
+              </span>
+            ) : (
+              <span>
+                I didn't receive a code
               <button
-                onClick={handleResendOtp}
-                disabled={verificationType === 'password-reset' ? isForgotPasswordPending : isRequestPending}
-                className="text-black underline decoration-[3px] underline-offset-[3px] decoration-CSecondary disabled:opacity-50"
+                onClick={handleResend}
+                disabled={!canResend || isResendPending}
+                className={`ml-1 text-gray-800 font-semibold underline decoration-2 underline-offset-2 hover:text-gray-900 transition-colors ${
+                  (!canResend || isResendPending) ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
               >
-                {(verificationType === 'password-reset' ? isForgotPasswordPending : isRequestPending) ? 'Sending...' : 'Resend'}
+                {isResendPending ? 'Sending...' : 'Resend'}
               </button>
-            </span>
+              </span>
+            )}
+          </span>
+            
+            {/* {resendError && (
+              <span className="text-red-500 text-sm text-center mt-2">
+                {resendError}
+              </span>
+            )} */}
           </div>
 
           {!noshow && (

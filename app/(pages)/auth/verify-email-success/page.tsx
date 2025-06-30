@@ -3,6 +3,7 @@ import { LogoIcon } from "@/_components/icons";
 import Link from "next/link";
 import { Routes } from "@/_config/routes";
 import { Suspense } from "react";
+import { LoadingButton } from "@/_components/ui/loading-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,11 @@ function VerifyEmailSuccess() {
             <span className="w-[70px] h-[70px] rounded-full bg-[#F3F3F3] flex items-center justify-center"><img src="/images/vectors/successCheck.png" /></span>
             <span className="text-[33px] font-medium flex leading-normal mt-3">You're All Set!</span>
             <span className="text-[#9C9C9C] text-sm mt-2">Your password has been reset successfully.<br /><text className="text-black font-medium">Welcome back</text>—your account is now <text className="text-black font-medium">more secure than ever.</text></span>
-            <Link href={Routes.auth.signIn} ><button className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base">Log In Securely</button></Link>
+            <Link href={Routes.auth.signIn}>
+              <LoadingButton className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base">
+                Log In Securely
+              </LoadingButton>
+            </Link>
           </div>
           <div className="flex h-7 gap-4 w-1/2 items-center justify-center absolute bottom-8 left-0 max-md:w-full max-md:bottom-4">
             <span className="w-3.5 h-3.5 bg-black rounded-full"></span>

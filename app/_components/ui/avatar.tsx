@@ -29,7 +29,7 @@ export const Avatar = ({
         className,
         classes.base,
         classes.rounded[rounded],
-        props.onClick && "cursor-pointer"
+        props.onClick && "cursor-pointer text-2xl"
       )}
       {...props}
     />

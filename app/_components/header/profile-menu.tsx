@@ -88,12 +88,13 @@ export default function ProfileMenu({
         className
       )}
     >
-      <MenuButton className="relative h-full w-full rounded-full bg-white h-16 w-16 border-4 border-CSecondary">
+      <MenuButton className="relative rounded-full bg-white h-16 w-16 border-4 border-CSecondary">
         <Avatar
-          className="cursor-pointer"
+          className="cursor-pointer !text-3xl "
           name={user.username}
           src={user.imageUrl}
           rounded="full"
+          textSizeRatio={3}
           size="100%"
         />
       </MenuButton>

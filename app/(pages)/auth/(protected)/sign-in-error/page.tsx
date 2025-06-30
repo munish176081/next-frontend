@@ -1,10 +1,10 @@
 "use client";
 
 import { useSearchParams, useRouter } from "next/navigation";
-import AuthSidePanel from "@/_components/auth/AuthSidePanel";
-import { Button } from "@/_components/ui/button";
-import React, { Suspense } from "react";
 import { Routes } from "@/_config/routes";
+import AuthSidePanel from "@/_components/auth/AuthSidePanel";
+import { LoadingButton } from "@/_components/ui/loading-button";
+import React, { Suspense } from "react";
 
 export const dynamic = 'force-dynamic';
 
@@ -44,12 +44,12 @@ function SignInErrorPage() {
                                 </div>
                             </div>
 
-                            <Button
-                                className="w-full h-12 text-base"
+                            <LoadingButton
+                                className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
                                 onClick={() => router.push(Routes.auth.signIn)}
                             >
                                 Try Again
-                            </Button>
+                            </LoadingButton>
 
                             <div className="relative my-6">
                                 <div className="absolute inset-0 flex items-center">

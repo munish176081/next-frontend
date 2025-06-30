@@ -3,7 +3,7 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/_components/ui/form-fields";
-import { Button } from "@/_components/ui/button";
+import { LoadingButton } from "@/_components/ui/loading-button";
 import { toast } from "@/_hooks/use-toast";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import {
@@ -23,7 +23,7 @@ export default function ResetPasswordForm() {
   } = useForm<ResetPasswordType>({
     resolver: zodResolver(resetPasswordSchema),
   });
-  const { mutate: resetPassword } = useResetPassword();
+  const { mutate: resetPassword, isPending } = useResetPassword();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -89,13 +89,13 @@ export default function ResetPasswordForm() {
         {...register("confirmPassword")}
       />
 
-      <Button
-        unstyled
+      <LoadingButton
         type="submit"
+        loading={isPending}
         className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
       >
         Reset Password
-      </Button>
+      </LoadingButton>
     </form>
   );
 }

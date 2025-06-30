@@ -33,7 +33,7 @@ export const signUpSchema = z
       .min(1, "The email is required.")
       .email({ message: "The email is invalid." }),
     password: passwordSchema,
-    confirmPassword: requiredPasswordSchema,
+    confirmPassword: passwordSchema,
     acceptPolicy: z.boolean().refine((data) => data === true, {
       message: "You must accept the terms of service and privacy policy.",
     }),
@@ -60,7 +60,10 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z.object({
   password: passwordSchema,
-  confirmPassword: requiredPasswordSchema,
+  confirmPassword: passwordSchema,
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match.",
+  path: ["confirmPassword"],
 });
 
 export const booleanCoerce = z

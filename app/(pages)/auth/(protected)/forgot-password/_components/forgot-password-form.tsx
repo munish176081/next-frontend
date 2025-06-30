@@ -2,8 +2,8 @@
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/_components/ui/form-fields";
-import { Button } from "@/_components/ui/button";
+import { Input } from "@/_components/ui/form-fields/input";
+import { LoadingButton } from "@/_components/ui/loading-button";
 import { useForgotPassword } from "@/_services/hooks/auth/use-forgot-password";
 import { toast } from "@/_hooks/use-toast";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
@@ -23,7 +23,7 @@ export default function ForgotPasswordForm() {
   } = useForm<ForgotPasswordType>({
     resolver: zodResolver(forgotPasswordSchema),
   });
-  const { mutate: forgotPassword } = useForgotPassword();
+  const { mutate: forgotPassword, isPending } = useForgotPassword();
 
   function handleFormSubmit(data: ForgotPasswordType) {
     forgotPassword(data.email, {
@@ -60,13 +60,13 @@ export default function ForgotPasswordForm() {
         {...register("email")}
       />
 
-      <Button
-        unstyled
+      <LoadingButton
         type="submit"
+        loading={isPending}
         className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
       >
         Reset Password
-      </Button>
+      </LoadingButton>
     </form>
   );
 }
