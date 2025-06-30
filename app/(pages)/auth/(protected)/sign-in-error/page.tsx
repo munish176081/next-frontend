@@ -5,6 +5,7 @@ import { Routes } from "@/_config/routes";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import React, { Suspense } from "react";
+import GoBackButton from "@/_components/common/go-back-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -18,19 +19,9 @@ function SignInErrorPage() {
             <div className="w-full max-w-6xl bg-white rounded-3xl shadow-sm overflow-hidden flex flex-col md:flex-row h-full max-h-[900px]">
                 {/* Left Panel - Error Content */}
                 <div className="w-full md:w-1/2 p-6 md:p-10 flex flex-col">
-                    <button 
-                        onClick={() => router.back()}
-                        className="flex items-center gap-2 self-start bg-gray-100 hover:bg-gray-200 rounded-full px-3 py-1.5 text-sm font-medium transition-colors mb-8"
-                    >
-                        <span className="flex size-6 bg-black rounded-full items-center justify-center">
-                            <img 
-                                src="/images/vectors/arrowLeftWhite.svg" 
-                                alt="Back arrow"
-                                className="w-3 h-3"
-                            />
-                        </span>
-                        Go Back
-                    </button>
+                    <div className="mb-8">
+                        <GoBackButton />
+                    </div>
 
                     <div className="flex flex-col flex-grow justify-center">
                         <div className="max-w-md w-full mx-auto">

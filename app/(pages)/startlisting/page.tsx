@@ -1,5 +1,6 @@
 "use client";
 import { Suspense } from "react";
+import GoBackButton from "@/_components/common/go-back-button";
 
 export const dynamic = 'force-dynamic';
 
@@ -40,7 +41,9 @@ function Startlisting() {
   return (
     <>
     <section className="container relative overflow-hidden p-8 rounded-max bg-white max-md:p-4 max-md:rounded-40">
-      <div className="absolute left-10 top-8 text-xs flex items-center bg-[#F3F3F3] p-0.5 rounded-full pr-2 gap-1 font-medium max-md:top-4 max-md:left-4 max-md:static max-w-max"><span className="flex size-6 bg-black rounded-full items-center justify-center"><img src="/images/vectors/arrowLeftWhite.svg" /></span> Go Back</div>
+      <div className="absolute left-10 top-8 max-md:top-4 max-md:left-4 max-md:static max-w-max">
+        <GoBackButton />
+      </div>
       <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px] max-md:mt-4">Start a new listing</span>
       <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4 max-md:grid-cols-1">
         {listingOptions.map(({ title, desc, image }, index) => (

@@ -14,6 +14,7 @@ import { useUser } from "@/_services/hooks/user/use-user";
 import { CountdownTimer } from "@/_components/ui/countdown-timer";
 import { useResendWithCountdown } from "@/_hooks/use-resend-with-countdown";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
+import GoBackButton from "@/_components/common/go-back-button";
 
 export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   const [values, setValues] = useState<string[]>(["", "", "", "", ""]);
@@ -192,15 +193,9 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
       <div className={`w-full bg-white rounded-max p-8 flex ${noshow ? '' : 'pl-0'} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
         {!noshow && (
-          <button
-            onClick={() => router.back()}
-            className="absolute left-10 top-8 text-xs flex items-center bg-[#F3F3F3] p-0.5 rounded-full pr-2 gap-1 font-medium max-md:top-4 max-md:left-4"
-          >
-            <span className="flex size-6 bg-black rounded-full items-center justify-center">
-              <img src="/images/vectors/arrowLeftWhite.svg" alt="Back arrow" />
-            </span>
-            Go Back
-          </button>
+          <div className="absolute left-10 top-8 max-md:top-4 max-md:left-4">
+            <GoBackButton />
+          </div>
         )}
 
         <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2'} h-full flex flex-col items-start text-xs max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
