@@ -84,7 +84,7 @@ export default function ProfileMenu({
     <Menu
       as="div"
       className={clsx(
-        "relative h-16 w-16 rounded-full bg-white shadow-card sm:h-14 sm:w-14 border 2xl:border-gray-lighter",
+        "relative h-16 w-16 rounded-full bg-white shadow-card sm:h-14 sm:w-14",
         className
       )}
     >
