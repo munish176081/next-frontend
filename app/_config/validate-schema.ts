@@ -25,9 +25,10 @@ export const signUpSchema = z
     username: z
       .string()
       .min(1, { message: "Name is required." })
-      .regex(/^[a-zA-Z0-9]+$/, {
-        message: "Name must be alphanumeric.",
-      }),
+      // .regex(/^[a-zA-Z0-9]+$/, {
+      //   message: "Name must be alphanumeric.",
+      // })
+      ,
     email: z
       .string()
       .min(1, "The email is required.")

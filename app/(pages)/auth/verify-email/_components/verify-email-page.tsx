@@ -198,7 +198,7 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
           </div>
         )}
 
-        <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2'} h-full flex flex-col items-start text-xs max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
+        <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2 px-10'} h-full flex flex-col items-start text-xs max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
           <div className="flex flex-col w-full my-auto">
             <span className="w-[70px] h-[70px] rounded-full bg-[#F3F3F3] flex items-center justify-center">
               <img src="/images/vectors/mail.svg" alt="Email icon" />
