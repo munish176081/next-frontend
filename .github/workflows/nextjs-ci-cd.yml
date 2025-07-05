@@ -33,7 +33,10 @@ jobs:
 
     - name: Prepare build branch
       run: |
-        mkdir deploy && cp -r .next public package.json next.config.js deploy/
+        mkdir deploy
+        cp -r .next public package.json next.config.js deploy/
+        # Remove cache directories to avoid large file issues
+        rm -rf deploy/.next/cache
         cd deploy
         git init
         git config user.name "GitHub Actions"
