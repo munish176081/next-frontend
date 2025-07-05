@@ -53,7 +53,7 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          # Setup Node and pnpm if not installed
+          # Install Node, pnpm, and pm2 if missing
           if ! command -v node &> /dev/null; then
             echo "Installing Node.js and pnpm..."
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
@@ -67,16 +67,24 @@ jobs:
           export NVM_DIR="$HOME/.nvm"
           [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
-          # Pull the latest from build branch and restart
+          # Clone or update the repo
           cd ~/pups4sale/next-frontend || mkdir -p ~/pups4sale/next-frontend && cd $_
           if [ ! -d .git ]; then
             git init
-            git remote add origin https://github.com/${{ github.repository }}.git
+            git remote add origin https://github.com/munish176081/next-frontend.git
           fi
 
+          # Ensure clean state
           git fetch origin build
+          git clean -fd
           git checkout -B build origin/build
           git reset --hard origin/build
 
+          # Install production deps
           pnpm install --prod
+
+          # Cleanup previous PM2 app (optional safety)
+          pm2 delete frontend || true
+
+          # Start or restart the app
           pm2 start "pnpm start" --name frontend || pm2 restart frontend --update-env
