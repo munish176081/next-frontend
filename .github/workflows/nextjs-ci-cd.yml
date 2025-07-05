@@ -34,8 +34,7 @@ jobs:
     - name: Prepare build branch
       run: |
         mkdir deploy
-        cp -r .next public package.json next.config.js deploy/
-        # Remove cache directories to avoid large file issues
+        cp -r .next public package.json pnpm-lock.yaml next.config.js deploy/
         rm -rf deploy/.next/cache
         cd deploy
         git init
@@ -43,7 +42,7 @@ jobs:
         git config user.email "actions@github.com"
         git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git checkout -B build
-        git add .
+        git add -f .next public package.json pnpm-lock.yaml next.config.js
         git commit -m "Deploy: production build"
         git push --force origin build
 
@@ -54,29 +53,30 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          # Setup Node and npm if not installed
+          # Setup Node and pnpm if not installed
           if ! command -v node &> /dev/null; then
-            echo "Installing Node.js and npm..."
+            echo "Installing Node.js and pnpm..."
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
             export NVM_DIR="$HOME/.nvm"
-            source $NVM_DIR/nvm.sh
+            source "$NVM_DIR/nvm.sh"
             nvm install 20
-            npm install -g pm2
+            npm install -g pnpm pm2
           fi
+
+          # Load nvm
+          export NVM_DIR="$HOME/.nvm"
+          [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
           # Pull the latest from build branch and restart
           cd ~/pups4sale/next-frontend || mkdir -p ~/pups4sale/next-frontend && cd $_
           if [ ! -d .git ]; then
             git init
             git remote add origin https://github.com/${{ github.repository }}.git
-            git checkout -b build
           fi
-                     git fetch origin build
-           git reset --hard origin/build
-           
-           # Set up environment
-           export NVM_DIR="$HOME/.nvm"
-           [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-           
-                     npm install --production
-          pm2 start "npm start" --name frontend || pm2 restart frontend --update-env
+
+          git fetch origin build
+          git checkout -B build origin/build
+          git reset --hard origin/build
+
+          pnpm install --prod
+          pm2 start "pnpm start" --name frontend || pm2 restart frontend --update-env
