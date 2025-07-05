@@ -5,12 +5,12 @@ on:
     branches:
       - main
 
-  jobs:
-    build-and-deploy:
-      runs-on: ubuntu-latest
-      timeout-minutes: 15
-      permissions:
-        contents: write
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
 
     steps:
     - name: Checkout main branch
