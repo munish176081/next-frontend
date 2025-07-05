@@ -12,19 +12,17 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # This ONLY affects the GitHub runner, not your EC2
     - name: Setup Node.js (Builder)
       uses: actions/setup-node@v4
       with:
         node-version: '20'
-        cache: 'pnpm'
-
-    - name: Install pnpm
-      run: npm install -g pnpm
+        cache: 'npm'
 
     - name: Install & Build
       run: |
-        pnpm install --frozen-lockfile
-        pnpm build
+        npm ci
+        npm run build
 
     - name: Deploy to EC2
       uses: appleboy/ssh-action@v1.0.0
@@ -33,18 +31,17 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
-          # Install Node.js and pnpm on EC2 if needed
+          # Permanent Node.js setup check (run once on EC2)
           if ! command -v node &> /dev/null; then
-            echo "Installing Node.js and pnpm..."
+            echo "Installing Node.js..."
             curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
-            export NVM_DIR="$HOME/.nvm"
-            source $NVM_DIR/nvm.sh
+            source ~/.bashrc
             nvm install 20
-            npm install -g pnpm pm2
+            npm install -g pm2
           fi
-
+          
           # Your deployment commands
           cd pups4sale/next-frontend
           git pull origin main
-          pnpm install --frozen-lockfile --prod
+          pnpm install
           pm2 restart frontend --update-env
