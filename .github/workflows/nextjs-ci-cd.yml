@@ -29,10 +29,9 @@ jobs:
         host: ${{ secrets.AWS_EC2_HOST }}
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
+        port: 22
         script: |
-          cd /var/www/nextjs-app
+          cd pups4sale/next-frontend
           git pull origin main
           npm ci --production
-          pm2 restart nextjs-app --update-env
-      env:
-        NODE_ENV: production
+          pm2 restart frontend --update-env
