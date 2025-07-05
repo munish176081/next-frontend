@@ -62,7 +62,7 @@ export default function SocialLogin({ type }: SocialLoginProps) {
           className="w-full h-16 border border-black font-medium text-lg rounded-full flex items-center justify-center gap-2 max-md:h-12 max-md:mt-0 max-md:text-base disabled:opacity-50"
         >
           <GoogleIcon className="mr-5" />
-          {type === "signin" ? "Sign in with Google (test-deploy)" : "Sign up with Google (test-deploy)"}
+          {type === "signin" ? "Sign in with Google" : "Sign up with Google"}
         </Button>
 
         <Button
