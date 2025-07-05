@@ -34,4 +34,7 @@ jobs:
           cd pups4sale/next-frontend
           git pull origin main
           npm ci --production
+          sudo chown -R ec2-user:ec2-user .
+          mkdir -p .next/cache/images
+          chmod -R 777 .next/cache
           pm2 restart frontend --update-env
