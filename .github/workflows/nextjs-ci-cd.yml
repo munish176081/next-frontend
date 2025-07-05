@@ -1,0 +1,38 @@
+name: NextJS AWS Deployment
+
+on:
+  push:
+    branches: [main]  # Your Next.js branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+
+    - name: Install & Build
+      run: |
+        npm ci
+        npm run build
+
+    - name: Deploy to AWS EC2
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.AWS_EC2_HOST }}
+        username: ec2-user
+        key: ${{ secrets.AWS_SSH_KEY }}
+        script: |
+          cd /var/www/nextjs-app
+          git pull origin main
+          npm ci --production
+          pm2 restart nextjs-app --update-env
+      env:
+        NODE_ENV: production
