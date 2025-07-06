@@ -153,7 +153,26 @@ export const getImagesSchema = ({
     })
     .default([]);
 
+export const listingFormSchema = z.object({
+  title: z.string().min(1, { message: "Title is required." }),
+  breed: z.string().min(1, { message: "Breed is required." }),
+  age: z.string().min(1, { message: "Age is required." }),
+  dogName: z.string().min(1, { message: "Dog name is required." }),
+  studFee: z.string().min(1, { message: "Stud fee is required." }),
+  microchipNumber: z.string().min(1, { message: "Microchip number is required." }),
+  semenType: z.string().min(1, { message: "Semen type is required." }),
+  collectionDate: z.string().min(1, { message: "Collection date is required." }),
+  ankcNumber: z.string().min(1, { message: "ANKC/Breeder registration number is required." }),
+  shippingAvailability: z.string().min(1, { message: "Shipping availability is required." }),
+  contactName: z.string().min(1, { message: "Name is required." }),
+  phoneNumber: z.string().min(1, { message: "Phone number is required." }),
+  email: z.string().min(1, { message: "Email is required." }).email({ message: "Invalid email format." }),
+  location: z.string().min(1, { message: "Location is required." }),
+  additionalNotes: z.string().optional(),
+});
+
 export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordType = z.infer<typeof forgotPasswordSchema>;
 export type SignInType = z.infer<typeof loginInfoSchema>;
 export type SignUpType = z.infer<typeof signUpSchema>;
+export type ListingFormType = z.infer<typeof listingFormSchema>;
