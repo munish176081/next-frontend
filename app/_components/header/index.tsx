@@ -107,7 +107,6 @@ export function Header(props: HeaderProps) {
               )}
             >
               <LogoIcon width="100%" height="100%" />
-              PUPS4SALE
             </Link>
           </div>
 
