@@ -81,6 +81,7 @@ export class ChunkedUploader {
       file.size,
       chunkUrls
     );
+    console.log(finalResult);
 
     return {
       uploadId: uploadId!,
