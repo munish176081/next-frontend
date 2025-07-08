@@ -171,8 +171,18 @@ export const listingFormSchema = z.object({
   additionalNotes: z.string().optional(),
 });
 
+export const contactFormSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Please enter a valid email"),
+  phone: z.string().min(1, "Phone number is required"),
+  subject: z.string().optional(),
+  message: z.string().min(1, "Message is required"),
+});
+
 export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordType = z.infer<typeof forgotPasswordSchema>;
 export type SignInType = z.infer<typeof loginInfoSchema>;
 export type SignUpType = z.infer<typeof signUpSchema>;
 export type ListingFormType = z.infer<typeof listingFormSchema>;
+export type ContactFormType = z.infer<typeof contactFormSchema>;
