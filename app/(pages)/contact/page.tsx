@@ -121,7 +121,7 @@ function Contact() {
                   />
                 )}
               />
-              {process.env.NEXT_PUBLIC_API_URL}
+              {process.env.NEXT_PUBLIC_API_URL}{"NOT PRINTING"}
               <Input
                 unstyled
                 type="text"
