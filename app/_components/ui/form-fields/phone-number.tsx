@@ -3,7 +3,7 @@ import "react-phone-input-2/lib/style.css";
 import clsx from "clsx";
 import PhoneInput from "react-phone-input-2";
 import { FieldHelperText, FieldError } from "@/_components/ui/form-fields";
-
+import '../../../overrides.css'
 const labelClasses = {
   size: {
     sm: "text-xs mb-1",
@@ -188,6 +188,8 @@ export interface PhoneNumberProps
   helperText?: React.ReactNode;
   /** Add custom classes into the component wrapper for extra style like spacing */
   className?: string;
+  /** Disable default styling and use only custom classes */
+  unstyled?: boolean;
 }
 
 /**
@@ -203,6 +205,7 @@ const PhoneNumber = ({
   label,
   helperText,
   error,
+  unstyled,
   enableSearch,
   labelClassName,
   inputClassName,
@@ -230,17 +233,17 @@ const PhoneNumber = ({
       <div className="group/phone-number relative">
         <PhoneInput
           inputClass={clsx(
-            inputClasses.base,
-            inputClasses.size[size],
-            inputClasses.rounded[rounded],
-            inputClasses.variant[variant].base,
-            inputClasses.variant[variant].color[color],
+            !unstyled && inputClasses.base,
+            !unstyled && inputClasses.size[size],
+            !unstyled && inputClasses.rounded[rounded],
+            !unstyled && inputClasses.variant[variant].base,
+            !unstyled && inputClasses.variant[variant].color[color],
             error && inputClasses.error,
             inputClassName
           )}
           buttonClass={clsx(
-            buttonClasses.base,
-            buttonClasses.size[size],
+            !unstyled && buttonClasses.base,
+            !unstyled && buttonClasses.size[size],
             (props.inputProps as { disabled: boolean })?.disabled &&
               "pointer-events-none",
             (props.inputProps as { readOnly: boolean })?.readOnly &&
@@ -248,12 +251,12 @@ const PhoneNumber = ({
             buttonClassName
           )}
           dropdownClass={clsx(
-            dropdownClasses.base,
-            dropdownClasses.rounded[rounded],
-            dropdownClasses.highlightListColor[color],
+            !unstyled && dropdownClasses.base,
+            !unstyled && dropdownClasses.rounded[rounded],
+            !unstyled && dropdownClasses.highlightListColor[color],
             dropdownClassName
           )}
-          searchClass={clsx(dropdownClasses.searchBox, searchClassName)}
+          searchClass={clsx(!unstyled && dropdownClasses.searchBox, searchClassName)}
           enableSearch={enableSearch}
           disableSearchIcon={true}
           {...props}

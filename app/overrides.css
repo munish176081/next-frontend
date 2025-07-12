@@ -1,0 +1,28 @@
+/* phone-input-overrides.css */
+.react-tel-input .flag-dropdown {
+    border: none !important;
+    @apply top-0 bottom-0 p-0 bg-white !rounded-l-full !border-r-0;
+    position: absolute !important;
+    top: 0 !important;
+    bottom: 0 !important;
+    margin-left: 10px !important;
+    padding: 0 !important;
+    background-color: white !important;
+    border-radius: 6px 0 0 6px !important;
+    border-right: none !important;
+    background:none !important;
+  }
+  
+  .react-tel-input .selected-flag {
+    background: transparent !important;
+    padding-right: 20px !important;
+    padding-left: 12px !important;
+  }
+  .react-tel-input .selected-flag {
+    /* outline: none; */
+    position: relative;
+    /* width: 38px; */
+    height: 100%;
+    padding: 0 0 0 0px;
+    border-radius: 3px 0 0 3px;
+}
