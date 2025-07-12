@@ -121,6 +121,7 @@ function Contact() {
                   />
                 )}
               />
+              {process.env.NEXT_PUBLIC_API_URL}
               <Input
                 unstyled
                 type="text"
