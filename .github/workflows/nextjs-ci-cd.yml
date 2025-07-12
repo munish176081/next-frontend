@@ -26,11 +26,16 @@ jobs:
       with:
         version: 8
 
+    - name: Setup env vars
+        run: |
+          echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}" >> .env
+          echo "NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=${{ secrets.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY }}" >> .env
+
     - name: Install & Build
       run: |
         pnpm install
         pnpm build
-
+    
     - name: Prepare build branch
       run: |
         mkdir deploy
