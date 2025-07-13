@@ -48,7 +48,8 @@ export default function SignUpForm() {
           description: "You have successfully signed up.",
         });
 
-        router.push(successRedirect ?? Routes.private.profile);
+        // Redirect all users to dashboard after signup
+        router.push("/dashboard");
       },
       onError: (error:any) => {
         const err = parseAxiosError(error);

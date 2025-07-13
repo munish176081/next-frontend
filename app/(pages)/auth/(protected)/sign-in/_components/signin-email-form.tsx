@@ -33,7 +33,8 @@ export function SigninEmailForm({
     await login(data, {
       onSuccess: () => {
         reset();
-        router.push(successRedirect ?? Routes.private.profile);
+        // Redirect all users to dashboard after login
+        router.push("/dashboard");
         // router.refresh();
       },
       onError: (error:any) => {

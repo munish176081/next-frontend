@@ -10,7 +10,8 @@ export default function HomeLayout({ children }: React.PropsWithChildren) {
 
   useEffect(() => {
     if (user && !isPending) {
-      router.push(Routes.public.home);
+      // Let the role-based router handle the redirect
+      router.push("/");
     }
   }, [user, isPending, router]);
 

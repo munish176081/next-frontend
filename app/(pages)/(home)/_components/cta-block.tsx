@@ -30,7 +30,7 @@ export function CtaBlock() {
       <div className="flex flex-col gap-6 absolute max-md:relative max-md:right-0 right-16 z-20 max-md:px-4">
         <span className="h-3/4 w-1 flex absolute -top-[70px] left-[38px] max-md:left-[46px] max-md:-top-[26px] z-10 bg-gradient-to-b from-white/0 via-CSecondary via-50% to-white"></span>
         {features.map((feature, index) => (
-          <div className="flex w-[420px] max-md:w-full gap-4 z-20">
+          <div className="flex w-[420px] max-md:w-full gap-4 z-20" key={index}>
             <span className={`min-w-20 w-20 h-20 max-md:w-16 max-md:h-16 max-md:min-w-16 rounded-full flex items-center justify-center bg-[#D9D9D9] border-4 ${index == 0 ? 'border-CSecondary' : index == 1 ? 'border-t-CSecondary border-r-CSecondary border-b-[#D9D9D9] border-l-[#D9D9D9] -rotate-45' : 'border-[#D9D9D9]'}`}><img className={`w-8 ${index == 1 ? 'rotate-45': ''}`} src={feature.icon} /></span>
             <span className="flex flex-col rounded-full bg-[#D9D9D9] text-sm w-full items-center justify-center max-md:text-xs max-md:text-center"><strong className="font-semibold">{feature.title}</strong>{feature.desc}</span>
           </div>

@@ -17,6 +17,9 @@ export const useUser = () => {
     queryKey: ["current-user"],
     queryFn: getUser,
     retry: false, // Don't retry if the request fails
-    staleTime: 0, // Always refetch when the query is invalidated
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnWindowFocus: false, // Don't refetch when window gains focus
+    refetchOnMount: false, // Don't refetch on component mount if data exists
   });
 };

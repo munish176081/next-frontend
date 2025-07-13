@@ -20,7 +20,7 @@ function VerifyEmailSuccess() {
             <span className="w-[70px] h-[70px] rounded-full bg-[#F3F3F3] flex items-center justify-center"><img src="/images/vectors/successCheck.png" /></span>
             <span className="text-[33px] font-medium flex leading-normal mt-3">You're All Set!</span>
             <span className="text-[#9C9C9C] text-sm mt-2">Your password has been reset successfully.<br /><text className="text-black font-medium">Welcome back</text>—your account is now <text className="text-black font-medium">more secure than ever.</text></span>
-            <Link href={Routes.auth.signIn}>
+            <Link href="/">
               <LoadingButton className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base">
                 Log In Securely
               </LoadingButton>
