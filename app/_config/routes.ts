@@ -3,6 +3,7 @@ export const Routes = {
     signIn: "/auth/sign-in",
     signUp: "/auth/sign-up",
     forgotPassword: "/auth/forgot-password",
+    verifyEmail: "/auth/verify-email",
   },
   public: {
     home: "/",
@@ -30,16 +31,22 @@ export const Routes = {
     userID: (userID: string) => `/user/${userID}`,
   },
   private: {
+    dashboard: "/dashboard",
     account: "/account",
     meetings: "/account/meetings",
     profile: "/account/profile",
     addListing: '/add-listing',
-    dashboard: '/account',
     inbox: '/account/inbox',
     listings: '/account/listings',
     reservations: '/account/reservations',
     accountSettings: '/account/settings',
     trips: '/trips',
     wishlist: '/wishlist',
+  },
+  admin: {
+    dashboard: "/admin",
+    users: "/admin/users",
+    passwords: "/admin/passwords",
+    settings: "/admin/settings",
   },
 };

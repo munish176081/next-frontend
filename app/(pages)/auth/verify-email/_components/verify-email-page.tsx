@@ -191,7 +191,7 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
 
   return (
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
-      <div className={`w-full bg-white rounded-max p-8 flex ${noshow ? '' : 'pl-0'} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
+      <div className={`w-full rounded-max flex ${noshow ? '' : 'pl-0 bg-white  p-8 '} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
         {!noshow && (
           <div className="absolute left-10 top-8 max-md:top-4 max-md:left-4">
             <GoBackButton />

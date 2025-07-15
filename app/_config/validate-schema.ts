@@ -25,10 +25,10 @@ export const signUpSchema = z
     username: z
       .string()
       .min(1, { message: "Name is required." })
-      // .regex(/^[a-zA-Z0-9]+$/, {
-      //   message: "Name must be alphanumeric.",
-      // })
-      ,
+    // .regex(/^[a-zA-Z0-9]+$/, {
+    //   message: "Name must be alphanumeric.",
+    // })
+    ,
     email: z
       .string()
       .min(1, "The email is required.")
@@ -175,7 +175,9 @@ export const contactFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email"),
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required"),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
 });

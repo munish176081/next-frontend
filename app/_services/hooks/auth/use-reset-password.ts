@@ -1,17 +1,31 @@
-import { ResetPasswordType } from "@/_config/validate-schema";
 import { axios } from "@/_lib/axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
-async function resetPassword(
-  resetPasswordData: ResetPasswordType & { token: string; userId: string }
-) {
-  const { data } = await axios.patch("/auth/reset-password", resetPasswordData);
+async function resetPassword({
+  userId,
+  token,
+  password,
+}: {
+  userId: string;
+  token: string;
+  password: string;
+}) {
+  const { data } = await axios.post("/auth/reset-password", {
+    userId,
+    token,
+    password,
+  });
 
   return data;
 }
 
 export const useResetPassword = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: resetPassword,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
   });
 };

@@ -1,15 +1,18 @@
 import { Header } from "@/_components/header";
-import AccountSideBar from "./_components/side-bar";
-import { RequireUser } from "@/_components/common/require-user";
+import { Footer } from "@/_components/common/footer";
+import { AuthGuard } from "@/_components/common/auth-guard";
+import { Suspense } from "react";
 
 export default function AccountLayout({ children }: React.PropsWithChildren) {
   return (
-    <RequireUser>
+    <AuthGuard>
       <Header />
-      <main className="pt-5 md:pt-24 4xl:pt-28 flex-grow flex h-[calc(100vh-64px)] sm:h-screen">
-        <AccountSideBar />
-        <div className="flex-grow px-10">{children}</div>
+      <main className="bg-gray-main py-12 max-md:py-4 max-2xl:px-4 max-md:!px-0">
+        <div className="flex-col flex gap-16 max-md:gap-4 max-md:px-4 mb-16 max-md:mb-4">
+          <Suspense>{children}</Suspense>
+        </div>
+        <Footer />
       </main>
-    </RequireUser>
+    </AuthGuard>
   );
 }

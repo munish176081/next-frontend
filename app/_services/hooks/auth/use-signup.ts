@@ -1,6 +1,6 @@
 import { SignUpType } from "@/_config/validate-schema";
 import { axios } from "@/_lib/axios";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 async function signup(signUpData: Omit<SignUpType, "acceptPolicy">) {
   const { data } = await axios.post("/auth/sign-up", signUpData);
@@ -9,7 +9,12 @@ async function signup(signUpData: Omit<SignUpType, "acceptPolicy">) {
 }
 
 export const useSignup = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: signup,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["current-user"] });
+    },
   });
 };

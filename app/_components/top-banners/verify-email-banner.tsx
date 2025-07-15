@@ -72,13 +72,8 @@ export function VerifyEmailBanner() {
     return null;
   }
 
-  // Don't show banner if no user, user is active, or account was created less than 10 minutes ago
-  if (
-    !user ||
-    user.status === "active" ||
-    // 10 minutes after account creation
-    +new Date(user.createdAt) + 10 * 60 * 1000 > todayTimeStamp
-  ) {
+  // Don't show banner if no user or user is active
+  if (!user || user.status === "active") {
     return null;
   }
 
@@ -87,30 +82,37 @@ export function VerifyEmailBanner() {
     return null;
   }
 
+  // Check if account was created less than 10 minutes ago
+  const isNewAccount = +new Date(user.createdAt) + 10 * 60 * 1000 > todayTimeStamp;
+
   return (
     <p className="fixed bottom-0 left-0 w-full py-2 text-center text-sm text-white bg-blue-500 z-[1000] pr-10">
       <span>
-        We have sent you an email to verify your account. If you have not
-        received yet, please
+        {isNewAccount 
+          ? "We have sent you an email to verify your account. Please check your inbox."
+          : "We have sent you an email to verify your account. If you have not received yet, please"
+        }
       </span>
       &nbsp;
-      {cooldownSeconds > 0 ? (
-        <span className="text-gray-300">
-          Resend available in <CountdownTimer 
-            seconds={cooldownSeconds} 
-            onComplete={resetCooldown}
-            className="text-white underline"
-          />
-        </span>
-      ) : (
-        <button
-          disabled={!canResend || isResendPending}
-          className="underline disabled:opacity-50 disabled:cursor-not-allowed"
-          type="submit"
-          onClick={handleResend}
-        >
-          {isResendPending ? 'Sending...' : 'Verify here'}
-        </button>
+      {!isNewAccount && (
+        cooldownSeconds > 0 ? (
+          <span className="text-gray-300">
+            Resend available in <CountdownTimer 
+              seconds={cooldownSeconds} 
+              onComplete={resetCooldown}
+              className="text-white underline"
+            />
+          </span>
+        ) : (
+          <button
+            disabled={!canResend || isResendPending}
+            className="underline disabled:opacity-50 disabled:cursor-not-allowed"
+            type="submit"
+            onClick={handleResend}
+          >
+            {isResendPending ? 'Sending...' : 'Verify here'}
+          </button>
+        )
       )}
       <button
         className="absolute right-2 top-1/2 -translate-y-1/2"

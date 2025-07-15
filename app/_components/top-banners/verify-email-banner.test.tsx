@@ -1,8 +1,8 @@
 import "@testing-library/jest-dom";
 import { render, screen } from "@testing-library/react";
 import { VerifyEmailBanner } from "./verify-email-banner";
-import { useUser } from "@/_services/hooks/useUser";
-import { useRequestEmailVerifyCode } from "@/_services/hooks/auth/useRequestEmailVerifyCode";
+import { useUser } from "@/_services/hooks/user/use-user";
+import { useRequestEmailVerifyCode } from "@/_services/hooks/auth/use-request-email-verify-code";
 import { useLocalStorage } from "usehooks-ts";
 import { toast } from "@/_hooks/use-toast";
 
@@ -49,7 +49,7 @@ describe("VerifyEmailBanner", () => {
     expect(screen.queryByText("Verify here")).toBeNull();
   });
 
-  it("should not return banner if user is created less than 10 minutes ago", () => {
+  it("should return banner for new users (less than 10 minutes ago) with different message", () => {
     (useUser as jest.Mock).mockReturnValue({
       data: {
         ...mockUser,
@@ -58,10 +58,11 @@ describe("VerifyEmailBanner", () => {
       },
     });
     render(<VerifyEmailBanner />);
-    expect(screen.queryByText("Verify here")).toBeNull();
+    expect(screen.queryByText("Please check your inbox.")).toBeInTheDocument();
+    expect(screen.queryByText("Verify here")).toBeNull(); // Resend option should not be available for new users
   });
 
-  it("should return banner if user is not verified and created more than 10 minutes ago", () => {
+  it("should return banner for older users (more than 10 minutes ago) with resend option", () => {
     (useUser as jest.Mock).mockReturnValue({
       data: {
         ...mockUser,

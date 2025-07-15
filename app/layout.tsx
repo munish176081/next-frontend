@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Inter, Lato, Playfair_Display, Satisfy } from "next/font/google";
 import "./globals.css";
 import { VerifyEmailBannerWrapper } from "@/_components/top-banners/verify-email-banner-wrapper";
+import { RoleBasedRouter } from "@/_components/common/role-based-router";
 
 const lato = Lato({
   subsets: ["latin"],
@@ -49,12 +50,10 @@ export default function RootLayout({
         className={`${playfair.variable} ${lato.variable} ${satisfy.variable} ${inter.variable} font-inter tracking-normal antialiased`}
       >
         <Providers>
-          {
-            <>
-              {children}
-              <VerifyEmailBannerWrapper />
-            </>
-          }
+          <RoleBasedRouter>
+            {children}
+            <VerifyEmailBannerWrapper />
+          </RoleBasedRouter>
         </Providers>
         <Toaster />
       </body>

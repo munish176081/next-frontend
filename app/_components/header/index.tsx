@@ -14,6 +14,7 @@ import { MenuIcon } from "../icons/menu";
 import { Button } from "../ui/button";
 import ProfileMenu from "./profile-menu";
 import { HeaderWrapper } from "./wrapper";
+import { LoadingLink } from "@/_components/common/loading-link";
 
 export interface HeaderProps {
   className?: string;
@@ -99,7 +100,7 @@ export function Header(props: HeaderProps) {
       <>
         <div className="flex items-center justify-between w-full">
           <div className="flex justify-start">
-            <Link
+            <LoadingLink
               href={Routes.public.home}
               className={clsx(
                 "text-black h-[48px] w-[150px] md:w-[181px] lg:w-[181px] md:h-[58px] lg:h-[58px]",
@@ -107,7 +108,7 @@ export function Header(props: HeaderProps) {
               )}
             >
               <LogoIcon width="100%" height="100%" />
-            </Link>
+            </LoadingLink>
           </div>
 
           {/* Desktop Navigation */}
@@ -124,12 +125,12 @@ export function Header(props: HeaderProps) {
                       <div className="h-full w-full flex flex-col overflow-y-auto !p-4">
                         {item.dropdownItems.map((dropdownItem) => (
                           <li key={dropdownItem.id} className="border-b border-black/20">
-                            <Link
+                            <LoadingLink
                               href={dropdownItem.path as string}
                               className="block px-2 py-2 text-gray-dark hover:bg-indigo-lighter transition"
                             >
                               {dropdownItem.label}
-                            </Link>
+                            </LoadingLink>
                           </li>
                         ))}
                       </div>
@@ -137,7 +138,7 @@ export function Header(props: HeaderProps) {
                   </li>
                 ) : (
                   <li>
-                    <Link
+                    <LoadingLink
                       href={item.path}
                       className={clsx(
                         "px-4 py-2 rounded-full transition capitalize hover:bg-indigo-lighter",
@@ -147,7 +148,7 @@ export function Header(props: HeaderProps) {
                       )}
                     >
                       {item.label}
-                    </Link>
+                    </LoadingLink>
                   </li>
                 )}
               </Fragment>
@@ -180,13 +181,13 @@ export function Header(props: HeaderProps) {
                     className="rounded-full border-black text-black hover:bg-gray-100 px-6"
                     asChild
                   >
-                    <Link href={Routes.auth.signIn}>Log In</Link>
+                    <LoadingLink href={Routes.auth.signIn}>Log In</LoadingLink>
                   </Button>
                   <Button
                     className="rounded-full bg-black text-white hover:bg-gray-900 px-6"
                     asChild
                   >
-                    <Link href={Routes.auth.signUp}>Register</Link>
+                    <LoadingLink href={Routes.auth.signUp}>Register</LoadingLink>
                   </Button>
                 </div>
               )}
@@ -207,13 +208,13 @@ export function Header(props: HeaderProps) {
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 border-b border-gray-200">
-              <Link
+              <LoadingLink
                 href={Routes.public.home}
                 className="text-black"
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 <LogoIcon width="120px" height="40px" />
-              </Link>
+              </LoadingLink>
             </div>
 
             <nav className="p-4 overflow-y-auto h-[calc(100vh-80px)]">
@@ -234,27 +235,27 @@ export function Header(props: HeaderProps) {
                             </Disclosure.Button>
                             <Disclosure.Panel className="pl-4">
                               {item.dropdownItems.map((subItem) => (
-                                <Link
+                                <LoadingLink
                                   key={subItem.id}
                                   href={subItem.path}
                                   onClick={() => setIsMobileMenuOpen(false)}
                                   className="block px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
                                 >
                                   {subItem.label}
-                                </Link>
+                                </LoadingLink>
                               ))}
                             </Disclosure.Panel>
                           </>
                         )}
                       </Disclosure>
                     ) : (
-                      <Link
+                      <LoadingLink
                         href={item.path}
                         onClick={() => setIsMobileMenuOpen(false)}
                         className="block px-4 py-2 rounded-lg hover:bg-gray-100"
                       >
                         {item.label}
-                      </Link>
+                      </LoadingLink>
                     )}
                   </li>
                 ))}
@@ -263,13 +264,13 @@ export function Header(props: HeaderProps) {
               <div className="mt-8 border-t border-gray-200 pt-4">
                 {showUserContent ? (
                   <>
-                    <Link
+                    <LoadingLink
                       href={Routes.private.account}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="block px-4 py-3 rounded-lg hover:bg-gray-100 font-medium"
                     >
                       My Account
-                    </Link>
+                    </LoadingLink>
                     <button
                       onClick={() => {
                         logout();
@@ -288,14 +289,14 @@ export function Header(props: HeaderProps) {
                       asChild
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <Link href={Routes.auth.signIn}>Log In</Link>
+                      <LoadingLink href={Routes.auth.signIn}>Log In</LoadingLink>
                     </Button>
                     <Button
                       className="w-full"
                       asChild
                       onClick={() => setIsMobileMenuOpen(false)}
                     >
-                      <Link href={Routes.auth.signUp}>Register</Link>
+                      <LoadingLink href={Routes.auth.signUp}>Register</LoadingLink>
                     </Button>
                   </div>
                 )}
