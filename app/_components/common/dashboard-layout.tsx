@@ -7,6 +7,7 @@ import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { VerificationGuard } from "./verification-guard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { LoadingLink } from "./loading-link";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -101,7 +102,7 @@ export const DashboardLayout = ({
                   (item.href === '/account' && pathname === '/account');
 
                 return (
-                  <Link
+                  <LoadingLink
                     key={index}
                     href={item.href}
                     className={`flex items-center text-[22px] font-semibold gap-4 transition-all duration-200 ${isActive ? 'text-black' : 'text-gray-600 hover:text-black'}`}
@@ -113,7 +114,7 @@ export const DashboardLayout = ({
                     {!isSidebarCollapsed && (
                       <span className="max-md:hidden pr-4">{item.name}</span>
                     )}
-                  </Link>
+                  </LoadingLink>
                 );
               })}
             </div>

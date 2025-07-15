@@ -41,8 +41,18 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
       const userRole = user.role || 'user';
       const isAdmin = userRole === 'super_admin' || userRole === 'admin';
       
-      // Skip routing logic for auth pages and public pages
-      if (pathname.startsWith('/auth/') || pathname === '/' || 
+      // Redirect authenticated users away from auth pages that are not needed when logged in
+      if (pathname.startsWith('/auth/sign-in') || 
+          pathname.startsWith('/auth/sign-up') ||
+          pathname.startsWith('/auth/forgot-password') ||
+          pathname.startsWith('/auth/reset-password') ||
+          pathname.startsWith('/auth/sign-in-error')) {
+        router.replace('/dashboard');
+        return;
+      }
+      
+      // Skip routing logic for public pages
+      if (pathname === '/' || 
           pathname.startsWith('/explore') || pathname.startsWith('/wishlist') || 
           pathname.startsWith('/meetings') || pathname.startsWith('/contact') || 
           pathname.startsWith('/blog') || pathname.startsWith('/create-listing') || 

@@ -4,6 +4,7 @@ import { Routes } from "@/_config/routes";
 import { cn } from "@/_lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { LoadingLink } from "@/_components/common/loading-link";
 
 const accountSidebarItems = [
   {
@@ -34,7 +35,7 @@ const AccountSideBar = () => {
   return (
     <aside className="max-w-[200px] w-full bg-orane-400 space-y-1">
       {accountSidebarItems.map((item) => (
-        <Link
+        <LoadingLink
           key={item.id}
           className={cn(
             "block px-4 py-3 rounded-r-xl",
@@ -45,7 +46,7 @@ const AccountSideBar = () => {
           href={item.path}
         >
           {item.label}
-        </Link>
+        </LoadingLink>
       ))}
     </aside>
   );

@@ -3,7 +3,7 @@
 import { Suspense } from "react";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/_components/ui/form-fields/input";
+import { Input, PhoneInput } from "@/_components/ui/form-fields";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import { toast } from "@/_hooks/use-toast";
 import { useContact } from "@/_services/hooks/contact/use-contact";
@@ -107,33 +107,20 @@ function Contact() {
                 name="phone"
                 control={control}
                 render={({ field }) => (
-                  <PhoneNumber
+                  <PhoneInput 
+                    label="Phone Number"
                     unstyled
-                    country="au"
-                    label="Your Phone Number *"
                     labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
-                    inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] !font-normal !outline-none !px-12 !w-full !h-[70px] !rounded-full !border !border-[#B5B5B5] !max-md:h-12"
-                    error={errors?.phone?.message}
-                    placeholder="Enter your Phone Number"
-                    value={field.value}
+                    inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
+                    value={field.value || ""}
                     onChange={field.onChange}
                     onBlur={field.onBlur}
+                    error={errors?.phone?.message}
+                    required
+                    placeholder="Enter your Phone Number"
                   />
                 )}
               />
-              {process.env.NEXT_PUBLIC_API_URL}{"NOT PRINTING"}
-              <Input
-                unstyled
-                type="text"
-                label="Your Phone Number *"
-                labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
-                inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
-                error={errors?.phone?.message}
-                required
-                placeholder="Enter your Phone Number"
-                {...register("phone")}
-              />
-              
               <Input
                 unstyled
                 type="text"

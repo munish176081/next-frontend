@@ -44,18 +44,18 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
     }, 200);
   };
 
-  // Auto-loading for route changes
+  // Auto-loading for route changes - show immediately
   useEffect(() => {
+    // Show loading immediately when route changes
     showLoading();
 
-    // Simulate progress
+    // Simulate progress with shorter delays for better UX
     const timers = [
-      setTimeout(() => setProgress(20), 100),
-      setTimeout(() => setProgress(40), 200),
-      setTimeout(() => setProgress(60), 300),
-      setTimeout(() => setProgress(80), 400),
-      setTimeout(() => setProgress(95), 500),
-      setTimeout(() => hideLoading(), 600),
+      setTimeout(() => setProgress(30), 50),
+      setTimeout(() => setProgress(60), 150),
+      setTimeout(() => setProgress(85), 250),
+      setTimeout(() => setProgress(95), 350),
+      setTimeout(() => hideLoading(), 450),
     ];
 
     return () => {

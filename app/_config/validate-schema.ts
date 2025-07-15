@@ -175,7 +175,12 @@ export const contactFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),
   email: z.string().email("Please enter a valid email"),
-  phone: z.string().min(1, "Phone number is required"),
+  phone: z
+    .string()
+    .min(1, "Phone number is required")
+    .regex(/^(\+61|0)?[2-9]\d{8}$/, {
+      message: "Please enter a valid Australian phone number",
+    }),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
 });
