@@ -121,16 +121,38 @@ const formatNumber = (digits: string): string => {
   }
 };
 
+// Function to add country code to formatted number
+const addCountryCode = (formattedNumber: string): string => {
+  if (!formattedNumber) return '';
+  
+  // Remove any existing +61 prefix
+  const cleanNumber = formattedNumber.replace(/^\+61\s*/, '');
+  
+  // Add +61 prefix
+  return `+61 ${cleanNumber}`;
+};
+
 // Validate Australian phone number
 const validateAustralianPhoneNumber = (value: string): boolean => {
     const digits = value.replace(/\D/g, '');
 
-    // Australian phone numbers should be 9 digits (excluding country code)
-    if (digits.length < 9) return false;
+    // With country code (61) or without (0)
+    const hasCountryCode = digits.startsWith('61');
+    const hasLocalPrefix = digits.startsWith('0');
 
-    // First digit should be 2-9 for valid Australian numbers
-    const firstDigit = digits.charAt(0);
-    return /^[2-9]/.test(firstDigit);
+    let number = digits;
+
+    // Normalize
+    if (hasCountryCode) {
+        number = '0' + digits.substring(2); // convert 61xx to 0xx
+    }
+
+    // At this point, all numbers should start with 0
+    if (!number.startsWith('0')) return false;
+
+    const phoneRegex = /^0(4\d{8}|[2378]\d{8})$/;
+
+    return phoneRegex.test(number);
 };
 
 /**
@@ -179,9 +201,15 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
         // Format the number for Australian format
         const formattedValue = formatAustralianPhoneNumber(limitedValue);
         
+        // Add country code to the final value for form submission
+        const finalValue = addCountryCode(formattedValue);
+        
         // Always update the value to allow typing
-        onChange?.(formattedValue);
+        onChange?.(finalValue);
     };
+
+    // Extract the number part without country code for display
+    const displayValue = value.replace(/^\+61\s*/, '');
 
     return (
         <div className={cn("w-full", className)}>
@@ -231,7 +259,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
                 <input
                     ref={ref}
                     type="tel"
-                    value={value}
+                    value={displayValue}
                     onChange={handleChange}
                     onFocus={handleFocus}
                     onBlur={handleBlur}
