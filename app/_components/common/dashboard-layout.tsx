@@ -8,6 +8,7 @@ import { ReactNode, useState } from "react";
 import { VerificationGuard } from "./verification-guard";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { LoadingLink } from "./loading-link";
+import { Routes } from "@/_config/routes";
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -66,18 +67,24 @@ export const DashboardLayout = ({
             <span className="text-5xl font-semibold max-md:text-2xl">
               Hello, <span className="text-[#797777]">{user?.name || 'User'}</span>
             </span>
-            <div className="ml-auto flex gap-4 items-center max-md:justify-center">
-              <select className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 h-[70px] rounded-full border-none w-52 max-md:w-32 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] bg-white font-medium">
-                <option>Add Listing</option>
-              </select>
-              <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative max-md:hidden">
-                <img className="w-8 max-md:w-5 invert" src="/images/vectors/search.svg" />
-              </span>
-              <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative">
-                <span className="w-6 h-6 max-md:w-3 max-md:h-3 absolute rounded-full bg-CPrimary right-0 top-0"></span>
-                <img className="w-8 max-md:w-5" src="/images/vectors/notification.svg" />
-              </span>
-            </div>
+            {/* User Dashboard */}
+            {userRole === 'user' && (
+              <div className="ml-auto flex gap-4 items-center max-md:justify-center">
+                <Link href={Routes.private.startListing}>
+                  <button className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-[70px] rounded-full border-none max-md:w-32 max-md:h-12 bg-no-repeat bg-[90%] bg-white font-medium w-44">
+                    Add Listing
+                  </button>
+                </Link>
+                <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative max-md:hidden">
+                  <img className="w-8 max-md:w-5 invert" src="/images/vectors/search.svg" />
+                </span>
+                <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative">
+                  <span className="w-6 h-6 max-md:w-3 max-md:h-3 absolute rounded-full bg-CPrimary right-0 top-0"></span>
+                  <img className="w-8 max-md:w-5" src="/images/vectors/notification.svg" />
+                </span>
+              </div>
+            )}
+
           </section>
 
           {/* Main Dashboard Section */}
@@ -122,9 +129,9 @@ export const DashboardLayout = ({
             {/* Main Content Area */}
             <div className={`${isSidebarCollapsed ? 'w-[calc(100%-6rem)]' : 'w-full'} p-4 rounded-40 bg-white overflow-y-auto flex flex-col max-md:overflow-visible max-md:rounded-[20px]`}>
               <div className="flex items-center justify-between pb-4">
-                <span className="text-[32px] font-semibold max-md:text-lg">
+                {/* <span className="text-[32px] font-semibold max-md:text-lg">
                   {title}
-                </span>
+                </span> */}
                 {showTimeFilter && (
                   <select className="text-lg max-md:text-xs placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 rounded-full border-[#CBCACA] border-[1px] w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium max-md:w-[120px] max-md:h-[34px] max-md:px-2 bg-white">
                     <option>Last Week</option>

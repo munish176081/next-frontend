@@ -87,18 +87,19 @@ interface StatusBadgeProps {
 
 export const StatusBadge = ({ status, className = "" }: StatusBadgeProps) => {
   const statusStyles: Record<string, string> = {
-    Active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Pending: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
-    Expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
-    Suspended: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
-    Normal: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Warning: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
-    Completed: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Failed: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+    Active: "text-white bg-[#74D27E] border border-[#74D27E]",
+    Draft: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
+    Expired: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    Suspended: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    Pending: "text-white bg-[#FFCE20] border border-[#FFCE20]",
+    Normal: "text-white bg-[#74D27E] border border-[#74D27E]",
+    Warning: "text-white bg-[#FFCE20] border border-[#FFCE20]",
+    Completed: "text-white bg-[#74D27E] border border-[#74D27E]",
+    Failed: "text-white bg-[#EE5D50] border border-[#EE5D50]",
   };
 
   return (
-    <span className={`min-h-6 text-[10px] rounded-full w-14 flex items-center justify-center ${statusStyles[status] || statusStyles['Pending']} ${className}`}>
+    <span className={`min-h-6 text-[10px] rounded-full w-14 flex items-center justify-center ${statusStyles[status] || statusStyles['Draft']} ${className}`}>
       {status}
     </span>
   );

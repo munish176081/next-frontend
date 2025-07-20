@@ -38,6 +38,7 @@ export const Routes = {
     addListing: '/add-listing',
     inbox: '/account/inbox',
     listings: '/account/listings',
+    startListing: '/startlisting',
     reservations: '/account/reservations',
     accountSettings: '/account/settings',
     trips: '/trips',

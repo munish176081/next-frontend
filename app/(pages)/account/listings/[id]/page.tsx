@@ -7,39 +7,83 @@ import { ListingDetails } from "./_components/listing-details";
 import { Heading } from "@/_components/ui/typegraphy";
 import { ListingLocation } from "./_components/listing-location";
 import { ListingPoints } from "./_components/listing-points";
-import { extractListingDetails } from "@/_utils/listing";
 import { useUserListing } from "@/_services/hooks/user/use-user-listing";
+import { ListingResponseDto } from "@/_types/listing";
 
-type PagePropws = {
+type PageProps = {
   params: { id: string };
 };
 
-const ListingDetail = ({ params: { id: listingId } }: PagePropws) => {
+const ListingDetail = ({ params: { id: listingId } }: PageProps) => {
   const { data: listing, isPending } = useUserListing(listingId);
 
   if (isPending) return <div>Loading...</div>;
 
   if (!listing) return notFound();
 
-  const {
-    location,
-    title,
-    description,
-    age,
-    minAge,
-    maxAge,
-    budget,
-    additionalNotes,
-    details,
-    // contactDetails,
-  } = extractListingDetails(listing);
+  // Extract data from the new listing structure
+  const title = listing.title;
+  const description = listing.description;
+  const location = listing.location;
+  const price = listing.price;
+  const breed = listing.breed;
+  
+  // Extract from metadata
+  const contactInfo = listing.metadata?.contactInfo;
+  const images = listing.metadata?.images || [];
+  
+  // Extract from fields (dynamic data)
+  const fields = listing.fields || {};
+  const age = fields.age || fields.dateOfBirth;
+  const minAge = fields.minAge;
+  const maxAge = fields.maxAge;
+  const budget = fields.budget;
+  const additionalNotes = fields.additionalNotes || fields.description;
+  
+  // Build specifications based on listing type
+  const specifications = [];
+  
+  if (breed) {
+    specifications.push({
+      name: "Breed",
+      value: breed,
+    });
+  }
+  
+  if (price) {
+    specifications.push({
+      name: "Price",
+      value: `$${price}`,
+    });
+  }
+  
+  if (fields.gender) {
+    specifications.push({
+      name: "Gender",
+      value: fields.gender,
+    });
+  }
+  
+  if (fields.vaccinationStatus) {
+    specifications.push({
+      name: "Vaccination Status",
+      value: fields.vaccinationStatus,
+    });
+  }
+  
+  if (fields.microchipNumber) {
+    specifications.push({
+      name: "Microchip Number",
+      value: fields.microchipNumber,
+    });
+  }
 
   return (
     <div className="pb-40">
       <ListingImageGallery listing={listing} />
 
       <div className="mt-10 max-w-3xl">
-        <p>{location?.address}</p>
+        <p>{location}</p>
         <Heading className="uppercase mt-2">{title}</Heading>
         <p className="mt-1">{description}</p>
 
@@ -65,20 +109,16 @@ const ListingDetail = ({ params: { id: listingId } }: PagePropws) => {
 
         {additionalNotes && <p>{additionalNotes}</p>}
 
-        {details && (
+        {specifications.length > 0 && (
           <ListingDetails
             className="mt-7"
-            title={details.title}
-            details={details.specifications}
+            title="Listing Details"
+            details={specifications}
           />
         )}
-        {/* On personal detail page, we do not need it */}
-        {/* {contactDetails && (
-            <ListingOwnerDetails className="mt-7" {...contactDetails} />
-          )} */}
 
-        {location?.address && (
-          <ListingLocation location={location} className="mt-7" />
+        {location && (
+          <ListingLocation location={{ address: location }} className="mt-7" />
         )}
       </div>
     </div>

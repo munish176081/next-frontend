@@ -319,30 +319,18 @@ export const PuppyDetails = () => {
                     label="Upload puppy images"
                     accept="image/*"
                     multiple
+                    value={field.value?.filter(item => typeof item === 'string') || []}
+                    onUrlsChange={(urls) => {
+                      field.onChange(urls);
+                    }}
                     onChange={(files) => {
+                      // Keep the original onChange for backward compatibility
                       field.onChange([
                         ...(field.value ?? []),
                         ...Array.from(files),
                       ]);
                     }}
                   />
-
-                  {field.value && (
-                    <ImagePreview
-                      images={field.value.map((image, imageIdx) => ({
-                        url:
-                          image instanceof File
-                            ? URL.createObjectURL(image)
-                            : "",
-                        error: errors?.puppies?.[idx]?.images?.[imageIdx]
-                          ?.message as string | undefined,
-                      }))}
-                      onDelete={(idx) => {
-                        field.value.splice(idx, 1);
-                        field.onChange(field.value);
-                      }}
-                    />
-                  )}
                 </>
               )}
             />

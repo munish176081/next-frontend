@@ -163,25 +163,18 @@ export const ParentDetails = () => {
               label="Upload health certificates"
               accept="image/*"
               multiple
+              maxCount={3}
+              maxSize={5}
+              value={field.value?.filter(item => typeof item === 'string') || []}
+              onUrlsChange={(urls) => {
+                field.onChange(urls);
+              }}
               onChange={(files) => {
+                // Keep the original onChange for backward compatibility
                 field.onChange([...(field.value ?? []), ...Array.from(files)]);
               }}
+              error={errors?.healthCertificatesImages?.message}
             />
-
-            {field.value && (
-              <ImagePreview
-                className="mb-4"
-                images={field.value.map((image, imageIdx) => ({
-                  url: image instanceof File ? URL.createObjectURL(image) : "",
-                  error: errors?.healthCertificatesImages?.[imageIdx]
-                    ?.message as string | undefined,
-                }))}
-                onDelete={(idx) => {
-                  field.value.splice(idx, 1);
-                  field.onChange(field.value);
-                }}
-              />
-            )}
           </>
         )}
       />

@@ -1,34 +1,33 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { axios } from '@/_lib/axios';
-import { CreateListingDto } from '@/_types/listing';
 import { toast } from '@/_hooks/use-toast';
 
-async function createListing(data: CreateListingDto) {
-  const response = await axios.post('/users/listings', data);
-  return response.data;
+async function deleteListing(id: string) {
+  await axios.delete(`/users/listings/${id}`);
 }
 
-export const useCreateListing = () => {
+export const useDeleteListing = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: createListing,
-    onSuccess: () => {
+    mutationFn: deleteListing,
+    onSuccess: (data, id) => {
       // Invalidate and refetch user listings
       queryClient.invalidateQueries({ queryKey: ['current-user-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
+      queryClient.removeQueries({ queryKey: ['current-user-listing', id] });
       
       toast({
         title: "Success",
-        description: "Listing created successfully!",
+        description: "Listing deleted successfully!",
       });
     },
     onError: (error: any) => {
       toast({
         title: "Error",
-        description: error?.response?.data?.message || "Failed to create listing. Please try again.",
+        description: error?.response?.data?.message || "Failed to delete listing. Please try again.",
         variant: "destructive",
       });
     },
   });
-};
+}; 
