@@ -104,7 +104,7 @@ function ExploreListings() {
   ]
   const params = useSearchParams();
   const filterData = extractFilterDataFromSeach(params);
-  const { data: listings = [], isPending } = useSearchListings(filterData);
+  // const { data: listings = [], isPending } = useSearchListings(filterData);
   const [showFilterBtn, setShowFilterBtn] = useState(false);
   return (
     <>

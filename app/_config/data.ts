@@ -991,14 +991,14 @@ export const SERVICES = [
   }
 ];
 
-export const LISTING_TYPES: ListingTypeEnum[] = [
-  "puppy",
-  "semen",
-  "stud_bitch",
-  "future",
-  "wanted_puppy",
-  "other",
-] as const;
+  export const LISTING_TYPES: ListingTypeEnum[] = [
+    ListingTypeEnum.PUPPY_LISTING,
+    ListingTypeEnum.SEMEN_LISTING,
+    ListingTypeEnum.STUD_LISTING,
+    ListingTypeEnum.FUTURE_LISTING,
+    ListingTypeEnum.WANTED_LISTING,
+    ListingTypeEnum.OTHER_SERVICES,
+  ];
 
 // Testimonials Data
 export const TESTIMONIALS = [

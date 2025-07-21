@@ -118,7 +118,7 @@ const ListingDetail = ({ params: { id: listingId } }: PageProps) => {
         )}
 
         {location && (
-          <ListingLocation location={{ address: location }} className="mt-7" />
+          <ListingLocation location={{ fullAddress: location, city: '', state: '', country: '' }} className="mt-7" />
         )}
       </div>
     </div>
