@@ -1,14 +1,14 @@
 import { UserListingType } from "@/_types/listing";
 import Image from "next/image";
 import { ListingImageGalleryExpandView } from "./expand-view";
-import { extractListingImages } from "@/_utils/listing";
 
 interface ListingImageGalleryProps {
   listing: UserListingType;
 }
 
 export const ListingImageGallery = ({ listing }: ListingImageGalleryProps) => {
-  const images = extractListingImages(listing);
+  // Get images from metadata, fallback to empty array
+  const images = listing.metadata?.images || ["/images/no-image-available.jpg"];
 
   const featuredImage = images[0];
 

@@ -5,15 +5,18 @@ async function resetPassword({
   userId,
   token,
   password,
+  confirmPassword,
 }: {
   userId: string;
   token: string;
   password: string;
+  confirmPassword: string;
 }) {
   const { data } = await axios.post("/auth/reset-password", {
     userId,
     token,
     password,
+    confirmPassword,
   });
 
   return data;

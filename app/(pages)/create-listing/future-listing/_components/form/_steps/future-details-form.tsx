@@ -71,6 +71,13 @@ export const futureDetailsSchema = z.object({
   })
     .optional()
     .default([]),
+  parentImages: getImagesSchema({
+    maxFileSize: MAX_FILE_SIZE,
+    maxImages: 10,
+    minImages: 2,
+  })
+    .optional()
+    .default([]),
   videoUrls: z.array(videoUrlSchema).optional().default([]),
 });
 
@@ -243,26 +250,18 @@ export const FutureDetailsForm = () => {
               label="Upload previous Litters images"
               accept="image/*"
               multiple
+              maxCount={10}
+              maxSize={5}
+              value={field.value?.filter(item => typeof item === 'string') || []}
+              onUrlsChange={(urls) => {
+                field.onChange(urls);
+              }}
               onChange={(files) => {
+                // Keep the original onChange for backward compatibility
                 field.onChange([...(field.value ?? []), ...Array.from(files)]);
               }}
+              error={errors?.images?.message}
             />
-
-            {field.value && (
-              <ImagePreview
-                className="mb-4"
-                images={field.value.map((image, imageIdx) => ({
-                  url: image instanceof File ? URL.createObjectURL(image) : "",
-                  error: errors?.images?.[imageIdx]?.message as
-                    | string
-                    | undefined,
-                }))}
-                onDelete={(idx) => {
-                  field.value.splice(idx, 1);
-                  field.onChange(field.value);
-                }}
-              />
-            )}
           </>
         )}
       />
@@ -272,6 +271,40 @@ export const FutureDetailsForm = () => {
           className="mb-4"
           size="lg"
           error={errors?.images?.message}
+        />
+      )}
+
+      <Controller
+        name="parentImages"
+        control={control}
+        render={({ field }) => (
+          <>
+            <FileUploader
+              label="Upload Parent Images"
+              accept="image/*"
+              multiple
+              minCount={2}
+              maxCount={10}
+              maxSize={5}
+              value={field.value?.filter(item => typeof item === 'string') || []}
+              onUrlsChange={(urls) => {
+                field.onChange(urls);
+              }}
+              onChange={(files) => {
+                // Keep the original onChange for backward compatibility
+                field.onChange([...(field.value ?? []), ...Array.from(files)]);
+              }}
+              error={errors?.parentImages?.message}
+            />
+          </>
+        )}
+      />
+
+      {errors?.parentImages && (
+        <FieldError
+          className="mb-4"
+          size="lg"
+          error={errors?.parentImages?.message}
         />
       )}
 
