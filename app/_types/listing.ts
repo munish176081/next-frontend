@@ -35,9 +35,11 @@ export interface ListingProductType {
   products: {
     id: string;
     name: string;
+    title: string;
     price: number;
     description: string;
     image: string;
+    durationInDays: number;
   }[];
 }
 
@@ -52,23 +54,15 @@ export interface ListingAdType {
     price: number;
     description: string;
     image: string;
+    durationInDays: number;
   }[];
 }
 
 export interface ListingCheckoutType {
   listingId: string;
-  listingType: ListingTypeEnum;
-  title: string;
-  description: string;
-  price: number;
-  image: string;
-  location: ListingLocationType;
-  contactInfo: {
-    name: string;
-    email: string;
-    phone: string;
-    location: string;
-  };
+  durationInDays: number;
+  adId?: string;
+  adDurationInDays?: number;
 }
 
 export interface ListingLocationType {

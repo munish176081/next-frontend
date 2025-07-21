@@ -1,10 +1,9 @@
 import { Heading } from "@/_components/ui/typegraphy";
-import { ContactDetailsType } from "@/_types/listing";
 
 export const ListingOwnerDetails = ({
   name,
   className,
-}: ContactDetailsType & { className?: string }) => {
+}: { name: string; className?: string }) => {
   return (
     <div className={className}>
       <Heading tag="h3">Owner Details</Heading>
