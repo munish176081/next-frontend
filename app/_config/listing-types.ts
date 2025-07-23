@@ -73,7 +73,7 @@ const COMMON_FIELDS = {
     label: 'Location',
     type: 'location' as const,
     required: false,
-    placeholder: 'Enter location',
+    placeholder: 'Enter Australian location',
     fieldCategory: 'common' as const
   }
 };
@@ -109,7 +109,7 @@ const CONTACT_FIELDS = {
     label: 'Contact Location',
     type: 'location' as const,
     required: false,
-    placeholder: 'Enter contact location',
+    placeholder: 'Enter Australian contact location',
     fieldCategory: 'contact' as const
   }
 };

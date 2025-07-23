@@ -32,6 +32,13 @@ export const LocationAutoComplete = ({
   const options = restrictedToCountry
     ? {
         componentRestrictions: { country: restrictedToCountry },
+        types: ["geocode"],
+        bounds: {
+          north: -10.0,  // Northern Australia
+          south: -44.0,  // Southern Australia
+          east: 154.0,   // Eastern Australia
+          west: 113.0    // Western Australia
+        }
       }
     : undefined;
 

@@ -18,7 +18,7 @@ const libraries: ("places")[] = ["places"];
 export default function LocationField({ 
   value, 
   onChange, 
-  placeholder = "Enter location", 
+  placeholder = "Enter Australian location", 
   error, 
   required = false,
   label = "Location"
@@ -35,9 +35,22 @@ export default function LocationField({
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
       if (place.formatted_address) {
-        const address = place.formatted_address;
-        setInputValue(address);
-        onChange(address);
+        // Check if the place is in Australia
+        const isInAustralia = place.address_components?.some(component => 
+          component.types.includes('country') && component.short_name === 'AU'
+        );
+        
+        if (isInAustralia) {
+          const address = place.formatted_address;
+          setInputValue(address);
+          onChange(address);
+        } else {
+          // If not in Australia, clear the input and show an error
+          setInputValue('');
+          onChange('');
+          // You could add a toast notification here if you want
+          console.warn('Please select an Australian address');
+        }
       }
     }
   };
@@ -63,7 +76,7 @@ export default function LocationField({
           <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder={placeholder}
+            placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
             className={`${baseClasses} ${errorClasses} pl-12`}
@@ -87,7 +100,7 @@ export default function LocationField({
           <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
           <input
             type="text"
-            placeholder="Loading Google Maps..."
+            placeholder="Loading Australian locations..."
             disabled
             className={`${baseClasses} ${errorClasses} pl-12 opacity-50`}
           />
@@ -105,19 +118,25 @@ export default function LocationField({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label> */}
-      <Autocomplete
-        onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
-        onPlaceChanged={handlePlaceChanged}
-        options={{
-          componentRestrictions: { country: "AU" },
-          types: ["geocode", "establishment"]
-        }}
-      >
+              <Autocomplete
+          onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+          onPlaceChanged={handlePlaceChanged}
+          options={{
+            componentRestrictions: { country: "AU" },
+            types: ["geocode"],
+            bounds: {
+              north: -10.0,  // Northern Australia
+              south: -44.0,  // Southern Australia
+              east: 154.0,   // Eastern Australia
+              west: 113.0    // Western Australia
+            }
+          }}
+        >
         <div className="relative">
           <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
           <input
             type="text"
-            placeholder={placeholder}
+            placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
             className={`${baseClasses} ${errorClasses} pl-12`}
