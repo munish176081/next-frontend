@@ -4,6 +4,7 @@ import { ListingField } from '@/_config/listing-types';
 import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { useDeleteUpload } from '@/_services/hooks/upload/use-delete-upload';
 import { useBulkDeleteUpload } from '@/_services/hooks/upload/use-bulk-delete-upload';
+import LocationField from './location-field';
 
 interface DynamicFormFieldProps {
   field: ListingField;
@@ -98,6 +99,18 @@ export default function DynamicFormField({ field, value, onChange, error, layout
     const textareaClasses = "text-base max-md:text-xs max-md:p-4 max-md:rounded-2xl placeholder:text-[#4B4A4A8C] font-normal outline-none p-6 w-full h-60 rounded-40 border border-[#B5B5B5]";
 
     switch (field.type) {
+      case 'location':
+        return (
+          <LocationField
+            value={value || ''}
+            onChange={(newValue) => onChange(field.name, newValue)}
+            placeholder={field.placeholder}
+            error={error}
+            required={field.required}
+            label={field.label}
+          />
+        );
+
       case 'text':
       case 'url':
         return (

@@ -70,7 +70,7 @@ export const DashboardLayout = ({
             {/* User Dashboard */}
             {userRole === 'user' && (
               <div className="ml-auto flex gap-4 items-center max-md:justify-center">
-                <Link href={Routes.private.startListing}>
+                <Link href={Routes.private.startlisting}>
                   <button className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-[70px] rounded-full border-none max-md:w-32 max-md:h-12 bg-no-repeat bg-[90%] bg-white font-medium w-44">
                     Add Listing
                   </button>

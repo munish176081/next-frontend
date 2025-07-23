@@ -31,8 +31,8 @@ function Startlisting() {
         {LISTING_TYPES.map((listing, index) => (
           <div 
             key={listing.id} 
-            className={`overflow-hidden flex flex-col gap-2 w-full cursor-pointer transition-all duration-300 ${
-              selectedListing === listing.id ? 'border-2 border-black rounded-4xl' : ''
+            className={`overflow-hidden flex flex-col gap-2 w-full cursor-pointer  ${
+              selectedListing === listing.id ? 'border-2 border-black rounded-[48px]' : ''
             }`}
             onClick={() => handleListingSelect(listing.id)}
           >
@@ -52,7 +52,7 @@ function Startlisting() {
         ))}
       </div>
       <div className="flex justify-between items-center mt-8 max-md:flex-col gap-6">
-        <span className="bg-[#F3F3F3] h-3 w-full rounded-full flex overflow-hidden max-w-[500px]">
+        <span className="bg-[#F3F3F3] h-3 w-full rounded-full flex overflow-hidden max-w-[500px] invisible">
           <span className="bg-CSecondary h-full rounded-full transition-all duration-300" style={{ width: `50%` }}></span>
         </span>
         <button 

@@ -15,6 +15,7 @@ import { useCreateListing } from "@/_services/hooks/listings/use-create-listing"
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
 import { useGetListingById } from "@/_services/hooks/listings/use-get-listing-by-id";
 import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
+import { toast } from "@/_hooks/use-toast";
 
 export const dynamic = 'force-dynamic';
 
@@ -227,7 +228,10 @@ function Startlistingform() {
 
   const handleSubmit = async () => {
     if (!validateForm()) {
-      alert('Please fix the errors before submitting.');
+      toast({
+        title: 'Please fix the errors before submitting.',
+        variant: 'destructive',
+      });
       return;
     }
 

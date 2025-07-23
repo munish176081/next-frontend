@@ -24,7 +24,7 @@ export const RequireUser = ({
   useEffect(() => {
     if (!isPending && (!user || isError)) {
       // Redirect to sign-in with redirect param
-      // router.replace(`/auth/sign-in?redirect=${encodeURIComponent(pathname)}`);
+      router.replace(`/auth/sign-in?redirect=${encodeURIComponent(pathname)}`);
     }
   }, [user, isPending, isError, router, pathname]);
 
@@ -33,8 +33,13 @@ export const RequireUser = ({
     return <div>Loading...</div>;
   }
 
+  // If user is not authenticated, don't render children
+  if (!user || isError) {
+    return null;
+  }
+
   // If user needs to be verified and isn't active, show verify email form
-  if (shouldVerified && user && user.status !== "active") {
+  if (shouldVerified && user.status !== "active") {
     return <VerifyEmailPage noshow={true} />;
   }
 

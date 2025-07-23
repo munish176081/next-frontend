@@ -1,7 +1,7 @@
 export interface ListingField {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url';
+  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location';
   required: boolean;
   placeholder?: string;
   options?: ({ value: string; label: string } | string)[];
@@ -71,7 +71,7 @@ const COMMON_FIELDS = {
   location: {
     name: 'location',
     label: 'Location',
-    type: 'text' as const,
+    type: 'location' as const,
     required: false,
     placeholder: 'Enter location',
     fieldCategory: 'common' as const
@@ -107,7 +107,7 @@ const CONTACT_FIELDS = {
   contactLocation: {
     name: 'contactLocation',
     label: 'Contact Location',
-    type: 'text' as const,
+    type: 'location' as const,
     required: false,
     placeholder: 'Enter contact location',
     fieldCategory: 'contact' as const

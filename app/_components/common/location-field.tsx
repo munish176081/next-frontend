@@ -1,0 +1,132 @@
+"use client";
+
+import { useState, useRef } from 'react';
+import { Autocomplete, useLoadScript } from "@react-google-maps/api";
+import { MapPin } from "lucide-react";
+
+interface LocationFieldProps {
+  value: string;
+  onChange: (value: string) => void;
+  placeholder?: string;
+  error?: string;
+  required?: boolean;
+  label?: string;
+}
+
+const libraries: ("places")[] = ["places"];
+
+export default function LocationField({ 
+  value, 
+  onChange, 
+  placeholder = "Enter location", 
+  error, 
+  required = false,
+  label = "Location"
+}: LocationFieldProps) {
+  const [inputValue, setInputValue] = useState(value || '');
+  const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
+
+  const { isLoaded, loadError } = useLoadScript({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDf0nuXtOo8kR-4iUlZcvGPvH85fflIJPg",
+    libraries,
+  });
+
+  const handlePlaceChanged = () => {
+    if (autocompleteRef.current) {
+      const place = autocompleteRef.current.getPlace();
+      if (place.formatted_address) {
+        const address = place.formatted_address;
+        setInputValue(address);
+        onChange(address);
+      }
+    }
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setInputValue(newValue);
+    onChange(newValue);
+  };
+
+  const baseClasses = "text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12";
+  const errorClasses = error ? "border-red-500" : "";
+
+  if (loadError) {
+    // Fallback to regular input if Google Maps fails to load
+    return (
+      <div className="flex flex-col w-full">
+        {/* <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label> */}
+        <div className="relative">
+          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleInputChange}
+            className={`${baseClasses} ${errorClasses} pl-12`}
+          />
+        </div>
+        {error && (
+          <span className="text-red-500 text-sm mt-1">{error}</span>
+        )}
+      </div>
+    );
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="flex flex-col w-full">
+        {/* <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+          {label}
+          {required && <span className="text-red-500 ml-1">*</span>}
+        </label> */}
+        <div className="relative">
+          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <input
+            type="text"
+            placeholder="Loading Google Maps..."
+            disabled
+            className={`${baseClasses} ${errorClasses} pl-12 opacity-50`}
+          />
+        </div>
+        {error && (
+          <span className="text-red-500 text-sm mt-1">{error}</span>
+        )}
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex flex-col w-full">
+      {/* <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label> */}
+      <Autocomplete
+        onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+        onPlaceChanged={handlePlaceChanged}
+        options={{
+          componentRestrictions: { country: "AU" },
+          types: ["geocode", "establishment"]
+        }}
+      >
+        <div className="relative">
+          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+          <input
+            type="text"
+            placeholder={placeholder}
+            value={inputValue}
+            onChange={handleInputChange}
+            className={`${baseClasses} ${errorClasses} pl-12`}
+          />
+        </div>
+      </Autocomplete>
+      {error && (
+        <span className="text-red-500 text-sm mt-1">{error}</span>
+      )}
+    </div>
+  );
+} 

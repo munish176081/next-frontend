@@ -22,7 +22,9 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
         const protectedRoutes = [
           '/dashboard',
           '/account',
-          '/admin'
+          '/admin',
+          '/startlisting',
+          '/startlistingform'
         ];
         
         // Check if current path is a protected route
@@ -55,8 +57,7 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
       if (pathname === '/' || 
           pathname.startsWith('/explore') || pathname.startsWith('/wishlist') || 
           pathname.startsWith('/meetings') || pathname.startsWith('/contact') || 
-          pathname.startsWith('/blog') || pathname.startsWith('/create-listing') || 
-          pathname.startsWith('/startlisting')) {
+          pathname.startsWith('/blog') || pathname.startsWith('/create-listing')) {
         return;
       }
 
@@ -68,6 +69,11 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
           return;
         }
         // If user is admin and on admin route, allow access
+        return;
+      }
+
+      // Handle startlisting routes - allow all authenticated users
+      if (pathname.startsWith('/startlisting') || pathname.startsWith('/startlistingform')) {
         return;
       }
 
