@@ -5,6 +5,7 @@ import GoBackButton from "@/_components/common/go-back-button";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
 import { 
   getListingTypeById, 
+  getListingTypeByShortCode,
   ListingField, 
   getCommonFields, 
   getContactFields, 
@@ -75,6 +76,7 @@ function Startlistingform() {
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
   
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
@@ -101,8 +103,12 @@ function Startlistingform() {
 
   useEffect(() => {
     const listingType = type || searchParams.get('type');
+    console.log('URL type parameter:', listingType);
+    
     if (listingType) {
-      const listingData = getListingTypeById(listingType);
+      // Try to get listing type by short code first, then by full ID for backward compatibility
+      const listingData = getListingTypeByShortCode(listingType) || getListingTypeById(listingType);
+      console.log('Resolved listing type:', listingData?.id);
       setSelectedListingType(listingData);
       
       if (listingData) {
@@ -227,6 +233,11 @@ function Startlistingform() {
   };
 
   const handleSubmit = async () => {
+    // Prevent multiple submissions
+    if (isSubmitting || isSubmitted) {
+      return;
+    }
+
     if (!validateForm()) {
       toast({
         title: 'Please fix the errors before submitting.',
@@ -345,16 +356,17 @@ function Startlistingform() {
         await createListingMutation.mutateAsync(listingData);
       }
       
+      // Mark as submitted to prevent further clicks
+      setIsSubmitted(true);
+      
       // Success toast is handled by the mutation
-      // Add a small delay to ensure the user sees the success message
-      setTimeout(() => {
-        router.push('/account/listings');
-      }, 1500);
+      // Navigate immediately after successful submission
+      router.push('/account/listings');
       
     } catch (error) {
       // Error toast is handled by the mutation
       console.error('Error submitting listing:', error);
-    } finally {
+      // Reset submitting state on error so user can try again
       setIsSubmitting(false);
     }
   };
@@ -492,7 +504,19 @@ function Startlistingform() {
 
   return (
     <>
-    <section className="container grid grid-cols-2 gap-8 max-md:p-4 max-md:gap-4 rounded-40 p-8 bg-white relative max-md:grid-cols-1">
+    {/* Loading Overlay */}
+    {(isSubmitting || isSubmitted) && (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="bg-white rounded-lg p-6 flex flex-col items-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
+          <p className="text-lg font-medium">
+            {isSubmitting ? 'Creating your listing...' : 'Redirecting to your listings...'}
+          </p>
+        </div>
+      </div>
+    )}
+    
+    <section className={`container grid grid-cols-2 gap-8 max-md:p-4 max-md:gap-4 rounded-40 p-8 bg-white relative max-md:grid-cols-1 ${isSubmitting || isSubmitted ? 'pointer-events-none opacity-50' : ''}`}>
       <div className="absolute left-8 top-8 max-md:top-4 max-md:left-4 max-md:static max-w-max">
         <GoBackButton />
       </div>
@@ -544,9 +568,9 @@ function Startlistingform() {
         <button 
           className="w-full h-20 bg-black text-white text-[22px] rounded-full mt-7 max-md:h-12 max-md:text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || isSubmitted}
         >
-          {isSubmitting ? 'Creating...' : 'Submit'}
+          {isSubmitting ? 'Creating...' : isSubmitted ? 'Redirecting...' : 'Submit'}
         </button>
       </div>
       <div className="flex max-md:w-full flex-col gap-6 bg-listingBG bg-cover h-full bg-bottom rounded-40 border border-black/20 max-md:hidden">

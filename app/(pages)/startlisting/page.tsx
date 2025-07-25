@@ -2,7 +2,7 @@
 import { Suspense, useState } from "react";
 import { useRouter } from "next/navigation";
 import GoBackButton from "@/_components/common/go-back-button";
-import { LISTING_TYPES } from "@/_config/listing-types";
+import { LISTING_TYPES, getShortCodeFromId } from "@/_config/listing-types";
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +16,8 @@ function Startlisting() {
 
   const handleNext = () => {
     if (selectedListing) {
-      router.push(`/startlistingform?type=${selectedListing}`);
+      const shortCode = getShortCodeFromId(selectedListing);
+      router.push(`/startlistingform?type=${shortCode}`);
     }
   };
 

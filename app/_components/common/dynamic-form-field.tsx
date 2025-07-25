@@ -5,6 +5,8 @@ import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { useDeleteUpload } from '@/_services/hooks/upload/use-delete-upload';
 import { useBulkDeleteUpload } from '@/_services/hooks/upload/use-bulk-delete-upload';
 import LocationField from './location-field';
+import { FileValidator } from '@/_utils/file-validation';
+import { toast } from '@/_hooks/use-toast';
 
 interface DynamicFormFieldProps {
   field: ListingField;
@@ -18,7 +20,67 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
+  const [fileValidationErrors, setFileValidationErrors] = useState<string[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper function to determine file type from URL
+  const getFileTypeFromUrl = (url: string): 'image' | 'video' | 'pdf' | 'document' => {
+    const extension = url.split('.').pop()?.toLowerCase();
+    if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(extension || '')) {
+      return 'image';
+    }
+    if (['mp4', 'avi', 'mov', 'wmv', 'flv', 'webm', 'mkv', '3gp', 'ogg', 'm4v'].includes(extension || '')) {
+      return 'video';
+    }
+    if (extension === 'pdf') {
+      return 'pdf';
+    }
+    return 'document';
+  };
+
+  // Helper function to get file icon based on type
+  const getFileIcon = (fileType: 'image' | 'video' | 'pdf' | 'document') => {
+    switch (fileType) {
+      case 'image':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+        );
+      case 'video':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+          </svg>
+        );
+      case 'pdf':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+          </svg>
+        );
+      case 'document':
+        return (
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+        );
+    }
+  };
+
+  // Helper function to get background color based on file type
+  const getFileTypeBgColor = (fileType: 'image' | 'video' | 'pdf' | 'document') => {
+    switch (fileType) {
+      case 'image':
+        return 'bg-blue-100';
+      case 'video':
+        return 'bg-red-100';
+      case 'pdf':
+        return 'bg-red-50';
+      case 'document':
+        return 'bg-blue-100';
+    }
+  };
 
   // Initialize uploaded URLs from value (for edit mode)
   useEffect(() => {
@@ -29,19 +91,29 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
     const { uploadFile, isUploading } = useFileUpload({
     onSuccess: (result) => {
-      const newUrls = [...uploadedUrls, result.finalUrl];
-      setUploadedUrls(newUrls);
-      onChange(field.name, newUrls);
+      console.log('Upload success for:', result.fileName, 'URL:', result.finalUrl);
+      
+      // Use functional state updates to avoid race conditions
+      setUploadedUrls(prevUrls => {
+        const newUrls = [...prevUrls, result.finalUrl];
+        console.log('Updated URLs:', newUrls);
+        // Update parent component with new URLs
+        onChange(field.name, newUrls);
+        return newUrls;
+      });
       
       // Remove the file from uploading set
       setUploadingFiles(prev => {
         const newSet = new Set(prev);
         newSet.delete(result.fileName);
+        console.log('Removed from uploading:', result.fileName, 'Remaining:', Array.from(newSet));
         return newSet;
       });
     },
     onError: (error) => {
       console.error('Upload failed:', error);
+      // Note: We can't easily identify which specific file failed in this callback
+      // The error handling is done at the hook level with toast notifications
     }
   });
 
@@ -54,28 +126,158 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []);
+    
+    // Clear previous validation errors when new files are selected
+    setFileValidationErrors([]);
 
-    // Validate file sizes
-    const validFiles = files.filter(file => {
-      if (field.fileConfig?.maxSize) {
-        return file.size <= field.fileConfig.maxSize * 1024 * 1024; // Convert MB to bytes
+    // Create a custom validation config based on the field's accept types
+    let validationConfig = FileValidator.getPresetConfig('document'); // Start with document as base
+    
+    // Parse the accept string to determine allowed file types
+    const acceptTypes = field.fileConfig?.accept?.split(',').map(type => type.trim()) || [];
+    const allowedTypes: string[] = [];
+    
+    acceptTypes.forEach(type => {
+      if (type === 'image/*') {
+        allowedTypes.push('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/svg+xml');
+      } else if (type === 'video/*') {
+        allowedTypes.push('video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv', 'video/3gp', 'video/ogg', 'video/m4v');
+      } else if (type === '.pdf') {
+        allowedTypes.push('application/pdf');
+      } else if (type.startsWith('.')) {
+        // Handle other file extensions
+        const extension = type.toLowerCase();
+        if (extension === '.doc' || extension === '.docx') {
+          allowedTypes.push('application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        } else if (extension === '.xls' || extension === '.xlsx') {
+          allowedTypes.push('application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        } else if (extension === '.ppt' || extension === '.pptx') {
+          allowedTypes.push('application/vnd.ms-powerpoint', 'application/vnd.openxmlformats-officedocument.presentationml.presentation');
+        } else if (extension === '.txt') {
+          allowedTypes.push('text/plain');
+        } else if (extension === '.csv') {
+          allowedTypes.push('text/csv');
+        } else if (extension === '.rtf') {
+          allowedTypes.push('application/rtf');
+        }
+      } else {
+        // Direct MIME type
+        allowedTypes.push(type);
       }
-      return true;
     });
+    
+    // Update validation config with allowed types
+    validationConfig.allowedTypes = allowedTypes;
+    
+    // Override with field-specific config
+    if (field.fileConfig?.maxSize) {
+      validationConfig.maxSize = field.fileConfig.maxSize;
+    }
+    if (field.fileConfig?.maxCount) {
+      validationConfig.maxCount = field.fileConfig.maxCount;
+    }
+    
+    // Handle minimum count intelligently for mixed file types
+    if (field.fileConfig?.minCount) {
+      // If the field accepts both images and videos, adjust minCount based on file types
+      const acceptsImages = field.fileConfig.accept?.includes('image/*');
+      const acceptsVideos = field.fileConfig.accept?.includes('video/*');
+      
+      if (acceptsImages && acceptsVideos) {
+        // For mixed file types, check if we're uploading videos
+        const hasVideos = files.some(file => file.type.startsWith('video/'));
+        const hasImages = files.some(file => file.type.startsWith('image/'));
+        
+        if (hasVideos && !hasImages) {
+          // If only videos are being uploaded, reduce minCount to 1
+          validationConfig.minCount = 1;
+        } else if (hasImages && !hasVideos) {
+          // If only images are being uploaded, use original minCount
+          validationConfig.minCount = field.fileConfig.minCount;
+        } else {
+          // If both types are being uploaded, use original minCount
+          validationConfig.minCount = field.fileConfig.minCount;
+        }
+      } else {
+        // For single file type, use original minCount
+        validationConfig.minCount = field.fileConfig.minCount;
+      }
+    }
+
+    // Validate files
+    const validation = FileValidator.validateFiles(files, validationConfig);
+    
+    // Custom validation for better error messages
+    const customErrors: string[] = [];
+    
+    // Check file count with more specific messaging for mixed file types
+    if (validationConfig.minCount && files.length < validationConfig.minCount) {
+      const acceptsImages = field.fileConfig?.accept?.includes('image/*');
+      const acceptsVideos = field.fileConfig?.accept?.includes('video/*');
+      
+      if (acceptsImages && acceptsVideos) {
+        const hasVideos = files.some(file => file.type.startsWith('video/'));
+        const hasImages = files.some(file => file.type.startsWith('image/'));
+        
+        if (hasVideos && !hasImages) {
+          customErrors.push(`At least 1 video file is required`);
+        } else if (hasImages && !hasVideos) {
+          customErrors.push(`At least ${field.fileConfig?.minCount || validationConfig.minCount} image(s) are required`);
+        } else {
+          customErrors.push(`At least ${validationConfig.minCount} file(s) are required`);
+        }
+      } else {
+        customErrors.push(`At least ${validationConfig.minCount} file(s) are required`);
+      }
+    }
+    
+    // Combine custom errors with validation errors
+    const allErrors = [...customErrors, ...validation.errors.filter(error => !error.includes('At least') && !error.includes('file(s) are required'))];
+    
+    if (allErrors.length > 0) {
+      // Show validation errors as toast notifications
+      console.error('File validation errors:', allErrors);
+      setFileValidationErrors(allErrors);
+      
+      allErrors.forEach(error => {
+        try {
+          toast({
+            title: "File Upload Error",
+            description: error,
+            variant: "destructive",
+          });
+        } catch (toastError) {
+          // Fallback to alert if toast fails
+          alert(`File Upload Error: ${error}`);
+        }
+      });
+      return;
+    }
+
+    // Clear validation errors if validation passes
+    setFileValidationErrors([]);
 
     // Add new file names to existing ones and mark them as uploading
-    const newFileNames = validFiles.map(file => file.name);
-    setFileNames(prev => [...prev, ...newFileNames]);
+    const newFileNames = files.map(file => file.name);
+    console.log('Processing files:', newFileNames);
+    
+    setFileNames(prev => {
+      const updated = [...prev, ...newFileNames];
+      console.log('Updated file names:', updated);
+      return updated;
+    });
+    
     setUploadingFiles(prev => {
       const newSet = new Set(prev);
       newFileNames.forEach(name => newSet.add(name));
+      console.log('Added to uploading set:', Array.from(newSet));
       return newSet;
     });
 
     // Upload each file
-    validFiles.forEach(file => {
-      const fileType = field.fileConfig?.accept?.includes('image/*') ? 'image' :
-        field.fileConfig?.accept?.includes('video/*') ? 'video' : 'document';
+    files.forEach((file, index) => {
+      console.log(`Uploading file ${index + 1}/${files.length}:`, file.name);
+      const fileType = FileValidator.getFileType(file);
       uploadFile({ file, fileType });
     });
 
@@ -195,7 +397,16 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                 {field.label}
                 <small className="text-sm font-normal text-[#4B4A4A8C]">
                   {field.fileConfig?.maxSize && `(Max size: ${field.fileConfig.maxSize} MB)`}
-                  {field.fileConfig?.minCount && ` - Min ${field.fileConfig.minCount} file(s)`}
+                  {field.fileConfig?.minCount && (() => {
+                    const acceptsImages = field.fileConfig.accept?.includes('image/*');
+                    const acceptsVideos = field.fileConfig.accept?.includes('video/*');
+                    
+                    if (acceptsImages && acceptsVideos) {
+                      return ` - Min ${field.fileConfig.minCount} image(s) or 1 video`;
+                    } else {
+                      return ` - Min ${field.fileConfig.minCount} file(s)`;
+                    }
+                  })()}
                 </small>
                 {isUploading && (
                   <small className="text-sm font-normal text-blue-600 mt-2">
@@ -258,32 +469,48 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                   </button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  {uploadedUrls.map((url, index) => (
-                    <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center min-w-0 flex-1">
-                        {field.fileConfig?.accept?.includes('image/*') ? (
-                          <div className="w-10 h-10 bg-blue-100 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
-                            <img src={url} alt="Preview" className="w-full h-full object-cover" />
-                            {/* <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg> */}
+                  {uploadedUrls.map((url, index) => {
+                    const fileType = getFileTypeFromUrl(url);
+                    const fileName = fileNames[index] || url.split('/').pop() || `File ${index + 1}`;
+                    
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center min-w-0 flex-1">
+                          <div className={`w-12 h-12 ${getFileTypeBgColor(fileType)} rounded-lg flex items-center justify-center mr-3 flex-shrink-0 overflow-hidden cursor-pointer`} onClick={() => window.open(url, '_blank')}>
+                            {fileType === 'image' ? (
+                              <img src={url} alt="Preview" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                            ) : fileType === 'video' ? (
+                              <div className="relative w-full h-full flex items-center justify-center group cursor-pointer" onClick={() => window.open(url, '_blank')}>
+                                <video 
+                                  src={url} 
+                                  className="w-full h-full object-cover rounded"
+                                  onLoadedMetadata={(e) => {
+                                    // Optional: Add video duration or other metadata
+                                  }}
+                                />
+                                <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center group-hover:bg-opacity-40 transition-all">
+                                  <div className="bg-white bg-opacity-90 rounded-full p-2 group-hover:scale-110 transition-transform">
+                                  <svg fill="#000000" height="20px" width="20px" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlnsXlink="http://www.w3.org/1999/xlink" viewBox="0 0 60 60" xmlSpace="preserve"><g id="SVGRepo_bgCarrier" strokeWidth="0"></g><g id="SVGRepo_tracerCarrier" strokeLinecap="round" strokeLinejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path d="M45.563,29.174l-22-15c-0.307-0.208-0.703-0.231-1.031-0.058C22.205,14.289,22,14.629,22,15v30 c0,0.371,0.205,0.711,0.533,0.884C22.679,45.962,22.84,46,23,46c0.197,0,0.394-0.059,0.563-0.174l22-15 C45.836,30.64,46,30.331,46,30S45.836,29.36,45.563,29.174z M24,43.107V16.893L43.225,30L24,43.107z"></path> <path d="M30,0C13.458,0,0,13.458,0,30s13.458,30,30,30s30-13.458,30-30S46.542,0,30,0z M30,58C14.561,58,2,45.439,2,30 S14.561,2,30,2s28,12.561,28,28S45.439,58,30,58z"></path> </g> </g></svg>
+                                  </div>
+                                </div>
+                              </div>
+                            ) : (
+                              getFileIcon(fileType)
+                            )}
                           </div>
-                        ) : (
-                          <div className="w-10 h-10 bg-blue-100 rounded-md flex items-center justify-center mr-3 flex-shrink-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                            </svg>
-                          </div>
-                        )}
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium text-gray-700 truncate">
-                            {fileNames[index] || `File ${index + 1}`}
-                          </p>
-                          <div className="flex items-center space-x-2">
-                            <span className="text-xs text-gray-500 truncate">{url.split('/').pop()?.substring(0, 20)}...</span>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-gray-700 truncate">
+                              {fileName}
+                            </p>
+                            <div className="flex items-center space-x-2">
+                              <span className="text-xs text-gray-500 capitalize">{fileType}</span>
+                              <span className="text-xs text-gray-400">•</span>
+                              <span className="text-xs text-gray-500 truncate" title={fileName}>
+                                {fileName.length > 20 ? `${fileName.substring(0, 20)}...` : fileName}
+                              </span>
+                            </div>
                           </div>
                         </div>
-                      </div>
                       <div className="flex items-center space-x-2 ml-2">
                         <a
                           href={url}
@@ -340,7 +567,30 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                         </button>
                       </div>
                     </div>
-                  ))}
+                  );
+                })}
+                </div>
+              </div>
+            )}
+
+            {/* File Validation Errors */}
+            {fileValidationErrors.length > 0 && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start">
+                  <svg className="h-5 w-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <div className="flex-1">
+                    <h4 className="text-sm font-medium text-red-800 mb-1">File Upload Errors</h4>
+                    <ul className="text-sm text-red-700 space-y-1">
+                      {fileValidationErrors.map((error, index) => (
+                        <li key={index} className="flex items-start">
+                          <span className="text-red-500 mr-1">•</span>
+                          <span>{error}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
               </div>
             )}

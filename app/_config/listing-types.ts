@@ -124,7 +124,7 @@ const MEDIA_FIELDS = {
     fileConfig: {
       multiple: true,
       accept: 'image/*',
-      maxSize: 5,
+      maxSize: 15,
       minCount: 1
     },
     fieldCategory: 'media' as const
@@ -137,7 +137,7 @@ const MEDIA_FIELDS = {
     fileConfig: {
       multiple: true,
       accept: 'video/*',
-      maxSize: 10,
+      maxSize: 500,
       minCount: 1
     },
     fieldCategory: 'media' as const
@@ -149,8 +149,8 @@ const MEDIA_FIELDS = {
     required: false,
     fileConfig: {
       multiple: true,
-      accept: '.pdf,.doc,.docx',
-      maxSize: 5,
+      accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf',
+      maxSize: 25,
       minCount: 1
     },
     fieldCategory: 'media' as const
@@ -771,6 +771,45 @@ export const LISTING_TYPES: ListingType[] = [
 
 export const getListingTypeById = (id: string): ListingType | undefined => {
   return LISTING_TYPES.find(type => type.id === id);
+};
+
+// URL shortening system for cleaner URLs
+const LISTING_TYPE_SHORT_CODES: Record<string, string> = {
+  'SEMEN_LISTING': 'semen',
+  'PUPPY_LISTING': 'puppy', 
+  'STUD_LISTING': 'stud',
+  'FUTURE_LISTING': 'future',
+  'WANTED_LISTING': 'wanted',
+  'OTHER_SERVICES': 'services'
+};
+
+const SHORT_CODE_TO_ID: Record<string, string> = Object.entries(LISTING_TYPE_SHORT_CODES).reduce((acc, [id, code]) => {
+  acc[code] = id;
+  return acc;
+}, {} as Record<string, string>);
+
+// Helper functions to convert between short codes and full IDs
+export const getShortCodeFromId = (id: string): string => {
+  return LISTING_TYPE_SHORT_CODES[id] || id;
+};
+
+export const getIdFromShortCode = (shortCode: string): string => {
+  return SHORT_CODE_TO_ID[shortCode] || shortCode;
+};
+
+// Get listing type by short code (backward compatible)
+export const getListingTypeByShortCode = (shortCode: string): ListingType | undefined => {
+  const fullId = getIdFromShortCode(shortCode);
+  console.log(`Converting short code "${shortCode}" to full ID "${fullId}"`);
+  return getListingTypeById(fullId);
+};
+
+// Debug function to show all available mappings
+export const debugListingTypeMappings = () => {
+  console.log('Available listing type mappings:');
+  Object.entries(LISTING_TYPE_SHORT_CODES).forEach(([id, code]) => {
+    console.log(`${id} -> ${code}`);
+  });
 };
 
 export const getAllFields = (listingType: ListingType): ListingField[] => {
