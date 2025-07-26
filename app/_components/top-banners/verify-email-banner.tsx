@@ -86,7 +86,7 @@ export function VerifyEmailBanner() {
   const isNewAccount = +new Date(user.createdAt) + 10 * 60 * 1000 > todayTimeStamp;
 
   return (
-    <p className="fixed bottom-0 left-0 w-full py-2 text-center text-sm text-white bg-blue-500 z-[1000] pr-10">
+    <p className="fixed hidden bottom-0 left-0 w-full py-2 text-center text-sm text-white bg-blue-500 z-[1000] pr-10">
       <span>
         {isNewAccount 
           ? "We have sent you an email to verify your account. Please check your inbox."

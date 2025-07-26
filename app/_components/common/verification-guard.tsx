@@ -32,7 +32,7 @@ export const VerificationGuard = ({ children }: VerificationGuardProps) => {
   if (user && user.status !== "active") {
     return (
       <div className="fixed inset-0 z-50 bg-white">
-        <VerifyEmailPage noshow={true} />
+        <VerifyEmailPage noshow={false} />
       </div>
     );
   }

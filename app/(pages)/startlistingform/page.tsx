@@ -22,26 +22,7 @@ import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
 
 export const dynamic = 'force-dynamic';
-const motherIcon = (<svg
-  className="w-6 h-6 text-blue-600"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
->
-  <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
-  <path d="M12 15v4m-2 0h4" />
-  <circle cx="12" cy="8" r="3" />
-</svg>)
-const fatherIcon = (<svg
-  className="w-6 h-6 text-pink-600"
-  viewBox="0 0 24 24"
-  fill="none"
-  stroke="currentColor"
->
-  <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
-  <circle cx="12" cy="8" r="3" />
-  <circle cx="12" cy="18" r="1.5" />
-</svg>);
+
 const listingTips = [
   {
     title: "1. Upload Clear, Bright Photos",
@@ -99,8 +80,8 @@ function Startlistingform() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  const [showMotherSection, setShowMotherSection] = useState(true);
-  const [showFatherSection, setShowFatherSection] = useState(true);
+  const [showMotherSection, setShowMotherSection] = useState(false);
+  const [showFatherSection, setShowFatherSection] = useState(false);
 
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();

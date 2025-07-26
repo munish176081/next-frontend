@@ -40,7 +40,7 @@ export const RequireUser = ({
 
   // If user needs to be verified and isn't active, show verify email form
   if (shouldVerified && user.status !== "active") {
-    return <VerifyEmailPage noshow={true} />;
+    return <VerifyEmailPage noshow={false} />;
   }
 
   // User is authenticated and verified, render children

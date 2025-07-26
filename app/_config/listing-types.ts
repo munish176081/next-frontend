@@ -163,7 +163,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Semen Listings',
     description: 'For listing available semen for breeding purposes.',
     price: '$19/mo',
-    image: '/images/vectors/startListing1.jpg',
+    image: '/images/breeds/semen.png',
     category: 'breeding',
     requiredFields: [
       COMMON_FIELDS.title,
@@ -287,7 +287,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Puppy Listings',
     description: 'For advertising individual puppies or full litters available now.',
     price: '$49 listing fee + add-ons',
-    image: '/images/vectors/startListing2.png',
+    image: '/images/vectors/startListing1.jpg',
     category: 'puppy',
     requiredFields: [
       COMMON_FIELDS.title,
@@ -413,7 +413,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Stud or Bitch Listings',
     description: 'For advertising dogs available for natural mating (Stud = Male, Bitch = Female).',
     price: '$39/mo',
-    image: '/images/vectors/startListing1.jpg',
+    image: '/images/breeds/stud.png',
     category: 'breeding',
     requiredFields: [
       COMMON_FIELDS.title,
@@ -519,7 +519,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Future Listings',
     description: 'For advertising planned or upcoming litters.',
     price: 'Free',
-    image: '/images/vectors/startListing1.jpg',
+    image: '/images/breeds/future.png',
     category: 'puppy',
     requiredFields: [
       COMMON_FIELDS.title,
@@ -622,7 +622,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Wanted Puppy Listings',
     description: 'For buyers seeking specific puppies or breeds.',
     price: 'Free',
-    image: '/images/vectors/startListing1.jpg',
+    image: '/images/breeds/wanted.png',
     category: 'wanted',
     requiredFields: [
       {
@@ -694,7 +694,7 @@ export const LISTING_TYPES: ListingType[] = [
     title: 'Other Services Listings',
     description: 'For services like grooming, training, transport, etc.',
     price: '$19/mo',
-    image: '/images/vectors/startListing1.jpg',
+    image: '/images/breeds/full-litter.png',
     category: 'service',
     requiredFields: [
       {
