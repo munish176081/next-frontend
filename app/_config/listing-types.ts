@@ -394,18 +394,18 @@ export const LISTING_TYPES: ListingType[] = [
         validation: { min: 1 },
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'parentImages',
-        label: 'Parent Information (Photos and Videos of Mother and Father)',
-        type: 'file',
-        required: false,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*,video/*',
-          maxSize: 10
-        },
-        fieldCategory: 'dynamic'
-      }
+      // {
+      //   name: 'parentImages',
+      //   label: 'Parent Information (Photos and Videos of Mother and Father)',
+      //   type: 'file',
+      //   required: false,
+      //   fileConfig: {
+      //     multiple: true,
+      //     accept: 'image/*,video/*',
+      //     maxSize: 10
+      //   },
+      //   fieldCategory: 'dynamic'
+      // }
     ]
   },
   {
@@ -546,19 +546,19 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter registration number',
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'parentImages',
-        label: 'Upload Parent Images',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*',
-          maxSize: 5,
-          minCount: 2
-        },
-        fieldCategory: 'dynamic'
-      }
+      // {
+      //   name: 'parentImages',
+      //   label: 'Upload Parent Images',
+      //   type: 'file',
+      //   required: true,
+      //   fileConfig: {
+      //     multiple: true,
+      //     accept: 'image/*',
+      //     maxSize: 5,
+      //     minCount: 2
+      //   },
+      //   fieldCategory: 'dynamic'
+      // }
     ],
     optionalFields: [
       COMMON_FIELDS.description,

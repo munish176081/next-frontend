@@ -14,13 +14,16 @@ interface DynamicFormFieldProps {
   onChange: (name: string, value: any) => void;
   error?: string;
   layout?: 'single' | 'double';
+  category?: 'mother' | 'father';
+  onPendingDeletionsChange?: (fieldName: string, pendingUrls: string[]) => void;
 }
 
-export default function DynamicFormField({ field, value, onChange, error, layout = 'single' }: DynamicFormFieldProps) {
+export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange }: DynamicFormFieldProps) {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [fileValidationErrors, setFileValidationErrors] = useState<string[]>([]);
+  const [pendingDeletions, setPendingDeletions] = useState<string[]>([]); // Track files marked for deletion
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to determine file type from URL
@@ -86,8 +89,38 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   useEffect(() => {
     if (Array.isArray(value)) {
       setUploadedUrls(value);
+      setPendingDeletions([]); // Reset pending deletions when value changes
     }
   }, [value]);
+
+  // Helper function to get current active files (excluding pending deletions)
+  const getActiveFiles = () => {
+    return uploadedUrls.filter(url => !pendingDeletions.includes(url));
+  };
+
+  // Helper function to mark file for deletion
+  const markForDeletion = (url: string) => {
+    setPendingDeletions(prev => [...prev, url]);
+    // Update parent form with active files only
+    const activeFiles = uploadedUrls.filter(u => u !== url);
+    onChange(field.name, activeFiles);
+    // Notify parent component about pending deletions
+    if (onPendingDeletionsChange) {
+      onPendingDeletionsChange(field.name, [...pendingDeletions, url]);
+    }
+  };
+
+  // Helper function to undo deletion
+  const undoDeletion = (url: string) => {
+    setPendingDeletions(prev => prev.filter(u => u !== url));
+    // Update parent form with all files (including restored one)
+    const allFiles = [...uploadedUrls.filter(u => !pendingDeletions.includes(u)), url];
+    onChange(field.name, allFiles);
+    // Notify parent component about updated pending deletions
+    if (onPendingDeletionsChange) {
+      onPendingDeletionsChange(field.name, pendingDeletions.filter(u => u !== url));
+    }
+  };
 
     const { uploadFile, isUploading } = useFileUpload({
     onSuccess: (result) => {
@@ -97,8 +130,22 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       setUploadedUrls(prevUrls => {
         const newUrls = [...prevUrls, result.finalUrl];
         console.log('Updated URLs:', newUrls);
-        // Update parent component with new URLs
-        onChange(field.name, newUrls);
+        
+        // Validate count requirements AFTER upload is complete (using active files)
+        const activeFiles = newUrls.filter(url => !pendingDeletions.includes(url));
+        if (field.fileConfig?.minCount && activeFiles.length < field.fileConfig.minCount) {
+          const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+          setFileValidationErrors([errorMessage]);
+        } else if (field.fileConfig?.maxCount && activeFiles.length > field.fileConfig.maxCount) {
+          const errorMessage = `Maximum ${field.fileConfig.maxCount} file(s) are allowed`;
+          setFileValidationErrors([errorMessage]);
+        } else {
+          // Clear validation errors if count is now valid
+          setFileValidationErrors([]);
+        }
+        
+        // Update parent component with active URLs only
+        onChange(field.name, activeFiles);
         return newUrls;
       });
       
@@ -204,42 +251,25 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       }
     }
 
-    // Validate files
-    const validation = FileValidator.validateFiles(files, validationConfig);
+    // Only validate file types and sizes immediately, NOT count requirements
+    const immediateValidation = FileValidator.validateFiles(files, {
+      ...validationConfig,
+      minCount: undefined, // Don't validate count immediately
+      maxCount: undefined  // Don't validate count immediately
+    });
     
-    // Custom validation for better error messages
-    const customErrors: string[] = [];
+    // Check for immediate validation errors (file type, size, etc.)
+    const immediateErrors = immediateValidation.errors.filter(error => 
+      !error.includes('At least') && 
+      !error.includes('file(s) are required') &&
+      !error.includes('Maximum')
+    );
     
-    // Check file count with more specific messaging for mixed file types
-    if (validationConfig.minCount && files.length < validationConfig.minCount) {
-      const acceptsImages = field.fileConfig?.accept?.includes('image/*');
-      const acceptsVideos = field.fileConfig?.accept?.includes('video/*');
+    if (immediateErrors.length > 0) {
+      console.error('File validation errors:', immediateErrors);
+      setFileValidationErrors(immediateErrors);
       
-      if (acceptsImages && acceptsVideos) {
-        const hasVideos = files.some(file => file.type.startsWith('video/'));
-        const hasImages = files.some(file => file.type.startsWith('image/'));
-        
-        if (hasVideos && !hasImages) {
-          customErrors.push(`At least 1 video file is required`);
-        } else if (hasImages && !hasVideos) {
-          customErrors.push(`At least ${field.fileConfig?.minCount || validationConfig.minCount} image(s) are required`);
-        } else {
-          customErrors.push(`At least ${validationConfig.minCount} file(s) are required`);
-        }
-      } else {
-        customErrors.push(`At least ${validationConfig.minCount} file(s) are required`);
-      }
-    }
-    
-    // Combine custom errors with validation errors
-    const allErrors = [...customErrors, ...validation.errors.filter(error => !error.includes('At least') && !error.includes('file(s) are required'))];
-    
-    if (allErrors.length > 0) {
-      // Show validation errors as toast notifications
-      console.error('File validation errors:', allErrors);
-      setFileValidationErrors(allErrors);
-      
-      allErrors.forEach(error => {
+      immediateErrors.forEach(error => {
         try {
           toast({
             title: "File Upload Error",
@@ -247,14 +277,13 @@ export default function DynamicFormField({ field, value, onChange, error, layout
             variant: "destructive",
           });
         } catch (toastError) {
-          // Fallback to alert if toast fails
           alert(`File Upload Error: ${error}`);
         }
       });
       return;
     }
 
-    // Clear validation errors if validation passes
+    // Clear validation errors for immediate issues
     setFileValidationErrors([]);
 
     // Add new file names to existing ones and mark them as uploading
@@ -380,10 +409,28 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         );
 
       case 'file':
+        const getCategoryStyles = () => {
+          if (category === 'mother') {
+            return 'border-pink-300 bg-pink-50';
+          } else if (category === 'father') {
+            return 'border-blue-300 bg-blue-50';
+          }
+          return 'border-black/20';
+        };
+
+        const getCategoryIcon = () => {
+          if (category === 'mother') {
+            return '👩‍🦰';
+          } else if (category === 'father') {
+            return '👨‍🦰';
+          }
+          return null;
+        };
+
         return (
           <div className="relative">
-            {/* Main Upload Box */}
-            <div className={`border-2 border-black/20 rounded-40 p-4 relative h-[300px] items-center justify-center flex flex-col ${errorClasses} ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
+            {/* Category Badge */}
+            <div className={`border-2 rounded-40 p-4 relative h-[300px] items-center justify-center flex flex-col ${getCategoryStyles()} ${errorClasses} ${isUploading ? 'opacity-50 pointer-events-none' : ''}`}>
               <input
                 ref={fileInputRef}
                 type="file"
@@ -425,35 +472,72 @@ export default function DynamicFormField({ field, value, onChange, error, layout
             {uploadedUrls.length > 0 && (
               <div className="mt-4 w-full border border-gray-200 rounded-lg p-4">
                 <div className="flex justify-between items-center mb-3">
-                  <p className="text-sm font-medium text-gray-700">
-                    Uploaded files ({uploadedUrls.length})
-                  </p>
+                  <div className="flex items-center space-x-2">
+                    <p className="text-sm font-medium text-gray-700">
+                      Uploaded files ({getActiveFiles().length}/{uploadedUrls.length})
+                    </p>
+                    {pendingDeletions.length > 0 && (
+                      <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                        {pendingDeletions.length} marked for deletion
+                      </span>
+                    )}
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
-                      // Use bulk delete for better performance
+                      // Use bulk delete for better performance - only delete active files
+                      const activeFiles = getActiveFiles();
+                      if (activeFiles.length === 0) {
+                        toast({
+                          title: "No Files to Delete",
+                          description: "All files are already marked for deletion.",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+                      
                       bulkDeleteUpload(
-                        { fileUrls: uploadedUrls },
+                        { fileUrls: activeFiles },
                         {
                           onSuccess: (data) => {
                             if (data.success) {
-                              console.log('All files deleted successfully:', data.message);
+                              console.log('All active files marked for deletion successfully:', data.message);
+                              // Mark all active files for deletion (soft delete)
+                              setPendingDeletions(prev => [...prev, ...activeFiles]);
+                              // Notify parent component about pending deletions
+                              if (onPendingDeletionsChange) {
+                                onPendingDeletionsChange(field.name, [...pendingDeletions, ...activeFiles]);
+                              }
+                              setFileNames([]);
+                              setUploadingFiles(new Set());
+                              
+                              // Validate count requirements AFTER bulk deletion
+                              if (field.fileConfig?.minCount && 0 < field.fileConfig.minCount) {
+                                const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+                                setFileValidationErrors([errorMessage]);
+                              } else {
+                                // Clear validation errors if count is now valid
+                                setFileValidationErrors([]);
+                              }
+                              
+                              onChange(field.name, []);
                             } else {
-                              console.error('Some files failed to delete:', data.message);
+                              console.error('Some files failed to mark for deletion:', data.message);
+                              toast({
+                                title: "Bulk Delete Failed",
+                                description: "Some files could not be marked for deletion. Please try again.",
+                                variant: "destructive",
+                              });
                             }
-                            // Clear local state regardless of backend result
-                            setUploadedUrls([]);
-                            setFileNames([]);
-                            setUploadingFiles(new Set());
-                            onChange(field.name, []);
                           },
                           onError: (error) => {
                             console.error('Bulk delete failed:', error);
-                            // Still clear local state even if backend fails
-                            setUploadedUrls([]);
-                            setFileNames([]);
-                            setUploadingFiles(new Set());
-                            onChange(field.name, []);
+                            // Show error but don't mark for deletion
+                            toast({
+                              title: "Bulk Delete Failed",
+                              description: "Failed to mark files for deletion. Please try again.",
+                              variant: "destructive",
+                            });
                           }
                         }
                       );
@@ -472,9 +556,14 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                   {uploadedUrls.map((url, index) => {
                     const fileType = getFileTypeFromUrl(url);
                     const fileName = fileNames[index] || url.split('/').pop() || `File ${index + 1}`;
+                    const isMarkedForDeletion = pendingDeletions.includes(url);
                     
                     return (
-                      <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100 transition-colors">
+                      <div key={index} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
+                        isMarkedForDeletion 
+                          ? 'bg-red-50 border-red-200 opacity-60' 
+                          : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                      }`}>
                         <div className="flex items-center min-w-0 flex-1">
                           <div className={`w-12 h-12 ${getFileTypeBgColor(fileType)} rounded-lg flex items-center justify-center mr-3 flex-shrink-0 overflow-hidden cursor-pointer`} onClick={() => window.open(url, '_blank')}>
                             {fileType === 'image' ? (
@@ -499,72 +588,78 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                             )}
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-medium text-gray-700 truncate">
-                              {fileName}
-                            </p>
                             <div className="flex items-center space-x-2">
-                              <span className="text-xs text-gray-500 capitalize">{fileType}</span>
+                              <p className={`text-sm font-medium truncate ${
+                                isMarkedForDeletion ? 'text-red-600 line-through' : 'text-gray-700'
+                              }`}>
+                                {fileName}
+                              </p>
+                              {isMarkedForDeletion && (
+                                <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+                                  Deleted
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <span className={`text-xs capitalize ${
+                                isMarkedForDeletion ? 'text-red-500' : 'text-gray-500'
+                              }`}>
+                                {fileType}
+                              </span>
                               <span className="text-xs text-gray-400">•</span>
-                              <span className="text-xs text-gray-500 truncate" title={fileName}>
+                              <span className={`text-xs truncate ${
+                                isMarkedForDeletion ? 'text-red-500' : 'text-gray-500'
+                              }`} title={fileName}>
                                 {fileName.length > 20 ? `${fileName.substring(0, 20)}...` : fileName}
                               </span>
                             </div>
                           </div>
                         </div>
                       <div className="flex items-center space-x-2 ml-2">
-                        <a
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
-                          title="Open in new tab"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                          </svg>
-                        </a>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            // Delete from backend first
-                            deleteUpload(
-                              { fileUrl: url },
-                              {
-                                onSuccess: (data) => {
-                                  if (data.success) {
-                                    // Then update local state
-                                    const newUrls = uploadedUrls.filter((_, i) => i !== index);
-                                    setUploadedUrls(newUrls);
-                                    onChange(field.name, newUrls);
-                                    setFileNames(prev => prev.filter((_, i) => i !== index));
-                                  } else {
-                                    console.error('Delete failed:', data.message);
-                                    // Still remove from local state even if backend delete fails
-                                    const newUrls = uploadedUrls.filter((_, i) => i !== index);
-                                    setUploadedUrls(newUrls);
-                                    onChange(field.name, newUrls);
-                                    setFileNames(prev => prev.filter((_, i) => i !== index));
-                                  }
-                                },
-                                onError: (error) => {
-                                  console.error('Failed to delete file:', error);
-                                  // Still remove from local state even if backend delete fails
-                                  const newUrls = uploadedUrls.filter((_, i) => i !== index);
-                                  setUploadedUrls(newUrls);
-                                  onChange(field.name, newUrls);
-                                  setFileNames(prev => prev.filter((_, i) => i !== index));
-                                }
-                              }
-                            );
-                          }}
-                          disabled={isDeleting}
-                          className="text-gray-500 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Remove file"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {!isMarkedForDeletion && (
+                          <>
+                            <a
+                              href={url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-gray-500 hover:text-blue-600 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                              title="Open in new tab"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                              </svg>
+                            </a>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                // Mark file for deletion (soft delete)
+                                markForDeletion(url);
+                              }}
+                              disabled={isDeleting}
+                              className="text-gray-500 hover:text-red-600 p-1 rounded-full hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                              title="Mark for deletion"
+                            >
+                              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                              </svg>
+                            </button>
+                          </>
+                        )}
+                        {isMarkedForDeletion && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Undo deletion
+                              undoDeletion(url);
+                            }}
+                            className="text-red-600 hover:text-green-600 p-1 rounded-full hover:bg-green-50 transition-colors"
+                            title="Undo deletion"
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                          </button>
+                        )}
                       </div>
                     </div>
                   );

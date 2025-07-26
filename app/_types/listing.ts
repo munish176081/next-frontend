@@ -116,6 +116,15 @@ export interface UserListingType extends ListingType {
 }
 
 // Backend DTO types
+export interface ParentInfo {
+  name?: string;
+  breed?: string;
+  color?: string;
+  weight?: string;
+  temperament?: string;
+  healthInfo?: string;
+}
+
 export interface CreateListingDto {
   title: string;
   description?: string;
@@ -139,6 +148,8 @@ export interface CreateListingDto {
   tags?: string[];
   isFeatured?: boolean;
   isPremium?: boolean;
+  motherInfo?: ParentInfo;
+  fatherInfo?: ParentInfo;
   seoData?: {
     slug?: string;
     metaTitle?: string;
@@ -174,6 +185,8 @@ export interface ListingResponseDto {
   isActive: boolean;
   seoData: Record<string, any>;
   analytics: Record<string, any>;
+  motherInfo?: ParentInfo;
+  fatherInfo?: ParentInfo;
   createdAt: Date;
   updatedAt: Date;
   availability: ListingAvailabilityEnum;

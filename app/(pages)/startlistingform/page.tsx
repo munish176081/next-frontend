@@ -3,23 +3,45 @@ import { Suspense, useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import GoBackButton from "@/_components/common/go-back-button";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
-import { 
-  getListingTypeById, 
+import {
+  getListingTypeById,
   getListingTypeByShortCode,
-  ListingField, 
-  getCommonFields, 
-  getContactFields, 
-  getMediaFields, 
-  getDynamicFields 
+  ListingField,
+  getCommonFields,
+  getContactFields,
+  getMediaFields,
+  getDynamicFields
 } from "@/_config/listing-types";
+import { isParentInfoRequired, getParentFields } from "@/_config/parent-fields";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
 import { useGetListingById } from "@/_services/hooks/listings/use-get-listing-by-id";
+import { useDeletePendingFiles } from "@/_services/hooks/upload/use-delete-pending-files";
 import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
+import { LoadingButton } from "@/_components/ui/loading-button";
 
 export const dynamic = 'force-dynamic';
-
+const motherIcon = (<svg
+  className="w-6 h-6 text-blue-600"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+>
+  <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+  <path d="M12 15v4m-2 0h4" />
+  <circle cx="12" cy="8" r="3" />
+</svg>)
+const fatherIcon = (<svg
+  className="w-6 h-6 text-pink-600"
+  viewBox="0 0 24 24"
+  fill="none"
+  stroke="currentColor"
+>
+  <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+  <circle cx="12" cy="8" r="3" />
+  <circle cx="12" cy="18" r="1.5" />
+</svg>);
 const listingTips = [
   {
     title: "1. Upload Clear, Bright Photos",
@@ -77,17 +99,42 @@ function Startlistingform() {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
-  
+  const [showMotherSection, setShowMotherSection] = useState(true);
+  const [showFatherSection, setShowFatherSection] = useState(true);
+
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
+  const deletePendingFilesMutation = useDeletePendingFiles();
   
+  // Track pending deletions across all file fields
+  const [pendingDeletions, setPendingDeletions] = useState<Record<string, string[]>>({});
+
   // Get edit parameters
   const editId = searchParams.get('edit');
   const type = searchParams.get('type');
-  
+
   // Fetch listing data if in edit mode
-  const { data: existingListing, isLoading: isLoadingListing, error: listingError } = useGetListingById(editId);
-  
+  const { data: existingListing, isLoading: isLoadingListing, error: listingError, refetch } = useGetListingById(editId);
+
+  // Force refetch when navigating to edit mode to ensure fresh data
+  useEffect(() => {
+    if (editId) {
+      refetch();
+    }
+  }, [editId, refetch]);
+
+  // Cleanup effect to handle abandoned forms
+  useEffect(() => {
+    return () => {
+      // If user navigates away without submitting, clear pending deletions
+      // This prevents orphaned files from being deleted later
+      if (!isSubmitted && Object.keys(pendingDeletions).length > 0) {
+        console.log('Form abandoned - clearing pending deletions');
+        setPendingDeletions({});
+      }
+    };
+  }, [isSubmitted, pendingDeletions]);
+
   console.log('Edit mode debug:', {
     editId,
     type,
@@ -104,13 +151,13 @@ function Startlistingform() {
   useEffect(() => {
     const listingType = type || searchParams.get('type');
     console.log('URL type parameter:', listingType);
-    
+
     if (listingType) {
       // Try to get listing type by short code first, then by full ID for backward compatibility
       const listingData = getListingTypeByShortCode(listingType) || getListingTypeById(listingType);
       console.log('Resolved listing type:', listingData?.id);
       setSelectedListingType(listingData);
-      
+
       if (listingData) {
         // Initialize form data
         const initialData: Record<string, any> = {};
@@ -121,18 +168,30 @@ function Startlistingform() {
             initialData[field.name] = '';
           }
         });
-        
+
+        // Initialize parent fields
+        const motherFields = getParentFields('mother');
+        const fatherFields = getParentFields('father');
+
+        [...motherFields, ...fatherFields].forEach(field => {
+          if (field.type === 'file') {
+            initialData[field.name] = [];
+          } else {
+            initialData[field.name] = '';
+          }
+        });
+
         // If editing, populate with existing data
         if (existingListing) {
           console.log('Loading existing listing data:', existingListing);
-          
+
           // Populate common fields from dedicated DB columns
           if (existingListing.title) initialData.title = existingListing.title;
           if (existingListing.description) initialData.description = existingListing.description;
           if (existingListing.breed) initialData.breed = existingListing.breed;
           if (existingListing.price) initialData.price = existingListing.price;
           if (existingListing.location) initialData.location = existingListing.location;
-          
+
           // Populate contact info from metadata
           if (existingListing.metadata?.contactInfo) {
             const contact = existingListing.metadata.contactInfo;
@@ -141,7 +200,7 @@ function Startlistingform() {
             if (contact.phone) initialData.contactPhone = contact.phone;
             if (contact.location) initialData.contactLocation = contact.location;
           }
-          
+
           // Populate media files from metadata
           if (existingListing.metadata?.images) {
             initialData.images = existingListing.metadata.images;
@@ -152,7 +211,40 @@ function Startlistingform() {
           if (existingListing.metadata?.documents) {
             initialData.documents = existingListing.metadata.documents;
           }
-          
+
+          // Populate parent media from metadata
+          if (existingListing.metadata?.motherImages) {
+            initialData.motherImages = existingListing.metadata.motherImages;
+          }
+          if (existingListing.metadata?.fatherImages) {
+            initialData.fatherImages = existingListing.metadata.fatherImages;
+          }
+          if (existingListing.metadata?.motherVideos) {
+            initialData.motherVideos = existingListing.metadata.motherVideos;
+          }
+          if (existingListing.metadata?.fatherVideos) {
+            initialData.fatherVideos = existingListing.metadata.fatherVideos;
+          }
+
+          // Populate parent info from dedicated columns
+          if (existingListing.motherInfo) {
+            initialData.motherName = existingListing.motherInfo.name;
+            initialData.motherBreed = existingListing.motherInfo.breed;
+            initialData.motherColor = existingListing.motherInfo.color;
+            initialData.motherWeight = existingListing.motherInfo.weight;
+            initialData.motherTemperament = existingListing.motherInfo.temperament;
+            initialData.motherHealthInfo = existingListing.motherInfo.healthInfo;
+          }
+
+          if (existingListing.fatherInfo) {
+            initialData.fatherName = existingListing.fatherInfo.name;
+            initialData.fatherBreed = existingListing.fatherInfo.breed;
+            initialData.fatherColor = existingListing.fatherInfo.color;
+            initialData.fatherWeight = existingListing.fatherInfo.weight;
+            initialData.fatherTemperament = existingListing.fatherInfo.temperament;
+            initialData.fatherHealthInfo = existingListing.fatherInfo.healthInfo;
+          }
+
           // Populate dynamic fields from the listing's fields
           if (existingListing.fields) {
             Object.entries(existingListing.fields).forEach(([key, value]) => {
@@ -162,7 +254,7 @@ function Startlistingform() {
             });
           }
         }
-        
+
         setFormData(initialData);
       }
     }
@@ -173,13 +265,39 @@ function Startlistingform() {
       ...prev,
       [name]: value
     }));
-    
+
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
+    }
+  };
+
+  // Function to handle pending deletions from file fields
+  const handlePendingDeletions = (fieldName: string, pendingUrls: string[]) => {
+    setPendingDeletions(prev => ({
+      ...prev,
+      [fieldName]: pendingUrls
+    }));
+  };
+
+  // Function to delete all pending files from R2
+  const deleteAllPendingFiles = async () => {
+    const allPendingUrls = Object.values(pendingDeletions).flat();
+    if (allPendingUrls.length === 0) {
+      return { success: true, message: 'No files to delete' };
+    }
+
+    try {
+      const result = await deletePendingFilesMutation.mutateAsync({
+        fileUrls: allPendingUrls
+      });
+      return result;
+    } catch (error) {
+      console.error('Failed to delete pending files:', error);
+      return { success: false, message: 'Failed to delete some files' };
     }
   };
 
@@ -191,7 +309,7 @@ function Startlistingform() {
     // Validate required fields
     selectedListingType.requiredFields.forEach((field: ListingField) => {
       const value = formData[field.name];
-      
+
       if (field.required) {
         if (field.type === 'checkbox') {
           if (!Array.isArray(value) || value.length === 0) {
@@ -227,6 +345,38 @@ function Startlistingform() {
         }
       }
     });
+
+    // Validate parent fields if required
+    if (isParentInfoRequired(selectedListingType.id as ListingTypeEnum)) {
+      const motherFields = getParentFields('mother');
+      const fatherFields = getParentFields('father');
+
+      [...motherFields, ...fatherFields].forEach(field => {
+        const value = formData[field.name];
+
+        if (field.validation.required) {
+          if (field.type === 'file') {
+            const urls = Array.isArray(value) ? value : [];
+            if (field.validation.minCount && urls.length < field.validation.minCount) {
+              newErrors[field.name] = `Please upload at least ${field.validation.minCount} ${field.label.toLowerCase()}`;
+            }
+          } else if (!value || value.toString().trim() === '') {
+            newErrors[field.name] = `${field.label} is required`;
+          }
+        }
+
+        // Length validation for text fields
+        if (field.type !== 'file' && value) {
+          const length = value.toString().length;
+          if (field.validation.minLength && length < field.validation.minLength) {
+            newErrors[field.name] = `${field.label} must be at least ${field.validation.minLength} characters`;
+          }
+          if (field.validation.maxLength && length > field.validation.maxLength) {
+            newErrors[field.name] = `${field.label} must be at most ${field.validation.maxLength} characters`;
+          }
+        }
+      });
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -287,6 +437,31 @@ function Startlistingform() {
         }
       });
 
+      // Extract parent information
+      const motherInfo = {
+        name: formData.motherName,
+        breed: formData.motherBreed,
+        color: formData.motherColor,
+        weight: formData.motherWeight,
+        temperament: formData.motherTemperament,
+        healthInfo: formData.motherHealthInfo
+      };
+
+      const fatherInfo = {
+        name: formData.fatherName,
+        breed: formData.fatherBreed,
+        color: formData.fatherColor,
+        weight: formData.fatherWeight,
+        temperament: formData.fatherTemperament,
+        healthInfo: formData.fatherHealthInfo
+      };
+
+      // Extract parent media
+      const motherImages = formData.motherImages || [];
+      const fatherImages = formData.fatherImages || [];
+      const motherVideos = formData.motherVideos || [];
+      const fatherVideos = formData.fatherVideos || [];
+
       // Also collect all file fields from dynamic fields for media arrays
       const allImages: string[] = [];
       const allVideos: string[] = [];
@@ -310,6 +485,13 @@ function Startlistingform() {
       if (mediaData.videos) allVideos.push(...mediaData.videos);
       if (mediaData.documents) allDocuments.push(...mediaData.documents);
 
+      // Prepare metadata with parent media
+      const metadata: Record<string, any> = {};
+      if (motherImages.length > 0) metadata.motherImages = motherImages;
+      if (fatherImages.length > 0) metadata.fatherImages = fatherImages;
+      if (motherVideos.length > 0) metadata.motherVideos = motherVideos;
+      if (fatherVideos.length > 0) metadata.fatherVideos = fatherVideos;
+
       // Extract price from various possible fields
       const price = commonData.price || formData.pricePerPuppy || formData.fee || null;
 
@@ -323,9 +505,12 @@ function Startlistingform() {
           location: commonData.location,
           fields: dynamicData,
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
+          fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
           images: allImages.length > 0 ? allImages : undefined,
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
           tags: extractTags(commonData, dynamicData),
         };
 
@@ -345,9 +530,12 @@ function Startlistingform() {
           location: commonData.location,
           fields: dynamicData,
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
+          fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
           images: allImages.length > 0 ? allImages : undefined,
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
           tags: extractTags(commonData, dynamicData),
           isFeatured: false,
           isPremium: false,
@@ -355,14 +543,21 @@ function Startlistingform() {
 
         await createListingMutation.mutateAsync(listingData);
       }
-      
+
       // Mark as submitted to prevent further clicks
       setIsSubmitted(true);
-      
+
+      // Delete pending files from R2 after successful form submission
+      const deleteResult = await deleteAllPendingFiles();
+      if (!deleteResult.success) {
+        console.warn('Some pending files could not be deleted:', deleteResult.message);
+        // Don't block navigation, but log the warning
+      }
+
       // Success toast is handled by the mutation
       // Navigate immediately after successful submission
       router.push('/account/listings');
-      
+
     } catch (error) {
       // Error toast is handled by the mutation
       console.error('Error submitting listing:', error);
@@ -385,23 +580,37 @@ function Startlistingform() {
 
   const extractTags = (commonData: Record<string, any>, dynamicData: Record<string, any>): string[] => {
     const tags: string[] = [];
-    
+
     // Add breed as tag
     if (commonData.breed) {
       tags.push(commonData.breed.toLowerCase());
     }
-    
+
     // Add listing type as tag
     if (selectedListingType) {
       tags.push(selectedListingType.id.toLowerCase());
     }
-    
+
     // Add location as tag
     if (commonData.location) {
       tags.push(commonData.location.toLowerCase());
     }
-    
+
     return tags;
+  };
+
+  const isParentSectionComplete = (parentType: 'mother' | 'father'): boolean => {
+    const fields = getParentFields(parentType);
+    return !fields.some(field => {
+      if (field.validation.required) {
+        const value = formData[field.name];
+        if (field.type === 'file') {
+          return !Array.isArray(value) || value.length === 0;
+        }
+        return !value || value.toString().trim() === '';
+      }
+      return false;
+    });
   };
 
   if (isLoadingListing) {
@@ -445,17 +654,17 @@ function Startlistingform() {
     if (fields.length === 0) return null;
 
     // Separate fields that should be in single row vs two columns
-    const singleRowFields = fields.filter(field => 
-      field.type === 'textarea' || 
-      field.type === 'file' || 
+    const singleRowFields = fields.filter(field =>
+      field.type === 'textarea' ||
+      field.type === 'file' ||
       field.name === 'title' ||
       field.name === 'description' ||
       field.name === 'serviceTitle' ||
       field.name === 'registrationNumber' ||
       field.name === 'serviceCategory'
     );
-    
-    const twoColumnFields = fields.filter(field => 
+
+    const twoColumnFields = fields.filter(field =>
       !singleRowFields.includes(field)
     );
 
@@ -473,6 +682,7 @@ function Startlistingform() {
               onChange={handleFieldChange}
               error={errors[field.name]}
               layout="single"
+              onPendingDeletionsChange={handlePendingDeletions}
             />
           ))}
         </div>
@@ -504,92 +714,244 @@ function Startlistingform() {
 
   return (
     <>
-    {/* Loading Overlay */}
-    {(isSubmitting || isSubmitted) && (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg p-6 flex flex-col items-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-black mb-4"></div>
-          <p className="text-lg font-medium">
-            {isSubmitting ? 'Creating your listing...' : 'Redirecting to your listings...'}
-          </p>
+      <section className={`container grid grid-cols-2 gap-8 max-md:p-4 max-md:gap-4 rounded-40 p-8 bg-white relative max-md:grid-cols-1 ${isSubmitting || isSubmitted ? 'pointer-events-none opacity-50' : ''}`}>
+        <div className="absolute left-8 top-8 max-md:top-4 max-md:left-4 max-md:static max-w-max">
+          <GoBackButton />
         </div>
-      </div>
-    )}
-    
-    <section className={`container grid grid-cols-2 gap-8 max-md:p-4 max-md:gap-4 rounded-40 p-8 bg-white relative max-md:grid-cols-1 ${isSubmitting || isSubmitted ? 'pointer-events-none opacity-50' : ''}`}>
-      <div className="absolute left-8 top-8 max-md:top-4 max-md:left-4 max-md:static max-w-max">
-        <GoBackButton />
-      </div>
-      <div className="flex max-md:w-full flex-col items-start max-md:p-0">
-        <span className="text-[32px] font-medium mt-16 max-md:text-[28px] max-md:mt-0">
-          {editId ? 'Edit listing' : 'Start a new listing'}
-        </span>
-        
-        {/* Selected Listing Type Display */}
-        <div className="w-full mt-4 p-4 bg-gray-50 border border-gray-200 rounded-20">
-          <span className="text-sm text-gray-600">Selected Listing Type:</span>
-          <div className="mt-1">
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-medium">{selectedListingType.title}</span>
-              <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">{selectedListingType.price}</span>
-            </div>
-            <p className="text-sm text-gray-600 mt-1">{selectedListingType.description}</p>
-          </div>
-        </div>
+        <div className="flex max-md:w-full flex-col items-start max-md:p-0">
+          <span className="text-[32px] font-medium mt-16 max-md:text-[28px] max-md:mt-0">
+            {editId ? 'Edit listing' : 'Start a new listing'}
+          </span>
 
-        {/* Common Fields */}
-        {commonFields.length > 0 && renderFieldGroup(commonFields, 'Basic Information')}
-
-        {/* Required Dynamic Fields */}
-        {dynamicRequiredFields.length > 0 && renderFieldGroup(dynamicRequiredFields, 'Required Information')}
-
-        {/* Optional Dynamic Fields */}
-        {dynamicOptionalFields.length > 0 && renderFieldGroup(dynamicOptionalFields, 'Additional Information')}
-
-        {/* Contact Details Section */}
-        {contactFields.length > 0 && (
-          <div className="w-full mt-6">
-            <span className="text-[32px] font-medium max-md:text-[28px] max-md:mt-10">Contact Details</span>
-            <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
-              {contactFields.map((field) => (
-                <DynamicFormField
-                  key={field.name}
-                  field={field}
-                  value={formData[field.name]}
-                  onChange={handleFieldChange}
-                  error={errors[field.name]}
-                  layout="double"
-                />
-              ))}
+          {/* Selected Listing Type Display */}
+          <div className="w-full mt-4 p-4 bg-gray-50 border border-gray-200 rounded-20">
+            <span className="text-sm text-gray-600">Selected Listing Type:</span>
+            <div className="mt-1">
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-medium">{selectedListingType.title}</span>
+                <span className="text-sm bg-green-100 text-green-800 px-2 py-1 rounded-full">{selectedListingType.price}</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-1">{selectedListingType.description}</p>
             </div>
           </div>
-        )}
 
-        <button 
-          className="w-full h-20 bg-black text-white text-[22px] rounded-full mt-7 max-md:h-12 max-md:text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          onClick={handleSubmit}
-          disabled={isSubmitting || isSubmitted}
-        >
-          {isSubmitting ? 'Creating...' : isSubmitted ? 'Redirecting...' : 'Submit'}
-        </button>
-      </div>
-      <div className="flex max-md:w-full flex-col gap-6 bg-listingBG bg-cover h-full bg-bottom rounded-40 border border-black/20 max-md:hidden">
-        <div className="flex relative flex-col h-full justify-evenly">
-          <span className="text-5xl font-medium w-full text-center">Create a Winning Ad!</span>
-          {listingTips.map((tip, i) => (
-            <div key={i} className="flex flex-col relative mb-12">
-              <img className={`absolute ${tip.alignRight ? "right-0" : "left-0"} -top-12 z-10`} src={tip.image} alt={`Tip ${i + 1}`}/>
-              <div className={`bg-[#4D4D4D]/15 border border-black/30 backdrop-blur-xl p-8 ${tip.alignRight ? "pr-20 rounded-r-full" : "pl-24 rounded-l-full ml-auto"} w-[calc(100%-60px)] text-white gap-5 min-h-60 flex flex-col justify-center`}>
-                <span className="text-3xl font-medium">{tip.title}</span>
-                <ul className="list-disc list-outside pl-4 text-xl font-medium">
-                  {tip.points.map((point, j) => (<li key={j}>{point}</li>))}
-                </ul>
+          {/* Common Fields */}
+          {commonFields.length > 0 && renderFieldGroup(commonFields, 'Basic Information')}
+
+          {/* Required Dynamic Fields */}
+          {dynamicRequiredFields.length > 0 && renderFieldGroup(dynamicRequiredFields, 'Required Information')}
+
+          {/* Optional Dynamic Fields */}
+          {dynamicOptionalFields.length > 0 && renderFieldGroup(dynamicOptionalFields, 'Additional Information')}
+
+          <div className="w-full mt-8">
+            <h2 className="text-2xl font-semibold text-gray-800 border-b border-gray-100 pb-4">
+              Parent Information
+            </h2>
+
+            {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
+              <div className="space-y-6">
+                {/* Mother Information Section */}
+                <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+                  <div
+                    className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setShowMotherSection(!showMotherSection)}
+                    aria-expanded={showMotherSection}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2.5 bg-pink-50 rounded-lg">
+                        <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                          <circle cx="12" cy="8" r="3" />
+                          <circle cx="12" cy="18" r="1.5" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
+                        <p className="text-sm text-gray-500">Required information about the dam</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                          Required
+                        </span>
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('mother')
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                          {!isParentSectionComplete('mother') ? 'Incomplete' : 'Complete'}
+                        </span>
+                      </div>
+                      <svg
+                        className={`w-5 h-5 text-gray-400 transition-transform ${showMotherSection ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {showMotherSection && (
+                    <div className="border-t border-gray-100 p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {getParentFields('mother').map((field) => (
+                          <DynamicFormField
+                            key={field.name}
+                            field={{
+                              ...field,
+                              required: field.validation.required || false,
+                              label: field.uploadConfig?.customLabel || field.label,
+                              fileConfig: field.type === 'file' ? {
+                                minCount: field.validation.minCount,
+                                maxCount: field.validation.maxCount,
+                                accept: field.uploadConfig?.accept
+                              } : undefined
+                            }}
+                            value={formData[field.name]}
+                            onChange={handleFieldChange}
+                            error={errors[field.name]}
+                            layout="double"
+                            category={field.uploadConfig?.category}
+                            onPendingDeletionsChange={handlePendingDeletions}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Father Information Section */}
+                <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+                  <div
+                    className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                    onClick={() => setShowFatherSection(!showFatherSection)}
+                    aria-expanded={showFatherSection}
+                    role="button"
+                    tabIndex={0}
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="p-2.5 bg-blue-50 rounded-lg">
+                        <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                          <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                          <path d="M12 15v4m-2 0h4" />
+                          <circle cx="12" cy="8" r="3" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 className="text-lg font-medium text-gray-900">Father's Details</h3>
+                        <p className="text-sm text-gray-500">Required information about the sire</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                          Required
+                        </span>
+                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('father')
+                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          }`}>
+                          {!isParentSectionComplete('father') ? 'Incomplete' : 'Complete'}
+                        </span>
+                      </div>
+                      <svg
+                        className={`w-5 h-5 text-gray-400 transition-transform ${showFatherSection ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden="true"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </div>
+                  </div>
+
+                  {showFatherSection && (
+                    <div className="border-t border-gray-100 p-6">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        {getParentFields('father').map((field) => (
+                          <DynamicFormField
+                            key={field.name}
+                            field={{
+                              ...field,
+                              required: field.validation.required || false,
+                              label: field.uploadConfig?.customLabel || field.label,
+                              fileConfig: field.type === 'file' ? {
+                                minCount: field.validation.minCount,
+                                maxCount: field.validation.maxCount,
+                                accept: field.uploadConfig?.accept
+                              } : undefined
+                            }}
+                            value={formData[field.name]}
+                            onChange={handleFieldChange}
+                            error={errors[field.name]}
+                            layout="double"
+                            category={field.uploadConfig?.category}
+                            onPendingDeletionsChange={handlePendingDeletions}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Contact Details Section */}
+          {contactFields.length > 0 && (
+            <div className="w-full mt-6">
+              <span className="text-[32px] font-medium max-md:text-[28px] max-md:mt-10">Contact Details</span>
+              <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
+                {contactFields.map((field) => (
+                  <DynamicFormField
+                    key={field.name}
+                    field={field}
+                    value={formData[field.name]}
+                    onChange={handleFieldChange}
+                    error={errors[field.name]}
+                    layout="double"
+                    onPendingDeletionsChange={handlePendingDeletions}
+                  />
+                ))}
               </div>
             </div>
-          ))}
+          )}
+
+          <LoadingButton
+            className="w-full h-20 bg-black text-white text-[22px] rounded-full mt-7 max-md:h-12 max-md:text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            onClick={handleSubmit}
+            disabled={isSubmitting || isSubmitted}
+            loading={isSubmitting}
+          >
+            Submit
+          </LoadingButton>
         </div>
-      </div>
-    </section>
+        <div className="flex max-md:w-full flex-col gap-6 bg-listingBG bg-cover h-full bg-bottom rounded-40 border border-black/20 max-md:hidden">
+          <div className="flex relative flex-col h-full justify-evenly">
+            <span className="text-5xl font-medium w-full text-center">Create a Winning Ad!</span>
+            {listingTips.map((tip, i) => (
+              <div key={i} className="flex flex-col relative mb-12">
+                <img className={`absolute ${tip.alignRight ? "right-0" : "left-0"} -top-12 z-10`} src={tip.image} alt={`Tip ${i + 1}`} />
+                <div className={`bg-[#4D4D4D]/15 border border-black/30 backdrop-blur-xl p-8 ${tip.alignRight ? "pr-20 rounded-r-full" : "pl-24 rounded-l-full ml-auto"} w-[calc(100%-60px)] text-white gap-5 min-h-60 flex flex-col justify-center`}>
+                  <span className="text-3xl font-medium">{tip.title}</span>
+                  <ul className="list-disc list-outside pl-4 text-xl font-medium">
+                    {tip.points.map((point, j) => (<li key={j}>{point}</li>))}
+                  </ul>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+
+      </section>
     </>
   );
 }

@@ -18,6 +18,7 @@ export const useUpdateListing = () => {
       queryClient.invalidateQueries({ queryKey: ['current-user-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-user-listing', id] });
+      queryClient.invalidateQueries({ queryKey: ['listing', id] }); // Backup invalidation for any remaining usage
       
       toast({
         title: "Success",

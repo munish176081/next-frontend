@@ -9,7 +9,7 @@ async function getListingById(id: string): Promise<ListingResponseDto> {
 
 export const useGetListingById = (id: string | null) => {
   return useQuery({
-    queryKey: ['listing', id],
+    queryKey: ['current-user-listing', id], // Match the query key used by other components
     queryFn: () => getListingById(id!),
     enabled: !!id,
   });
