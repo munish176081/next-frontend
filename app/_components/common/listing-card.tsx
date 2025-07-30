@@ -43,7 +43,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
           <img className="w-4 hidden peer-checked:flex" src="/images/vectors/favorite_Fill.svg" />
         </label>
       )}
-      <Link href={`${Routes.private.account}/listings/${listing.id}`} className="relative w-full h-56 bg-gray-100 overflow-hidden rounded-xl">
+      <Link href={`/explore/${listing.id}`} className="relative w-full h-56 bg-gray-100 overflow-hidden rounded-xl">
         <Image src={image || "/images/placeholder.png"} alt={title || "Listing Image"} fill className="object-cover rounded-md"/>
         {(listingType || badge) && (
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
@@ -54,7 +54,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
           </div>
         )}
       </Link>
-      <Link href={`${Routes.private.account}/listings/${listing.id}`} className="flex flex-col gap-2 mt-4">
+      <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4">
         <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
         {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
         {description && (<Text className="text-base text-[#A6A4A4]">{description}</Text>)}

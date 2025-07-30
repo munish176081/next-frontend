@@ -23,4 +23,22 @@ export {
   type RecentActivityType,
   type ActivityStatsType,
   type ActivityLogFilterParams
-} from "./use-admin-activity-logs"; 
+} from "./use-admin-activity-logs";
+
+// Breeds Management
+export {
+  useAdminBreeds,
+  useAdminBreed,
+  useAdminActiveBreeds,
+  useAdminSearchBreeds,
+  useCreateBreed,
+  useUpdateBreed,
+  useDeleteBreed,
+  useHardDeleteBreed,
+  useToggleBreedStatus,
+  type Breed,
+  type CreateBreedData,
+  type UpdateBreedData,
+  type BreedQueryParams,
+  type BreedsResponse
+} from "./use-admin-breeds"; 

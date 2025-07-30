@@ -1,7 +1,7 @@
 "use client";
 import React, { useRef, useState } from 'react';
 import { ListingCard } from "@/_components/common/listing-card";
-import { CtaBlock } from "../(home)/_components/cta-block";
+import { CtaBlock } from "../../(home)/_components/cta-block";
 import ActionIcon from "@/_components/ui/action-icon";
 import {
   Autoplay,
@@ -10,13 +10,27 @@ import {
   SwiperSlide,
 } from "@/_components/ui/slider";
 import { FreeMode, Thumbs } from 'swiper/modules';
-import { Suspense } from "react";
-import type { Swiper as SwiperType } from 'swiper';
+import { usePublicListing } from "@/_services/hooks/listings/use-public-listing";
+import { useParams } from "next/navigation";
+import { formatListingType } from "@/_utils/listing";
+import { ListingTypeEnum } from "@/_types/listing";
+import Image from 'next/image';
 
-export const dynamic = 'force-dynamic';
-
-function ExploreDetail() {
-  const listings = [
+const ExploreDetail = () => {
+  const params = useParams();
+  const listingId = params.id as string;
+  
+  // Fetch listing data
+  const { data: listing, isLoading, error } = usePublicListing(listingId);
+  
+  // Debug logging
+  console.log('Listing API Response:', listing);
+  console.log('Listing ID:', listingId);
+  console.log('Is Loading:', isLoading);
+  console.log('Error:', error);
+  
+  // Fallback data for similar listings (will be replaced with API call later)
+  const similarListings = [
     {
       id: "1",
       title: "French Bulldog",
@@ -66,18 +80,54 @@ function ExploreDetail() {
       image: "/images/breed-by-type/image.png",
     },
   ];
-  const dogDetails = [
+
+  // Transform API data to match the design expectations
+  const transformedListing = listing ? {
+    title: listing.title || "Untitled Listing",
+    breed: listing.breed || "Unknown Breed",
+    location: listing.location || "Location not specified",
+    price: (() => {
+      if (typeof listing.price === 'number') return listing.price;
+      if (typeof listing.price === 'string') {
+        const parsed = parseFloat(listing.price);
+        return isNaN(parsed) ? 0 : parsed;
+      }
+      return 0;
+    })(),
+    description: listing.description || "No description available",
+    listingType: formatListingType(listing.type),
+    images: (() => {
+      if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
+        return listing.metadata.images;
+      }
+      // Fallback to default images if no images are provided
+      return ["/images/vectors/detailSlide1.png", "/images/vectors/detailSlide2.png", "/images/vectors/detailSlide3.png"];
+    })(),
+    featuredImage: listing.metadata?.featuredImage || "/images/vectors/detailSlide1.png",
+    availability: listing.availability || 'available',
+    user: listing.user,
+    fields: listing.fields || {},
+    motherInfo: listing.motherInfo,
+    fatherInfo: listing.fatherInfo,
+    viewCount: listing.viewCount || 0,
+    favoriteCount: listing.favoriteCount || 0,
+    createdAt: listing.createdAt || new Date(),
+  } : null;
+
+  // Generate dog details from API data
+  const dogDetails = transformedListing ? [
     { label: "Attribute", value: "Details", title: 'true' },
-    { label: "Dog Name", value: "Alika Flores" },
-    { label: "Breed", value: "Golden Retriever" },
-    { label: "Age", value: "Adult" },
-    { label: "Semen type", value: "Chilled" },
-    { label: "Shipping Availability", value: "Yes" },
-    { label: "Collection Date", value: "1978-05-27" },
-    { label: "ANKC Breeder Register", value: "Ex lorem dolorem aut" },
-    { label: "Stud Fee", value: "3" },
-    { label: "Location", value: "Klostergade 12, 3230 Græsted, Denmark" },
-  ];
+    { label: "Dog Name", value: transformedListing.fields?.dogName || transformedListing.title },
+    { label: "Breed", value: transformedListing.breed },
+    { label: "Age", value: transformedListing.fields?.age || "Adult" },
+    { label: "Semen type", value: transformedListing.fields?.semenType || "Chilled" },
+    { label: "Shipping Availability", value: transformedListing.fields?.shippingAvailable ? "Yes" : "No" },
+    { label: "Collection Date", value: transformedListing.fields?.collectionDate || "1978-05-27" },
+    { label: "ANKC Breeder Register", value: transformedListing.fields?.ankcBreederRegister || "Ex lorem dolorem aut" },
+    { label: "Stud Fee", value: transformedListing.fields?.studFee || "3" },
+    { label: "Location", value: transformedListing.location },
+  ] : [];
+
   const testimonials = [
   {
     image: "/images/vectors/profile.jpg",
@@ -156,7 +206,28 @@ const halfStarSvg = (
 const emptyStarSvg = (
   <svg key={Math.random()} width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#E0E0E0"/></svg>
 );
-const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
+const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (error || !transformedListing) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-semibold mb-4">Listing Not Found</h1>
+          <p className="text-gray-600">The listing you're looking for doesn't exist or has been removed.</p>
+        </div>
+      </div>
+    );
+  }
   return (
     <>
     <section className="container relative overflow-hidden p-8 rounded-40 bg-white grid grid-cols-2 gap-8 items-start max-md:grid-cols-1 max-md:p-4 max-md:rounded-[20px]">
@@ -167,60 +238,101 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
             <img className="w-11 max-md:w-6 peer-checked:hidden" src="/images/vectors/favorite.svg" />
             <img className="w-11 max-md:w-6 hidden peer-checked:flex" src="/images/vectors/favorite_Fill.svg" />
           </label>
-          <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0"><span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">Litter Listing</span></div>
-          <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn",}} thumbs={{ swiper: thumbsSwiper }}>
-            <SwiperSlide className="group relative flex flex-col overflow-hidden">
-              <img src='/images/vectors/detailSlide1.png' className="object-cover w-full h-[554px] max-md:h-[260px]"/>
-            </SwiperSlide>
-            <SwiperSlide className="group relative flex flex-col overflow-hidden">
-              <img src='/images/vectors/detailSlide2.png' className="object-cover w-full h-[554px] max-md:h-[260px]"/>
-            </SwiperSlide>
-            <SwiperSlide className="group relative flex flex-col overflow-hidden">
-              <img src='/images/vectors/detailSlide3.png' className="object-cover w-full h-[554px] max-md:h-[260px]"/>
-            </SwiperSlide>
+          <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0">
+            <span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">
+              {transformedListing.listingType}
+            </span>
+          </div>
+          <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn",}} 
+          thumbs={{ swiper: thumbsSwiper }}>
+            {transformedListing.images && transformedListing.images.length > 0 ? (
+              transformedListing.images.map((image: string, index: number) => (
+                <SwiperSlide key={index} className="group relative flex flex-col overflow-hidden">
+                  <Image src={image} className="object-cover w-full h-[554px] max-md:h-[260px]" alt={`${transformedListing.title} - Image ${index + 1}`} width={100} height={100} />
+                </SwiperSlide>
+              ))
+            ) : (
+              <SwiperSlide className="group relative flex flex-col overflow-hidden">
+                <img src="/images/vectors/detailSlide1.png" className="object-cover w-full h-[554px] max-md:h-[260px]" alt="Default listing image" />
+              </SwiperSlide>
+            )}
           </Swiper>
           <ActionIcon rounded="full" className="bg-black !h-16 max-md:hidden !w-16 absolute top-0 bottom-0 m-auto z-10 left-4 swipperPrevBtn"><img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" /></ActionIcon>
           <ActionIcon rounded="full" className="bg-black !h-16 max-md:hidden !w-16 absolute top-0 bottom-0 m-auto z-10 right-4 swipperNextBtn"><img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" /></ActionIcon>
         </div>
         <Swiper onSwiper={setThumbsSwiper} spaceBetween={20} slidesPerView={3} freeMode={true} watchSlidesProgress={true} modules={[FreeMode, Navigation, Thumbs]} className="w-full mt-8 max-md:mt-4">
-          <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary"><img className="w-full h-[238px] max-md:h-[100px] object-cover" src="/images/vectors/detailSlide1.png" /></SwiperSlide>
-          <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary"><img className="w-full h-[238px] max-md:h-[100px] object-cover" src="/images/vectors/detailSlide2.png" /></SwiperSlide>
-          <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary"><img className="w-full h-[238px] max-md:h-[100px] object-cover" src="/images/vectors/detailSlide3.png" /></SwiperSlide>
+          {transformedListing.images && transformedListing.images.length > 0 ? (
+            transformedListing.images.map((image: string, index: number) => (
+              <SwiperSlide key={index} className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary">
+                <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src={image} alt={`${transformedListing.title} - Thumbnail ${index + 1}`} width={100} height={100} />
+              </SwiperSlide>
+            ))
+          ) : (
+            <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary">
+              <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src="/images/vectors/detailSlide1.png" alt="Default listing thumbnail" width={100} height={100} />
+            </SwiperSlide>
+          )}
         </Swiper>
       </div>
       <div className="flex flex-col gap-3 max-md:gap-2">
-        <span className="text-5xl font-medium max-md:text-3xl">Golden Retriever Puppy</span>
-        <span className="text-[22px] text-[#9B9B9B] mt-3 max-md:text-base max-md:mt-1">(GR-2025-001)</span>
-        <span className='max-md:text-xs'>Klostergade 12, 3230 Græsted, Denmark</span>
+        <span className="text-5xl font-medium max-md:text-3xl">{transformedListing.title}</span>
+        <span className="text-[22px] text-[#9B9B9B] mt-3 max-md:text-base max-md:mt-1">({transformedListing.breed}-{new Date(transformedListing.createdAt).getFullYear()}-{String(transformedListing.viewCount).padStart(3, '0')})</span>
+        <span className='max-md:text-xs'>{transformedListing.location}</span>
         <div className="flex gap-2 max-md:gap-1">
-          <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-[#87D78E4D] bg-[#87D78E4D]/30 px-4 rounded-full flex items-center">Available</span>
-          <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-black/20 px-4 rounded-full flex items-center gap-2 max-md:gap-1"><img className='max-md:w-4' src="/images/vectors/verified.png" />Pups4Sale Breeder Conditions Verified</span>
+          <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-[#87D78E4D] bg-[#87D78E4D]/30 px-4 rounded-full flex items-center">
+            {transformedListing.availability === 'available' ? 'Available' : 
+             transformedListing.availability === 'reserved' ? 'Reserved' : 
+             transformedListing.availability === 'sold_out' ? 'Sold Out' : 'Draft'}
+          </span>
+          <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-black/20 px-4 rounded-full flex items-center gap-2 max-md:gap-1">
+            <img className='max-md:w-4' src="/images/vectors/verified.png" />Pups4Sale Breeder Conditions Verified
+          </span>
         </div>
-        <span className="flex items-baseline gap-2"><text className="text-[32px] max-md:text-xl font-medium">$1200.00</text> <s className="text-[#717171] text-[22px] max-md:text-sm font-medium">$2690.00</s><small className="text-[22px] font-medium max-md:text-sm">(Incl. Stud fee - $3)</small></span>
+        <span className="flex items-baseline gap-2">
+          <text className="text-[32px] max-md:text-xl font-medium">
+            ${typeof transformedListing.price === 'number' ? transformedListing.price.toFixed(2) : '0.00'}
+          </text> 
+          <s className="text-[#717171] text-[22px] max-md:text-sm font-medium">
+            ${typeof transformedListing.price === 'number' ? (transformedListing.price * 2.24).toFixed(2) : '0.00'}
+          </s>
+          <small className="text-[22px] font-medium max-md:text-sm">
+            (Incl. Stud fee - ${transformedListing.fields?.studFee || '3'})
+          </small>
+        </span>
         <div className="border border-black/20 p-8 rounded-40 gap-4 flex flex-col mt-4 max-md:p-4 max-md:rounded-[20px] max-md:gap-2 max-md:mt-2">
-          <button className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11"><img className='max-md:w-4' src="/images/vectors/DNA.png" />View DNA Results of Parents</button>
+          <button className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11">
+            <img className='max-md:w-4' src="/images/vectors/DNA.png" />View DNA Results of Parents
+          </button>
           <span className="text-[34px] font-medium mt-3 max-md:text-xl">Schedule Meeting</span>
           <div className="flex gap-4 w-full max-md:gap-2 max-md:grid max-md:grid-cols-2">
             <div className="flex w-full relative">
-              <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0"><img className="max-md:w-4" src="/images/vectors/selectDate.png" /></span>
+              <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
+                <img className="max-md:w-4" src="/images/vectors/selectDate.png" />
+              </span>
               <input className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" type="date" placeholder="Select Date" />
             </div>
             <div className="flex w-full relative">
-              <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0"><img className="max-md:w-4" src="/images/vectors/selectTime.png" /></span>
+              <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
+                <img className="max-md:w-4" src="/images/vectors/selectTime.png" />
+              </span>
               <input className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" type="time" placeholder="Select Time" />
             </div>
           </div>
-          <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2"><img className='max-md:w-3' src="/images/vectors/scheduleMeeting.png" />Schedule meeting</button>
+          <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2">
+            <img className='max-md:w-3' src="/images/vectors/scheduleMeeting.png" />Schedule meeting
+          </button>
           <span className="flex justify-center text-xl font-medium max-md:text-base">Or</span>
-          <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2"><img className='max-md:w-3' src="/images/vectors/liveChat.png" />Live Chat</button>
+          <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2">
+            <img className='max-md:w-3' src="/images/vectors/liveChat.png" />Live Chat
+          </button>
         </div>
       </div>
     </section>
     <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex gap-12 max-md:flex-col-reverse max-md:p-4 max-md:rounded-[20px] max-md:gap-3">
       <div className="flex w-1/2 max-md:w-full flex-col gap-5 max-md:gap-2">
         <span className="text-[40px] font-medium leading-tight max-md:text-[30px]">Detailed Description</span>
-        <span className="text-2xl font-medium leading-tight max-md:text-base">About This Puppy</span>
-        <span className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs">Meet your new best friend! This playful Golden Retriever puppy is raised in a loving home, fully vaccinated, and ready to become a cherished member of your family.</span>
+        <span className="text-2xl font-medium leading-tight max-md:text-base">About This {transformedListing.breed}</span>
+        <span className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs">{transformedListing.description}</span>
         <ul className="text-[21px] text-[#3F3E3E] list-disc list-inside leading-tight max-md:text-xs">
           <li>Ideal for families</li>
           <li>Socialized with children and other pets</li>
@@ -236,7 +348,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
         </div>
       </div>
       <div className="flex w-1/2 max-md:w-full rounded-3xl overflow-hidden max-md:rounded-xl">
-        <img className="w-full h-full object-cover" src="/images/vectors/detailDescription.png" />
+        <img className="w-full h-full object-cover" src={transformedListing.featuredImage} />
       </div>
     </section>
     <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
@@ -247,28 +359,32 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
         <div className="overflow-hidden flex flex-col gap-2 w-full">
           <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
           <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-            <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden"><img className="w-full h-full object-cover" src="/images/vectors/dogParent1.jpg" /></span>
-            <span className="text-[22px] font-medium max-md:text-[18px]">Name: Maximus</span>
+            <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
+              <img className="w-full h-full object-cover" src="/images/vectors/dogParent1.jpg" />
+            </span>
+            <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.fatherInfo?.name || "Maximus"}</span>
             <ul className="list-disc list-inside text-xs text-[#8A8585]">
-              <li>Breed: Purebred Golden Retriever</li>
-              <li>Color: Cream</li>
-              <li>Weight: 32 kg</li>
-              <li>Temperament: Friendly, Calm</li>
-              <li>Health Info: DNA Tested, Hip Scored</li>
+              <li>Breed: {transformedListing.fatherInfo?.breed || "Purebred Golden Retriever"}</li>
+              <li>Color: {transformedListing.fatherInfo?.color || "Cream"}</li>
+              <li>Weight: {transformedListing.fatherInfo?.weight || "32 kg"}</li>
+              <li>Temperament: {transformedListing.fatherInfo?.temperament || "Friendly, Calm"}</li>
+              <li>Health Info: {transformedListing.fatherInfo?.healthInfo || "DNA Tested, Hip Scored"}</li>
             </ul>
           </div>
         </div>
         <div className="overflow-hidden flex flex-col gap-2 w-full">
           <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
           <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-            <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden"><img className="w-full h-full object-top object-cover" src="/images/vectors/dogParent2.jpg" /></span>
-            <span className="text-[22px] font-medium max-md:text-[18px]">Name: Bella</span>
+            <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
+              <img className="w-full h-full object-top object-cover" src="/images/vectors/dogParent2.jpg" />
+            </span>
+            <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.motherInfo?.name || "Bella"}</span>
             <ul className="list-disc list-inside text-xs text-[#8A8585]">
-              <li>Breed: Purebred Golden Retriever</li>
-              <li>Color: Light Gold</li>
-              <li>Weight: 28 kg</li>
-              <li>Temperament: Nurturing, Playful</li>
-              <li>Health Info: DNA Tested, Elbow Scored</li>
+              <li>Breed: {transformedListing.motherInfo?.breed || "Purebred Golden Retriever"}</li>
+              <li>Color: {transformedListing.motherInfo?.color || "Light Gold"}</li>
+              <li>Weight: {transformedListing.motherInfo?.weight || "28 kg"}</li>
+              <li>Temperament: {transformedListing.motherInfo?.temperament || "Nurturing, Playful"}</li>
+              <li>Health Info: {transformedListing.motherInfo?.healthInfo || "DNA Tested, Elbow Scored"}</li>
             </ul>
           </div>
         </div>
@@ -282,8 +398,8 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
         {dogDetails.map((item, index) => (
           <>
             <div key={index} className={`flex justify-center py-3 text-[32px] ${item.title ? 'font-semibold' : ''}`}>
-              <span className={`w-1/3 max-md:w-1/2 max-md:text-base ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
-              <span className={`w-1/3 max-md:w-1/2 max-md:text-base max-md:text-right ${item.title ? 'max-md:text-xl' : ''}`}>{item.value}</span>
+              <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
+              <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-right ${item.title ? 'max-md:text-xl' : ''}`}>{item.value}</span>
             </div>
             <hr className="border-0 h-0.5 bg-gradient-to-r from-white/0 via-[#EFC951] to-white/0" />
           </>
@@ -291,9 +407,16 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
       </div>
     </section>
     <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col items-center bg-aboutOwner bg-no-repeat bg-center bg-container max-md:p-4 max-md:rounded-[20px]">
-    <span className="text-[40px] font-medium relative max-md:text-[32px]"><img className="absolute -left-32 top-6 max-md:w-14 max-md:-left-14" src="/images/vectors/line-12.png" />About Owner</span>
-    <span className="text-xl font-medium relative mt-2 max-md:text-base max-md:mt-1">Yasir Khattak <img className="absolute -bottom-2" src="/images/vectors/line-11.png" /></span>
-    <span className="text-[21px] text-[#7E7E7E] mt-5 max-md:text-sm max-md:mt-3">Member since: 2024-09-06</span>
+    <span className="text-[40px] font-medium relative max-md:text-[32px]">
+      <img className="absolute -left-32 top-6 max-md:w-14 max-md:-left-14" src="/images/vectors/line-12.png" />About Owner
+    </span>
+    <span className="text-xl font-medium relative mt-2 max-md:text-base max-md:mt-1">
+      {transformedListing.user?.name || "Yasir Khattak"} 
+      <img className="absolute -bottom-2" src="/images/vectors/line-11.png" />
+    </span>
+    <span className="text-[21px] text-[#7E7E7E] mt-5 max-md:text-sm max-md:mt-3">
+      Member since: {new Date(transformedListing.createdAt).toLocaleDateString()}
+    </span>
     <div className="flex gap-4 h-[350px] max-md:h-auto w-full mt-7 max-md:flex-wrap max-md:mt-4">
       <div className="w-2/12 max-md:w-[calc(100%/2-8px)] flex flex-col gap-4">
         <span className="overflow-hidden flex w-full h-full rounded-2xl"><img src="/images/vectors/dog1.png" className="w-full h-full object-cover" /></span>
@@ -303,14 +426,6 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
       <div className="overflow-hidden w-5/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog4.png" className="w-full h-full object-cover" /></div>
       <div className="overflow-hidden w-3/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog5.png" className="w-full h-full object-cover" /></div>
     </div>
-    </section>
-    <section className="flex flex-col gap-6 container">
-      <span className="text-[40px] font-medium max-md:text-[32px] flex gap-4 max-md:items-center max-md:gap-2">Yasir's Previous Listings <img className='max-md:w-20 rotate-45' src="/images/vectors/arrow.png" alt="" /></span>
-      <div className="flex gap-6 max-md:flex-col">
-        {listings.map((listing, index) => (
-            <ListingCard key={index} listing={{ ...listing, favourite: true }} />
-        ))}
-      </div>
     </section>
     <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col gap-8 max-md:gap-4 max-md:p-4 max-md:rounded-[20px]">
       <span className="text-[40px] font-medium m-auto">Reviews</span>
@@ -370,7 +485,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
           {testimonials.map((testimonial, index) => (
             <div key={index} className="w-full border border-black/20 rounded-[20px] p-8 gap-6 flex flex-col shadow-review">
               <span className="w-11 h-11 rounded-full overflow-hidden"><img className="w-full h-full object-cover" src={testimonial.image} alt={testimonial.name}/></span>
-              <span className="flex gap-1"><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="half-grad"><stop offset="50%" stop-color="#FFA439"></stop><stop offset="50%" stop-color="#E0E0E0"></stop></linearGradient></defs><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="url(#half-grad)"></path></svg></span>
+              <span className="flex gap-1"><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="half-grad"><stop offset="50%" stop-color="#FFA439"></stop><stop offset="50%" stop-color="#E0E0E0"></stop></linearGradient></defs><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="url(#half-grad)"></path></svg></span>
               <span className="text-[13px]">{testimonial.message}</span>
               <span className="text-[13px] text-[#3D3D3D]">{testimonial.name} <br />{testimonial.title}</span>
             </div>
@@ -381,20 +496,14 @@ const [thumbsSwiper, setThumbsSwiper] = useState<SwiperType | null>(null);
     <section className="flex flex-col gap-6 container">
       <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
       <div className="flex gap-6 max-md:flex-col">
-        {listings.map((listing, index) => (
-            <ListingCard key={index} listing={{ ...listing, favourite: true }} />
+        {similarListings.map((listing) => (
+            <ListingCard key={listing.id} listing={{ ...listing, favourite: true }} />
         ))}
       </div>
     </section>
     <CtaBlock />
     </>
   );
-}
+};
 
-export default function Page() {
-  return (
-    <Suspense fallback={null}>
-      <ExploreDetail />
-    </Suspense>
-  );
-}
+export default ExploreDetail;

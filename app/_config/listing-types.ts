@@ -56,7 +56,7 @@ const COMMON_FIELDS = {
     label: 'Breed',
     type: 'select' as const,
     required: true,
-    options: ['Select Breed', 'Labrador', 'Golden Retriever', 'German Shepherd', 'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Dachshund', 'Yorkshire Terrier', 'Boxer'],
+    // options removed - now using dynamic breed data from backend API
     fieldCategory: 'common' as const
   },
   price: {
@@ -268,18 +268,18 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter video URL',
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'provenLitterImages',
-        label: 'Proven Litter Images (Photos and Images of Mother and Father)',
-        type: 'file',
-        required: false,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*',
-          maxSize: 5
-        },
-        fieldCategory: 'dynamic'
-      }
+      // {
+      //   name: 'provenLitterImages',
+      //   label: 'Proven Litter Images (Photos and Images of Mother and Father)',
+      //   type: 'file',
+      //   required: false,
+      //   fileConfig: {
+      //     multiple: true,
+      //     accept: 'image/*',
+      //     maxSize: 5
+      //   },
+      //   fieldCategory: 'dynamic'
+      // }
     ]
   },
   {
@@ -630,7 +630,7 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Breed Wanted',
         type: 'select',
         required: true,
-        options: ['Select Breed', 'Labrador', 'Golden Retriever', 'German Shepherd', 'Bulldog', 'Poodle', 'Beagle', 'Rottweiler', 'Dachshund', 'Yorkshire Terrier', 'Boxer'],
+        // options removed - now using dynamic breed data from backend API
         fieldCategory: 'dynamic'
       },
       {

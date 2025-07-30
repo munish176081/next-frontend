@@ -11,7 +11,7 @@ export interface ParentFieldValidation {
 
 export interface ParentField {
   name: string;
-  type: 'text' | 'textarea' | 'file';
+  type: 'text' | 'textarea' | 'file' | 'select';
   label: string;
   placeholder?: string;
   validation: ParentFieldValidation;
@@ -65,10 +65,10 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
       },
       {
         name: "motherBreed",
-        type: "text",
+        type: "select",
         label: "Breed",
-        placeholder: "Enter mother's breed",
-        validation: { required: true, minLength: 2, maxLength: 100 }
+        placeholder: "Select mother's breed",
+        validation: { required: true }
       },
       {
         name: "motherColor",
@@ -135,10 +135,10 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
       },
       {
         name: "fatherBreed",
-        type: "text",
+        type: "select",
         label: "Breed",
-        placeholder: "Enter father's breed",
-        validation: { required: true, minLength: 2, maxLength: 100 }
+        placeholder: "Select father's breed",
+        validation: { required: true }
       },
       {
         name: "fatherColor",

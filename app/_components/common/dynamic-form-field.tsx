@@ -7,6 +7,7 @@ import { useBulkDeleteUpload } from '@/_services/hooks/upload/use-bulk-delete-up
 import LocationField from './location-field';
 import { FileValidator } from '@/_utils/file-validation';
 import { toast } from '@/_hooks/use-toast';
+import { BreedSelect } from '@/_components/form-fields/breed-select';
 
 interface DynamicFormFieldProps {
   field: ListingField;
@@ -378,6 +379,21 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         );
 
       case 'select':
+        // Special handling for breed fields that don't have options (using dynamic data)
+        if (field.name === 'breed' || field.name === 'breedWanted' || field.name === 'motherBreed' || field.name === 'fatherBreed' || !field.options) {
+          return (
+            <BreedSelect
+              value={value}
+              onChange={(newValue) => onChange(field.name, newValue)}
+              label={field.label}
+              required={field.required}
+              error={error}
+              showLabel={false}
+              className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+            />
+          );
+        }
+        
         return (
           <select
             value={value || ''}

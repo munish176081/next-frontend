@@ -265,14 +265,16 @@ function UserListingsPage() {
                       <span className="w-20 h-20 flex rounded-xl overflow-hidden">
                         {listing.featuredImage ||
                         listing.metadata?.images?.[0] ? (
-                          <img
-                            className="w-full h-full object-cover"
-                            src={
-                              listing.featuredImage ||
-                              listing.metadata.images[0]
-                            }
-                            alt={listing.title || "Listing"}
-                          />
+                            <Image
+                            width={80}
+                            height={80}
+                             className="w-full h-full object-cover"
+                              src={
+                                listing.featuredImage ||
+                                listing.metadata.images[0]
+                              }
+                              alt={listing.title || "Listing"}
+                            />
                         ) : (
                           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                             <FileText className="w-8 h-8 text-gray-400" />

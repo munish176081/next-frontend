@@ -26,7 +26,8 @@ import {
   Star,
   BookOpen,
   HelpCircle,
-  LogOut
+  LogOut,
+  PawPrint
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -91,6 +92,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/alerts",
         icon: AlertCircle,
         description: "Manage system notifications"
+      },
+      {
+        name: "Breed Management",
+        href: "/admin/breeds",
+        icon: PawPrint,
+        description: "Manage dog breeds"
       }
     ]
   },
@@ -120,6 +127,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/settings",
         icon: Settings,
         description: "System configuration"
+      },
+      {
+        name: "Breed Management",
+        href: "/admin/breeds",
+        icon: PawPrint,
+        description: "Manage dog breeds"
       }
     ]
   },

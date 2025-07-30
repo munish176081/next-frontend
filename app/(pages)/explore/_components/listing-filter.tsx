@@ -20,7 +20,6 @@ import { ListingTypeEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
 import { optionalLocationSchema } from "@/_config/validate-schema";
 import { Routes } from "@/_config/routes";
-import { Suspense } from "react";
 
 export const listingFilterSchema = z
   .object({
@@ -57,6 +56,10 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
   const lng = params.get("lng");
   const minPrice = params.get("minPrice");
   const maxPrice = params.get("maxPrice");
+  const search = params.get("search");
+  const page = params.get("page");
+
+  console.log(params, search);
 
   return {
     ...(types && {
@@ -68,6 +71,8 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
     ...(lng && { lng }),
     ...(minPrice && { minPrice }),
     ...(maxPrice && { maxPrice }),
+    ...(search && { search }),
+    ...(page && { page: Number(page) }),
   };
 };
 
@@ -166,8 +171,8 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
         <div className="flex flex-col gap-2">
           <span className="text-xl font-medium">Gender</span>
           <div className="flex flex-wrap justify-start gap-3">
-            <label className="relative overflow-hidden"><input type="radio" name="genderFilter" className="absolute w-full h-full opacity-0 peer cursor-pointer" /><span className="h-10 px-5 gap-1 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:bg-black peer-checked:text-white"><svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg"><mask id="mask0_3_14246" maskUnits="userSpaceOnUse" x="0" y="0" width="15" height="16"><path d="M0.224609 0.499369H14.9645V15.2393H0.224609V0.499369Z" fill="white"/></mask><g mask="url(#mask0_3_14246)"><path d="M8.82227 6.64062L13.1214 2.34149" stroke="currentColor" stroke-width="1.38186" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M5.44562 14.3179C3.07127 14.3179 1.14648 12.3931 1.14648 10.0187C1.14648 7.64439 3.07127 5.7196 5.44562 5.7196C7.81997 5.7196 9.74475 7.64439 9.74475 10.0187C9.74475 12.3931 7.81997 14.3179 5.44562 14.3179Z" stroke="currentColor" stroke-width="1.38186" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.3574 1.4205H12.8141C13.4921 1.4205 14.0424 1.97079 14.0424 2.64882V5.10547" stroke="currentColor" stroke-width="1.38186" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></g></svg>Male</span></label>
-            <label className="relative overflow-hidden"><input type="radio" name="genderFilter" className="absolute w-full h-full opacity-0 peer cursor-pointer" /><span className="h-10 px-5 gap-1 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:bg-black peer-checked:text-white"><svg width="10" height="15" viewBox="0 0 10 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.17578 9.67554V14.189" stroke="currentColor" stroke-width="1.35403" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M3.36719 12.3838H6.97792" stroke="currentColor" stroke-width="1.35403" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/><path d="M1.26172 5.46288C1.26172 3.30246 3.01293 1.55125 5.17335 1.55125C7.33377 1.55125 9.08498 3.30246 9.08498 5.46288C9.08498 7.6233 7.33377 9.37451 5.17335 9.37451C3.01293 9.37451 1.26172 7.6233 1.26172 5.46288Z" stroke="currentColor" stroke-width="1.35403" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg>Female</span></label>
+            <label className="relative overflow-hidden"><input type="radio" name="genderFilter" className="absolute w-full h-full opacity-0 peer cursor-pointer" /><span className="h-10 px-5 gap-1 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:bg-black peer-checked:text-white"><svg width="15" height="16" viewBox="0 0 15 16" fill="none" xmlns="http://www.w3.org/2000/svg"><mask id="mask0_3_14246" maskUnits="userSpaceOnUse" x="0" y="0" width="15" height="16"><path d="M0.224609 0.499369H14.9645V15.2393H0.224609V0.499369Z" fill="white"/></mask><g mask="url(#mask0_3_14246)"><path d="M8.82227 6.64062L13.1214 2.34149" stroke="currentColor" strokeWidth="1.38186"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M5.44562 14.3179C3.07127 14.3179 1.14648 12.3931 1.14648 10.0187C1.14648 7.64439 3.07127 5.7196 5.44562 5.7196C7.81997 5.7196 9.74475 7.64439 9.74475 10.0187C9.74475 12.3931 7.81997 14.3179 5.44562 14.3179Z" stroke="currentColor" strokeWidth="1.38186"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M10.3574 1.4205H12.8141C13.4921 1.4205 14.0424 1.97079 14.0424 2.64882V5.10547" stroke="currentColor" strokeWidth="1.38186"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></g></svg>Male</span></label>
+            <label className="relative overflow-hidden"><input type="radio" name="genderFilter" className="absolute w-full h-full opacity-0 peer cursor-pointer" /><span className="h-10 px-5 gap-1 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:bg-black peer-checked:text-white"><svg width="10" height="15" viewBox="0 0 10 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.17578 9.67554V14.189" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.36719 12.3838H6.97792" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M1.26172 5.46288C1.26172 3.30246 3.01293 1.55125 5.17335 1.55125C7.33377 1.55125 9.08498 3.30246 9.08498 5.46288C9.08498 7.6233 7.33377 9.37451 5.17335 9.37451C3.01293 9.37451 1.26172 7.6233 1.26172 5.46288Z" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>Female</span></label>
           </div>
         </div>
         <Controller name="breed" control={control} render={({ field }) => (
@@ -256,11 +261,3 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
     </form>
   );
 };
-
-export default function ListingFilterWithSuspense(props: ListingFilterProps) {
-  return (
-    <Suspense fallback={null}>
-      <ListingFilter {...props} />
-    </Suspense>
-  );
-}
