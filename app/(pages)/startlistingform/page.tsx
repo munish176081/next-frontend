@@ -258,26 +258,37 @@ function Startlistingform() {
 
   // Function to handle pending deletions from file fields
   const handlePendingDeletions = (fieldName: string, pendingUrls: string[]) => {
-    setPendingDeletions(prev => ({
-      ...prev,
-      [fieldName]: pendingUrls
-    }));
+    console.log('📝 handlePendingDeletions called:', { fieldName, pendingUrls });
+    setPendingDeletions(prev => {
+      const newState = {
+        ...prev,
+        [fieldName]: pendingUrls
+      };
+      console.log('📊 Updated pending deletions state:', newState);
+      return newState;
+    });
   };
 
   // Function to delete all pending files from R2
   const deleteAllPendingFiles = async () => {
     const allPendingUrls = Object.values(pendingDeletions).flat();
+    console.log('🗑️ Attempting to delete pending files:', allPendingUrls);
+    console.log('📊 Pending deletions state:', pendingDeletions);
+    
     if (allPendingUrls.length === 0) {
+      console.log('✅ No files to delete');
       return { success: true, message: 'No files to delete' };
     }
 
     try {
+      console.log('🚀 Calling deletePendingFilesMutation with URLs:', allPendingUrls);
       const result = await deletePendingFilesMutation.mutateAsync({
         fileUrls: allPendingUrls
       });
+      console.log('✅ Delete result:', result);
       return result;
     } catch (error) {
-      console.error('Failed to delete pending files:', error);
+      console.error('❌ Failed to delete pending files:', error);
       return { success: false, message: 'Failed to delete some files' };
     }
   };

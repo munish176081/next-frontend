@@ -19,7 +19,7 @@ export const useBulkDeleteUpload = () => {
 
   return useMutation<BulkDeleteUploadResponse, Error, BulkDeleteUploadParams>({
     mutationFn: async ({ fileUrls }: BulkDeleteUploadParams) => {
-      const response = await axios.post('/uploads/debug/bulk-delete', {
+      const response = await axios.post('/uploads/bulk-delete', {
         fileUrls,
       });
       return response.data;

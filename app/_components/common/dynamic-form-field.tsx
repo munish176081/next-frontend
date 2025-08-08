@@ -583,7 +583,28 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                         <div className="flex items-center min-w-0 flex-1">
                           <div className={`w-12 h-12 ${getFileTypeBgColor(fileType)} rounded-lg flex items-center justify-center mr-3 flex-shrink-0 overflow-hidden cursor-pointer`} onClick={() => window.open(url, '_blank')}>
                             {fileType === 'image' ? (
-                              <img src={url} alt="Preview" className="w-full h-full object-cover hover:scale-105 transition-transform" />
+                              <>
+                                <img
+                                  src={url}
+                                  alt="Preview"
+                                  className="w-full h-full object-contain"
+                                  onError={(e) => {
+                                    const imgElement = e.currentTarget;
+                                    console.warn('Image failed to load (likely ORB blocked):', url);
+                                    
+                                    // Hide the failed image and show fallback icon immediately
+                                    imgElement.style.display = 'none';
+                                    imgElement.nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                  onLoad={(e) => {
+                                    // Hide fallback icon when image loads successfully
+                                    e.currentTarget.nextElementSibling?.classList.add('hidden');
+                                  }}
+                                />
+                                <div className="w-full h-full flex items-center justify-center cursor-pointer" onClick={() => window.open(url, '_blank')} title="Click to view image in new tab">
+                                  {getFileIcon('image')}
+                                </div>
+                              </>
                             ) : fileType === 'video' ? (
                               <div className="relative w-full h-full flex items-center justify-center group cursor-pointer" onClick={() => window.open(url, '_blank')}>
                                 <video 

@@ -15,10 +15,10 @@ export const useDeleteUpload = () => {
 
   return useMutation<DeleteUploadResponse, Error, DeleteUploadParams>({
     mutationFn: async ({ fileUrl }: DeleteUploadParams) => {
-      const response = await axios.post('/uploads/debug/test-delete', {
-        fileUrl,
+      const response = await axios.delete('/uploads/by-url', {
+        data: { fileUrl },
       });
-      return response.data;
+      return { success: true, message: 'Delete successful' };
     },
     onSuccess: (data) => {
       if (data.success) {

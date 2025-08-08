@@ -27,7 +27,7 @@ export const useDeletePendingFiles = () => {
       }
 
       try {
-        const response = await axios.post('/uploads/debug/bulk-delete', {
+        const response = await axios.post('/uploads/bulk-delete', {
           fileUrls,
         });
         return response.data;
