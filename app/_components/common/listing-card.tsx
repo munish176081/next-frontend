@@ -18,6 +18,7 @@ interface ListingCardProps {
     badge?: string;
     listingType?: string;
     favourite?: boolean;
+    age?: string;
   };
 }
 
@@ -33,6 +34,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
     listingType,
     image,
     favourite,
+    age,
   } = listing;
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6">
@@ -57,6 +59,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
       <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4">
         <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
         {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+        {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>}
         {description && (<Text className="text-base text-[#A6A4A4]">{description}</Text>)}
         <div className="flex items-center justify-between mt-2">
           {price && <Text className="text-2xl">${price}</Text>}

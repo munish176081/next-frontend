@@ -83,6 +83,9 @@ function Startlistingform() {
   const [showMotherSection, setShowMotherSection] = useState(false);
   const [showFatherSection, setShowFatherSection] = useState(false);
 
+  // Add breedId to track the selected breed ID separately
+  const [breedId, setBreedId] = useState<string | undefined>();
+
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
   const deletePendingFilesMutation = useDeletePendingFiles();
@@ -170,6 +173,7 @@ function Startlistingform() {
           if (existingListing.title) initialData.title = existingListing.title;
           if (existingListing.description) initialData.description = existingListing.description;
           if (existingListing.breed) initialData.breed = existingListing.breed;
+          if (existingListing.breedId) setBreedId(existingListing.breedId);
           if (existingListing.price) initialData.price = existingListing.price;
           if (existingListing.location) initialData.location = existingListing.location;
 
@@ -241,11 +245,21 @@ function Startlistingform() {
     }
   }, [searchParams, existingListing]);
 
-  const handleFieldChange = (name: string, value: any) => {
+  const handleFieldChange = (name: string, value: any, breedId?: string) => {
     setFormData(prev => ({
       ...prev,
       [name]: value
     }));
+
+    // Store breed ID separately for breed fields
+    if (name === 'breed' || name === 'motherBreed' || name === 'fatherBreed') {
+      if (breedId) {
+        setBreedId(breedId);
+      } else if (name === 'breed') {
+        // If breed is cleared, also clear breedId
+        setBreedId(undefined);
+      }
+    }
 
     // Clear error when user starts typing
     if (errors[name]) {
@@ -494,6 +508,7 @@ function Startlistingform() {
           description: commonData.description,
           price: price ? parseFloat(price) : undefined,
           breed: commonData.breed,
+          breedId: breedId, // Include breed ID
           location: commonData.location,
           fields: dynamicData,
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
@@ -519,6 +534,7 @@ function Startlistingform() {
           category: getCategoryFromType(selectedListingType.id as ListingTypeEnum),
           price: price ? parseFloat(price) : undefined,
           breed: commonData.breed,
+          breedId: breedId, // Include breed ID
           location: commonData.location,
           fields: dynamicData,
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,

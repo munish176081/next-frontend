@@ -134,6 +134,7 @@ export interface CreateListingDto {
   fields?: Record<string, any>;
   price?: number;
   breed?: string;
+  breedId?: string;
   location?: string;
   expiresAt?: string;
   contactInfo?: {
@@ -173,6 +174,8 @@ export interface ListingResponseDto {
   metadata: Record<string, any>;
   price: number;
   breed: string;
+  breedId?: string;
+  breedName: string;
   location: string;
   expiresAt: Date;
   startedOrRenewedAt: Date;
@@ -206,6 +209,9 @@ export interface ListingSummaryDto {
   title: string;
   price: number;
   breed: string;
+  breedId?: string;
+  breedName: string;
+  age?: string;
   location: string;
   featuredImage: string;
   metadata: Record<string, any>;

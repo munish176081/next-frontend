@@ -10,7 +10,7 @@ import {
   SwiperSlide,
 } from "@/_components/ui/slider";
 import { FreeMode, Thumbs } from 'swiper/modules';
-import { usePublicListing } from "@/_services/hooks/listings/use-public-listing";
+import { usePublicListing, useSimilarListings } from "@/_services/hooks/listings";
 import { useParams } from "next/navigation";
 import { formatListingType } from "@/_utils/listing";
 import { ListingTypeEnum } from "@/_types/listing";
@@ -29,57 +29,27 @@ const ExploreDetail = () => {
   console.log('Is Loading:', isLoading);
   console.log('Error:', error);
   
-  // Fallback data for similar listings (will be replaced with API call later)
-  const similarListings = [
-    {
-      id: "1",
-      title: "French Bulldog",
-      location: "View Puppy",
-      description:
-        "A gentle and playful Golden Retriever pup, fully vaccinated and ready to join your family.",
-      price: 1200,
-      rating: 4.9,
-      reviews: 20,
-      listingType: "Litter Listing",
-      image: "/images/breed-by-type/1.png",
-    },
-    {
-      id: "2",
-      title: "Funny Toy Poodle",
-      location: "Melbourne, VIC",
-      description:
-        "An adorable Frenchie with a friendly personality—perfect for small spaces and big hearts.",
-      price: 1500,
-      rating: 4.7,
-      reviews: 28,
-      listingType: "Semen Listing",
-      image: "/images/breed-by-type/2.png",
-    },
-    {
-      id: "3",
-      title: "Maltese",
-      location: "Brisbane, QLD",
-      description:
-        "A sociable, energetic Lab pup, raised in a loving environment and eager for adventure.",
-      price: 1000,
-      rating: 4.8,
-      reviews: 42,
-      listingType: "Litter Listing",
-      image: "/images/breed-by-type/4.png",
-    },
-    {
-      id: "4",
-      title: "Shih Tzu",
-      location: "Adelaide, SA",
-      description:
-        "An affectionate Cavoodle with a hypoallergenic coat, ideal for families seeking a cuddly companion.",
-      price: 1800,
-      rating: 4.7,
-      reviews: 18,
-      listingType: "Litter Listing",
-      image: "/images/breed-by-type/image.png",
-    },
-  ];
+  // Fetch similar listings based on current listing
+  const { data: similarListingsData } = useSimilarListings({
+    breed: listing?.breed,
+    type: listing?.type,
+    category: listing?.category,
+    excludeId: listingId,
+    limit: 4,
+  });
+
+  // Transform similar listings data to match the expected format
+  const similarListings = similarListingsData?.data?.map(listing => ({
+    id: listing.id,
+    title: listing.title,
+    location: listing.location,
+    description: `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`, // Generate description from available data
+    price: listing.price,
+    rating: 4.5, // Default rating since it's not in the API
+    reviews: Math.floor(Math.random() * 50) + 10, // Random reviews for now
+    listingType: formatListingType(listing.type),
+    image: listing.featuredImage || "/images/breed-by-type/1.png", // Use featured image or fallback
+  })) || [];
 
   // Transform API data to match the design expectations
   const transformedListing = listing ? {
@@ -103,7 +73,9 @@ const ExploreDetail = () => {
       // Fallback to default images if no images are provided
       return ["/images/vectors/detailSlide1.png", "/images/vectors/detailSlide2.png", "/images/vectors/detailSlide3.png"];
     })(),
-    featuredImage: listing.metadata?.featuredImage || "/images/vectors/detailSlide1.png",
+    motherImages: listing.metadata?.motherImages || [],
+    fatherImages: listing.metadata?.fatherImages || [],
+    featuredImage: listing.metadata?.featuredImage ? listing.metadata.featuredImage : listing.metadata.images[0],
     availability: listing.availability || 'available',
     user: listing.user,
     fields: listing.fields || {},
@@ -119,12 +91,12 @@ const ExploreDetail = () => {
     { label: "Attribute", value: "Details", title: 'true' },
     { label: "Dog Name", value: transformedListing.fields?.dogName || transformedListing.title },
     { label: "Breed", value: transformedListing.breed },
-    { label: "Age", value: transformedListing.fields?.age || "Adult" },
-    { label: "Semen type", value: transformedListing.fields?.semenType || "Chilled" },
-    { label: "Shipping Availability", value: transformedListing.fields?.shippingAvailable ? "Yes" : "No" },
-    { label: "Collection Date", value: transformedListing.fields?.collectionDate || "1978-05-27" },
-    { label: "ANKC Breeder Register", value: transformedListing.fields?.ankcBreederRegister || "Ex lorem dolorem aut" },
-    { label: "Stud Fee", value: transformedListing.fields?.studFee || "3" },
+    { label: "Age", value: transformedListing.fields?.age || "Age not specified" },
+    { label: "Semen type", value: transformedListing.fields?.semenType || "Chilled(Static)" },
+    { label: "Shipping Availability", value: transformedListing.fields?.shippingAvailable ? "Yes(Static)" : "No(Static)" },
+    { label: "Collection Date", value: transformedListing.fields?.collectionDate || "1978-05-27(Static)" },
+    { label: "ANKC Breeder Register", value: transformedListing.fields?.ankcBreederRegister || "Ex lorem dolorem aut(Static)" },
+    { label: "Stud Fee", value: transformedListing.fields?.studFee || "3(Static)" },
     { label: "Location", value: transformedListing.location },
   ] : [];
 
@@ -309,13 +281,23 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
               <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
                 <img className="max-md:w-4" src="/images/vectors/selectDate.png" />
               </span>
-              <input className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" type="date" placeholder="Select Date" />
+              <input 
+                className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" 
+                type="date" 
+                placeholder="Select Date"
+                defaultValue={new Date().toISOString().split('T')[0]}
+              />
             </div>
             <div className="flex w-full relative">
               <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
                 <img className="max-md:w-4" src="/images/vectors/selectTime.png" />
               </span>
-              <input className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" type="time" placeholder="Select Time" />
+              <input 
+                className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12" 
+                type="time" 
+                placeholder="Select Time"
+                defaultValue={new Date().toTimeString().slice(0, 5)}
+              />
             </div>
           </div>
           <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2">
@@ -334,9 +316,9 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
         <span className="text-2xl font-medium leading-tight max-md:text-base">About This {transformedListing.breed}</span>
         <span className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs">{transformedListing.description}</span>
         <ul className="text-[21px] text-[#3F3E3E] list-disc list-inside leading-tight max-md:text-xs">
-          <li>Ideal for families</li>
-          <li>Socialized with children and other pets</li>
-          <li>Raised with expert care and training</li>
+          <li>Ideal for families(Static)</li>
+          <li>Socialized with children and other pets(Static)</li>
+          <li>Raised with expert care and training(Static)</li>
         </ul>
         <div className="flex p-2 rounded-full border border-black/20 text-lg gap-4 pr-8 items-center leading-snug max-md:text-xs max-md:gap-2 max-md:pr-2">
           <img className='max-md:w-16' src="/images/vectors/detailDescription1.png" />
@@ -360,7 +342,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
           <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
           <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
             <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
-              <img className="w-full h-full object-cover" src="/images/vectors/dogParent1.jpg" />
+              <img className="w-full h-full object-cover" src={transformedListing.fatherImages[0] || "/images/vectors/dogParent1.jpg"} />
             </span>
             <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.fatherInfo?.name || "Maximus"}</span>
             <ul className="list-disc list-inside text-xs text-[#8A8585]">
@@ -376,7 +358,7 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
           <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
           <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
             <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
-              <img className="w-full h-full object-top object-cover" src="/images/vectors/dogParent2.jpg" />
+              <img className="w-full h-full object-top object-cover" src={transformedListing.motherImages[0] || "/images/vectors/dogParent2.jpg"} />
             </span>
             <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.motherInfo?.name || "Bella"}</span>
             <ul className="list-disc list-inside text-xs text-[#8A8585]">
@@ -410,12 +392,50 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
     <span className="text-[40px] font-medium relative max-md:text-[32px]">
       <img className="absolute -left-32 top-6 max-md:w-14 max-md:-left-14" src="/images/vectors/line-12.png" />About Owner
     </span>
-    <span className="text-xl font-medium relative mt-2 max-md:text-base max-md:mt-1">
-      {transformedListing.user?.name || "Yasir Khattak"} 
-      <img className="absolute -bottom-2" src="/images/vectors/line-11.png" />
-    </span>
+    <div className="flex items-center gap-4 mt-2">
+      {transformedListing.user?.imageUrl && (
+        <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EFC951]">
+          <img 
+            src={transformedListing.user.imageUrl} 
+            alt="Owner Profile" 
+            className="w-full h-full object-cover"
+            onError={(e) => {
+              e.currentTarget.src = "/images/vectors/profile.jpg";
+            }}
+          />
+        </div>
+      )}
+      <div className="flex flex-col">
+        <span className="text-xl font-medium max-md:text-base text-center">
+          {transformedListing.user?.name || "Owner Name Not Available"} 
+          <img className="absolute -bottom-2" src="/images/vectors/line-11.png" />
+        </span>
+        {transformedListing.user?.email && (
+          <span className="text-lg text-[#5A5A5A] mt-1 max-md:text-sm">
+            {transformedListing.user.email}
+          </span>
+        )}
+      </div>
+    </div>
     <span className="text-[21px] text-[#7E7E7E] mt-5 max-md:text-sm max-md:mt-3">
-      Member since: {new Date(transformedListing.createdAt).toLocaleDateString()}
+      Member since: {transformedListing.createdAt ? 
+        (() => {
+          try {
+            const date = new Date(transformedListing.createdAt);
+            if (isNaN(date.getTime())) {
+              return 'Date not available';
+            }
+            return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          } catch (error) {
+            return 'Date not available';
+          }
+        })() : 
+        'Date not available'
+      }
     </span>
     <div className="flex gap-4 h-[350px] max-md:h-auto w-full mt-7 max-md:flex-wrap max-md:mt-4">
       <div className="w-2/12 max-md:w-[calc(100%/2-8px)] flex flex-col gap-4">
@@ -496,9 +516,22 @@ const [thumbsSwiper, setThumbsSwiper] = useState<any>(null);
     <section className="flex flex-col gap-6 container">
       <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
       <div className="flex gap-6 max-md:flex-col">
-        {similarListings.map((listing) => (
-            <ListingCard key={listing.id} listing={{ ...listing, favourite: true }} />
-        ))}
+        {similarListingsData ? (
+          similarListings.length > 0 ? (
+            similarListings.map((listing) => (
+              <ListingCard key={listing.id} listing={{ ...listing, favourite: true }} />
+            ))
+          ) : (
+            <div className="w-full text-center py-8 text-gray-500">
+              No similar listings found at the moment.
+            </div>
+          )
+        ) : (
+          <div className="w-full text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+            Loading similar listings...
+          </div>
+        )}
       </div>
     </section>
     <CtaBlock />

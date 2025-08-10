@@ -12,7 +12,7 @@ import { BreedSelect } from '@/_components/form-fields/breed-select';
 interface DynamicFormFieldProps {
   field: ListingField;
   value: any;
-  onChange: (name: string, value: any) => void;
+  onChange: (name: string, value: any, breedId?: string) => void;
   error?: string;
   layout?: 'single' | 'double';
   category?: 'mother' | 'father';
@@ -384,7 +384,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           return (
             <BreedSelect
               value={value}
-              onChange={(newValue) => onChange(field.name, newValue)}
+              onChange={(newValue, breedId) => onChange(field.name, newValue, breedId)}
               label={field.label}
               required={field.required}
               error={error}

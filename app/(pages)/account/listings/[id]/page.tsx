@@ -34,7 +34,7 @@ const ListingDetail = ({ params: { id: listingId } }: PageProps) => {
   
   // Extract from fields (dynamic data)
   const fields = listing.fields || {};
-  const age = fields.age || fields.dateOfBirth;
+  const age = fields.age; // Use the calculated age from backend
   const minAge = fields.minAge;
   const maxAge = fields.maxAge;
   const budget = fields.budget;
