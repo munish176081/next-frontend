@@ -239,6 +239,33 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         options: ['Air Transport', 'Road Transport'],
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: [
+          'Vet Checked',
+          'Microchip Number Verified',
+          'Purebred Certified',
+          'Flea & Tick Treated',
+          'Worming Treated',
+          'Breeder Conditions Verified'
+        ],
+        fieldCategory: 'dynamic'
       }
     ],
     optionalFields: [
@@ -360,6 +387,33 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         options: ['Air Transport', 'Road Transport'],
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: [
+          'Vet Checked',
+          'Microchip Number Verified',
+          'Purebred Certified',
+          'Flea & Tick Treated',
+          'Worming Treated',
+          'Breeder Conditions Verified'
+        ],
+        fieldCategory: 'dynamic'
       }
     ],
     optionalFields: [
@@ -470,6 +524,33 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         placeholder: 'Enter fee amount',
         validation: { min: 0 },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: [
+          'Vet Checked',
+          'Microchip Number Verified',
+          'Purebred Certified',
+          'Flea & Tick Treated',
+          'Worming Treated',
+          'Breeder Conditions Verified'
+        ],
         fieldCategory: 'dynamic'
       }
     ],
@@ -613,6 +694,33 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'textarea',
         required: false,
         placeholder: 'Enter deposit information and amount',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: [
+          'Vet Checked',
+          'Microchip Number Verified',
+          'Purebred Certified',
+          'Flea & Tick Treated',
+          'Worming Treated',
+          'Breeder Conditions Verified'
+        ],
         fieldCategory: 'dynamic'
       }
     ]

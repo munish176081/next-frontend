@@ -208,6 +208,7 @@ export interface ListingSummaryDto {
   category: ListingCategoryEnum;
   title: string;
   price: number;
+  description: string;
   breed: string;
   breedId?: string;
   breedName: string;

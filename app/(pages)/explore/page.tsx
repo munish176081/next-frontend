@@ -37,7 +37,7 @@ const ExploreListings = () => {
   const transformedListings = listingsResponse?.data?.map((listing) => ({
     id: listing.id,
     title: listing.title,
-    description: listing.metadata?.description || "A wonderful puppy looking for a loving home.",
+    description: listing?.description || "A wonderful puppy looking for a loving home.",
     price: listing.price,
     location: listing.location,
     rating: 4.8, // Default rating since API doesn't provide this yet

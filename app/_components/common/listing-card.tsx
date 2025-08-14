@@ -60,7 +60,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
         <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
         {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
         {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>}
-        {description && (<Text className="text-base text-[#A6A4A4]">{description}</Text>)}
+        {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         <div className="flex items-center justify-between mt-2">
           {price && <Text className="text-2xl">${price}</Text>}
           <div className="flex items-center gap-1 text-base">{rating && <span>{rating}</span>}<Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />{reviews !== undefined && <span>({reviews})</span>}</div>
