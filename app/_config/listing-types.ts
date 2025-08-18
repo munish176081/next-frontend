@@ -1,3 +1,5 @@
+import { getBadgeFormOptions } from './badge-config';
+
 export interface ListingField {
   name: string;
   label: string;
@@ -257,15 +259,9 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Select Badges',
         type: 'checkbox',
         required: false,
-        options: [
-          'Vet Checked',
-          'Microchip Number Verified',
-          'Purebred Certified',
-          'Flea & Tick Treated',
-          'Worming Treated',
-          'Breeder Conditions Verified'
-        ],
-        fieldCategory: 'dynamic'
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
       }
     ],
     optionalFields: [
@@ -405,15 +401,9 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Select Badges',
         type: 'checkbox',
         required: false,
-        options: [
-          'Vet Checked',
-          'Microchip Number Verified',
-          'Purebred Certified',
-          'Flea & Tick Treated',
-          'Worming Treated',
-          'Breeder Conditions Verified'
-        ],
-        fieldCategory: 'dynamic'
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
       }
     ],
     optionalFields: [
@@ -543,15 +533,9 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Select Badges',
         type: 'checkbox',
         required: false,
-        options: [
-          'Vet Checked',
-          'Microchip Number Verified',
-          'Purebred Certified',
-          'Flea & Tick Treated',
-          'Worming Treated',
-          'Breeder Conditions Verified'
-        ],
-        fieldCategory: 'dynamic'
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
       }
     ],
     optionalFields: [
@@ -713,14 +697,7 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Select Badges',
         type: 'checkbox',
         required: false,
-        options: [
-          'Vet Checked',
-          'Microchip Number Verified',
-          'Purebred Certified',
-          'Flea & Tick Treated',
-          'Worming Treated',
-          'Breeder Conditions Verified'
-        ],
+        options: getBadgeFormOptions(),
         fieldCategory: 'dynamic'
       }
     ]

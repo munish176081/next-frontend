@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
 import { ListingField } from '@/_config/listing-types';
 import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { useDeleteUpload } from '@/_services/hooks/upload/use-delete-upload';
@@ -8,6 +8,9 @@ import LocationField from './location-field';
 import { FileValidator } from '@/_utils/file-validation';
 import { toast } from '@/_hooks/use-toast';
 import { BreedSelect } from '@/_components/form-fields/breed-select';
+
+// Lazy load BadgeSelector to avoid SSR issues
+const BadgeSelector = lazy(() => import('@/_components/ui/badge/badge-selector'));
 
 interface DynamicFormFieldProps {
   field: ListingField;
@@ -748,74 +751,23 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
       case 'checkbox':
         // Check if this is a badge field (has badge-related options)
-        const isBadgeField = field.options?.some((option: any) => {
-          const label = typeof option === 'string' ? option : option.label;
-          return label && (
-            label.includes('Vet Checked') ||
-            label.includes('Microchip') ||
-            label.includes('Purebred') ||
-            label.includes('Flea') ||
-            label.includes('Worming') ||
-            label.includes('Breeder')
-          );
-        });
+        const isBadgeField = field.name === 'badges';
 
         if (isBadgeField) {
-          // Render badge-style checkboxes with image background
           return (
-            <div className="flex justify-between gap-2">
-              {field.options?.map((option, index) => {
-                const optionValue = typeof option === 'string' ? option : option.value;
-                const optionLabel = typeof option === 'string' ? option : option.label;
-                return (
-                  <label key={index} className="relative cursor-pointer flex flex-col items-center">
-                    <input
-                      type="checkbox"
-                      checked={Array.isArray(value) && value.includes(optionValue)}
-                      onChange={() => handleCheckboxChange(optionValue)}
-                      className="hidden"
-                    />
-                    
-                    <div className="relative mb-2">
-                      <img 
-                        src="/images/vectors/detailDescription3.png" 
-                        alt={optionLabel}
-                        className={`
-                          w-20 h-20 object-contain transition-all duration-200
-                          ${Array.isArray(value) && value.includes(optionValue)
-                            ? 'opacity-100 scale-105' 
-                            : 'opacity-60 hover:opacity-80'
-                          }
-                        `}
-                      />
-                      
-                      {/* Text overlay */}
-                      {/* <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-xs font-medium text-black text-center px-1">
-                          {optionLabel}
-                        </span>
-                      </div> */}
-                      
-                      {/* Checkmark overlay for selected state */}
-                      {Array.isArray(value) && value.includes(optionValue) && (
-                        <div className="absolute inset-0 flex items-center justify-center">
-                          <div className="bg-green-500 rounded-full p-1">
-                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    
-                    {/* Text below the badge */}
-                    <span className="text-xs font-medium text-center text-gray-700 max-w-[80px] leading-tight">
-                      {optionLabel}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
+            <Suspense fallback={<div className="flex justify-center p-4">Loading badges...</div>}>
+              <BadgeSelector
+                value={Array.isArray(value) ? value : []}
+                onChange={(badgeValues) => {
+                  console.log('BadgeSelector onChange called with:', badgeValues);
+                  console.log('Field name:', field.name);
+                  onChange(field.name, badgeValues);
+                }}
+                size="md"
+                showCategories={false}
+                maxSelection={10}
+              />
+            </Suspense>
           );
         }
 

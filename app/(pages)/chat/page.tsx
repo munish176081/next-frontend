@@ -2,7 +2,7 @@
 import React from 'react';
 import { ChatInterface } from '@/_components/chat/ChatInterface';
 
-export default function InboxPage() {
+export default function ChatPage() {
   // For now, using a hardcoded user ID - this should come from your auth system
   const userId = "test-user-id"; // Replace with actual user ID from your auth
 

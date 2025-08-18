@@ -1,5 +1,7 @@
 "use client";
 
+import { useRouter } from 'next/navigation';
+
 const rows = [
   {
     plan: "Premium Plan",
@@ -65,6 +67,8 @@ const statusStyles: Record<string, string> = {
 };
 
 export const UserDashboardContent = () => {
+  const router = useRouter();
+
   return (
     <div className="flex flex-col w-full gap-4 max-md:flex-col">
       <div className="flex flex-col w-full gap-4 max-md:flex-col">
@@ -159,7 +163,7 @@ export const UserDashboardContent = () => {
                 </div>
                 <span className="text-[9px] whitespace-nowrap text-ellipsis block overflow-hidden text-[#888787]">Thank You for sharing this information! I am so exited</span>
               </div>
-              <button className="w-full h-16 bg-black text-white text-[22px] rounded-full max-md:h-12 max-md:text-base">View Inbox</button>
+              <button className="w-full h-16 bg-black text-white text-[22px] rounded-full max-md:h-12 max-md:text-base" onClick={() => router.push('/account/inbox')}>View Inbox</button>
             </div>
           </div>
         </div>

@@ -3,7 +3,7 @@ import { axios } from '@/_lib/axios';
 import { ListingResponseDto } from '@/_types/listing';
 
 async function getListingById(id: string): Promise<ListingResponseDto> {
-  const { data } = await axios.get(`/users/listings/${id}`);
+  const { data } = await axios.get(`/listings/${id}`);
   return data;
 }
 

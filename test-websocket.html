@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Real-time Chat</title>
+    <script src="https://cdn.socket.io/4.7.4/socket.io.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .connected { background: #d4edda; color: #155724; }
+        .disconnected { background: #f8d7da; color: #721c24; }
+        .message { background: #f8f9fa; padding: 10px; margin: 5px 0; border-radius: 5px; }
+        .input-group { margin: 10px 0; }
+        input, button { padding: 8px; margin: 5px; }
+        .logs { background: #f8f9fa; border: 1px solid #dee2e6; padding: 15px; height: 400px; overflow-y: auto; }
+        .debug-info { background: #e9ecef; padding: 15px; margin: 10px 0; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <h1>🔌 WebSocket Real-time Chat Test</h1>
+    
+    <div class="debug-info">
+        <h3>🔍 Debug Information:</h3>
+        <p><strong>Current URL:</strong> <span id="currentUrl">Loading...</span></p>
+        <p><strong>Available Cookies:</strong> <span id="availableCookies">Loading...</span></p>
+        <p><strong>LocalStorage Keys:</strong> <span id="localStorageKeys">Loading...</span></p>
+        <p><strong>Session ID Found:</strong> <span id="sessionIdFound">None</span></p>
+    </div>
+    
+    <div class="input-group">
+        <label for="sessionId">Session ID:</label>
+        <input type="text" id="sessionId" placeholder="Enter session ID" style="width: 300px;">
+        <button onclick="connect()">Connect</button>
+        <button onclick="disconnect()">Disconnect</button>
+        <button onclick="autoDetectSession()">Auto-Detect Session</button>
+        <button onclick="testBackendConnectivity()">Test Backend</button>
+    </div>
+    
+    <div id="status" class="status disconnected">
+        Status: Disconnected
+    </div>
+    
+    <div class="input-group">
+        <label for="conversationId">Conversation ID:</label>
+        <input type="text" id="conversationId" placeholder="Enter conversation ID" style="width: 300px;">
+        <button onclick="joinRoom()">Join Room</button>
+        <button onclick="leaveRoom()">Leave Room</button>
+    </div>
+    
+    <div class="input-group">
+        <label for="messageContent">Test Message:</label>
+        <input type="text" id="messageContent" placeholder="Type a test message" style="width: 300px;">
+        <button onclick="sendTestMessage()">Send Message</button>
+        <button onclick="testTyping()">Test Typing</button>
+    </div>
+    
+    <div class="input-group">
+        <h3>Connection Info:</h3>
+        <p>Socket ID: <span id="socketId">None</span></p>
+        <p>Current Room: <span id="currentRoom">None</span></p>
+        <p>Connected Users: <span id="userCount">0</span></p>
+    </div>
+    
+    <div class="input-group">
+        <h3>Real-time Events:</h3>
+        <div id="logs" class="logs"></div>
+    </div>
+
+    <script>
+        let socket = null;
+        let currentRoom = null;
+        
+        function log(message, type = 'info') {
+            const logs = document.getElementById('logs');
+            const timestamp = new Date().toLocaleTimeString();
+            const color = type === 'error' ? 'red' : type === 'success' ? 'green' : 'black';
+            logs.innerHTML += `<div class="message" style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logs.scrollTop = logs.scrollHeight;
+        }
+        
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            if (connected) {
+                status.className = 'status connected';
+                status.textContent = 'Status: Connected';
+            } else {
+                status.className = 'status disconnected';
+                status.textContent = 'Status: Disconnected';
+            }
+        }
+        
+        function updateDebugInfo() {
+            // Update current URL
+            document.getElementById('currentUrl').textContent = window.location.href;
+            
+            // Update available cookies
+            document.getElementById('availableCookies').textContent = document.cookie || 'No cookies found';
+            
+            // Update localStorage keys
+            const keys = Object.keys(localStorage);
+            document.getElementById('localStorageKeys').textContent = keys.length > 0 ? keys.join(', ') : 'No localStorage keys found';
+            
+            // Update session ID found
+            const sessionId = getSessionId();
+            document.getElementById('sessionIdFound').textContent = sessionId || 'None';
+        }
+        
+        function getSessionId() {
+            // Try cookies first - this is how the backend session system works
+            const cookies = document.cookie.split(';');
+            const cookieNames = ['connect.sid', 'sessionId', 'sid', 'auth_token'];
+            
+            for (const cookie of cookies) {
+                const [name, value] = cookie.trim().split('=');
+                if (cookieNames.includes(name)) {
+                    console.log('Found session ID in cookies:', name, value);
+                    return value;
+                }
+            }
+            
+            // Try localStorage as fallback
+            const localSessionId = localStorage.getItem('sessionId');
+            if (localSessionId) {
+                console.log('Found session ID in localStorage:', localSessionId);
+                return localSessionId;
+            }
+            
+            return null;
+        }
+        
+        function autoDetectSession() {
+            const sessionId = getSessionId();
+            if (sessionId) {
+                document.getElementById('sessionId').value = sessionId;
+                log(`✅ Auto-detected session ID: ${sessionId}`, 'success');
+            } else {
+                log('❌ No session ID found automatically', 'error');
+            }
+        }
+        
+        function connect() {
+            const sessionId = document.getElementById('sessionId').value;
+            if (!sessionId) {
+                alert('Please enter a session ID');
+                return;
+            }
+            
+            try {
+                log('Attempting to connect to WebSocket server...', 'info');
+                log(`Using session ID: ${sessionId}`, 'info');
+                
+                socket = io('http://localhost:3001', {
+                    auth: {
+                        sessionId: sessionId
+                    },
+                    transports: ['websocket'],
+                    withCredentials: true
+                });
+                
+                socket.on('connect', () => {
+                    log('✅ Connected to WebSocket server!', 'success');
+                    log(`Socket ID: ${socket.id}`, 'info');
+                    document.getElementById('socketId').textContent = socket.id;
+                    updateStatus(true);
+                });
+                
+                socket.on('disconnect', () => {
+                    log('❌ Disconnected from WebSocket server', 'error');
+                    document.getElementById('socketId').textContent = 'None';
+                    document.getElementById('currentRoom').textContent = 'None';
+                    updateStatus(false);
+                });
+                
+                socket.on('connect_error', (error) => {
+                    log(`❌ Connection error: ${JSON.stringify(error)}`, 'error');
+                    updateStatus(false);
+                });
+                
+                socket.on('error', (error) => {
+                    log(`❌ WebSocket error: ${JSON.stringify(error)}`, 'error');
+                });
+                
+                socket.on('joined_conversation', (data) => {
+                    log(`✅ Joined conversation: ${data.conversationId}`, 'success');
+                    currentRoom = data.conversationId;
+                    document.getElementById('currentRoom').textContent = data.conversationId;
+                });
+                
+                socket.on('left_conversation', (data) => {
+                    log(`👋 Left conversation: ${data.conversationId}`, 'info');
+                    if (currentRoom === data.conversationId) {
+                        currentRoom = null;
+                        document.getElementById('currentRoom').textContent = 'None';
+                    }
+                });
+                
+                socket.on('user_typing', (data) => {
+                    log(`⌨️ User typing: ${data.username} is ${data.isTyping ? 'typing' : 'not typing'} in ${data.conversationId}`, 'info');
+                });
+                
+                socket.on('new_message', (data) => {
+                    log(`📨 New message received: "${data.message.content}" from ${data.senderId} in ${data.conversationId}`, 'success');
+                });
+                
+                socket.on('message_sent', (data) => {
+                    log(`✅ Message sent confirmation: "${data.message.content}" in ${data.conversationId}`, 'success');
+                });
+                
+                socket.on('user_status_changed', (data) => {
+                    log(`👤 User status changed: ${data.userId} is now ${data.isOnline ? 'online' : 'offline'}`, 'info');
+                });
+                
+            } catch (error) {
+                log(`❌ Error connecting: ${error.message}`, 'error');
+            }
+        }
+        
+        function disconnect() {
+            if (socket) {
+                socket.disconnect();
+                socket = null;
+                log('🔌 Disconnected from WebSocket server', 'info');
+            }
+        }
+        
+        function joinRoom() {
+            if (!socket) {
+                alert('Please connect first');
+                return;
+            }
+            
+            const conversationId = document.getElementById('conversationId').value;
+            if (!conversationId) {
+                alert('Please enter a conversation ID');
+                return;
+            }
+            
+            socket.emit('join_conversation', { conversationId });
+            log(`🚪 Joining conversation room: ${conversationId}`, 'info');
+        }
+        
+        function leaveRoom() {
+            if (!socket || !currentRoom) {
+                alert('Not in any room');
+                return;
+            }
+            
+            socket.emit('leave_conversation', { conversationId: currentRoom });
+            log(`🚪 Leaving conversation room: ${currentRoom}`, 'info');
+        }
+        
+        function sendTestMessage() {
+            if (!socket || !currentRoom) {
+                alert('Please connect and join a room first');
+                return;
+            }
+            
+            const content = document.getElementById('messageContent').value;
+            if (!content.trim()) {
+                alert('Please enter a message');
+                return;
+            }
+            
+            // Simulate sending a message (this would normally go through your API)
+            log(`📤 Simulating message send: "${content}" to room ${currentRoom}`, 'info');
+            
+            // Clear input
+            document.getElementById('messageContent').value = '';
+        }
+        
+        function testTyping() {
+            if (!socket || !currentRoom) {
+                alert('Please connect and join a room first');
+                return;
+            }
+            
+            socket.emit('typing_start', { conversationId: currentRoom });
+            log(`⌨️ Started typing in room ${currentRoom}`, 'info');
+            
+            setTimeout(() => {
+                socket.emit('typing_stop', { conversationId: currentRoom });
+                log(`⌨️ Stopped typing in room ${currentRoom}`, 'info');
+            }, 3000);
+        }
+
+        function testBackendConnectivity() {
+            const sessionId = document.getElementById('sessionId').value;
+            if (!sessionId) {
+                alert('Please enter a session ID first to test backend connectivity.');
+                return;
+            }
+
+            log('🧪 Testing backend connectivity...', 'info');
+            log('Backend URL: http://localhost:3001', 'info');
+            log('Session ID: ' + sessionId, 'info');
+
+            fetch('http://localhost:3001/api/v1/chat/test-websocket')
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    log('✅ Backend HTTP endpoint is reachable', 'success');
+                    log('📡 Backend response: ' + JSON.stringify(data), 'info');
+                })
+                .catch(error => {
+                    log('❌ Backend HTTP endpoint is not reachable: ' + error.message, 'error');
+                    log('💡 Make sure your backend is running on port 3001', 'error');
+                });
+        }
+        
+        // Auto-fill session ID from localStorage if available
+        window.onload = function() {
+            updateDebugInfo();
+            
+            const savedSessionId = localStorage.getItem('sessionId');
+            if (savedSessionId) {
+                document.getElementById('sessionId').value = savedSessionId;
+            }
+            
+            // Test with a sample session ID if none found
+            if (!savedSessionId) {
+                document.getElementById('sessionId').value = 'test-session-123';
+                log('💡 Using test session ID. Replace with your actual session ID for real testing.', 'info');
+            }
+            
+            // Add global test function for debugging
+            window.testWebSocketConnection = function() {
+                log('🧪 Testing WebSocket connection...', 'info');
+                log('Backend URL: http://localhost:3001', 'info');
+                log('Session ID: ' + document.getElementById('sessionId').value, 'info');
+                
+                // Test if backend is reachable
+                fetch('http://localhost:3001/api/v1/chat/test-websocket')
+                    .then(response => {
+                        log('✅ Backend HTTP endpoint is reachable', 'success');
+                        return response.json();
+                    })
+                    .then(data => {
+                        log('📡 Backend response: ' + JSON.stringify(data), 'info');
+                    })
+                    .catch(error => {
+                        log('❌ Backend HTTP endpoint is not reachable: ' + error.message, 'error');
+                        log('💡 Make sure your backend is running on port 3001', 'error');
+                    });
+            };
+            
+            log('💡 Use testWebSocketConnection() in console to test backend connectivity', 'info');
+        };
+        
+        // Update debug info every 5 seconds
+        setInterval(updateDebugInfo, 5000);
+    </script>
+</body>
+</html> 

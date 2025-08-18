@@ -14,6 +14,6 @@ export { useFavoriteListing } from "./use-favorite-listing";
 export { usePublishListing } from "./use-publish-listing";
 export { useUpdateAvailability } from "./use-update-availability";
 export { useListingStats } from "./use-listing-stats";
-export { useGlobalStats } from "./use-global-stats";
+export { useGlobalListingStats } from "./use-global-stats";
 export { useContactListing } from "./use-contact-listing";
 export { useGetListingById } from "./use-get-listing-by-id";

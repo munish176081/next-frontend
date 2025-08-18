@@ -246,27 +246,20 @@ function Startlistingform() {
   }, [searchParams, existingListing]);
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    console.log(`Field change - ${name}:`, value, 'Breed ID:', breedId);
+    
+    setFormData(prev => {
+      const newData = { ...prev, [name]: value };
+      console.log('Updated form data:', newData);
+      return newData;
+    });
 
-    // Store breed ID separately for breed fields
-    if (name === 'breed' || name === 'motherBreed' || name === 'fatherBreed') {
-      if (breedId) {
-        setBreedId(breedId);
-      } else if (name === 'breed') {
-        // If breed is cleared, also clear breedId
-        setBreedId(undefined);
-      }
-    }
+    // Clear error for this field
+    setErrors(prev => ({ ...prev, [name]: '' }));
 
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({
-        ...prev,
-        [name]: ''
-      }));
+    // Handle breed selection
+    if (name === 'breed' && breedId) {
+      setBreedId(breedId);
     }
   };
 
@@ -442,6 +435,13 @@ function Startlistingform() {
           dynamicData[field.name] = formData[field.name];
         }
       });
+
+      // Debug logging for dynamic fields
+      console.log('Dynamic fields being submitted:', dynamicFields);
+      console.log('Form data for dynamic fields:', formData);
+      console.log('Processed dynamic data:', dynamicData);
+      console.log('Badges data:', formData.badges);
+      console.log('DNA Results data:', formData.dnaResults);
 
       // Extract parent information
       const motherInfo = {
@@ -669,6 +669,7 @@ function Startlistingform() {
       field.name === 'description' ||
       field.name === 'serviceTitle' ||
       field.name === 'registrationNumber' ||
+      field.name === 'badges' ||
       field.name === 'serviceCategory'
     );
 
