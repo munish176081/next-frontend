@@ -256,22 +256,17 @@ class ChatWebSocketService {
   }
 
   // Typing indicators
-  async startTyping(conversationId: string): Promise<void> {
+  async sendTyping(conversationId: string, isTyping: boolean): Promise<void> {
+    console.log('🔌 ChatWebSocketService: sendTyping called with:', { conversationId, isTyping });
+    console.log('🔌 Socket connected:', this.socket?.connected);
+    
     if (!this.socket?.connected) {
       console.warn('ChatWebSocketService: Cannot send typing indicator, not connected');
       return;
     }
-
-    this.socket.emit('typing_start', { conversationId });
-  }
-
-  async stopTyping(conversationId: string): Promise<void> {
-    if (!this.socket?.connected) {
-      console.warn('ChatWebSocketService: Cannot send typing indicator, not connected');
-      return;
-    }
-
-    this.socket.emit('typing_stop', { conversationId });
+    
+    console.log('🔌 Emitting typing event to server');
+    this.socket.emit('typing', { conversationId, isTyping });
   }
 
   // Read receipts

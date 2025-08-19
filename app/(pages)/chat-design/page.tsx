@@ -44,20 +44,20 @@ const messages = [
 ];
 
 const Chat = () => {
-  const MessageCard = ({ name, avatar, online, unreadCount, time, color, text, unread }) => (
-    <div onClick={() => setIsVisible(true)} className={`flex flex-col ${online ? "bg-[#F4F2F6] border-r-[#B699CA]" : "border-r-transparent"} pr-12 p-4 gap-1 border-r-[6px] border-b border-b-black/20 relative`}>
-      <div className="flex gap-2 font-medium items-center relative">
-        <span className="size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white" style={{ backgroundColor: color }}></span>
-        <span className="size-10 rounded-full overflow-hidden"><img className="w-full h-full object-cover" src={avatar} alt={name} /></span>
-        {name}
-        {unreadCount > 0 && (
-          <span className="size-5 rounded-full bg-[#EE5D50] flex items-center justify-center text-[8px] text-white">{unreadCount}</span>
-        )}
+    const MessageCard = ({ name, avatar, online, unreadCount, time, color, text, unread }: { name: string, avatar: string, online: boolean, unreadCount: number, time: string, color: string, text: string, unread: boolean }) => (
+      <div onClick={() => setIsVisible(true)} className={`flex flex-col ${online ? "bg-[#F4F2F6] border-r-[#B699CA]" : "border-r-transparent"} pr-12 p-4 gap-1 border-r-[6px] border-b border-b-black/20 relative`}>
+        <div className="flex gap-2 font-medium items-center relative">
+          <span className="size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white" style={{ backgroundColor: color }}></span>
+          <span className="size-10 rounded-full overflow-hidden"><img className="w-full h-full object-cover" src={avatar} alt={name} /></span>
+          {name}
+          {unreadCount > 0 && (
+            <span className="size-5 rounded-full bg-[#EE5D50] flex items-center justify-center text-[8px] text-white">{unreadCount}</span>
+          )}
+        </div>
+        <span className={`text-sm whitespace-nowrap text-ellipsis block overflow-hidden ${!unread ? 'text-[#888787]' : ''}`}>{text}</span>
+        <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">{time}<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={color}/></svg></span>
       </div>
-      <span className={`text-sm whitespace-nowrap text-ellipsis block overflow-hidden ${!unread ? 'text-[#888787]' : ''}`}>{text}</span>
-      <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">{time}<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={color}/></svg></span>
-    </div>
-  );
+    );
   const [isVisible, setIsVisible] = useState(false);
   return (
     <>

@@ -55,23 +55,56 @@ class ChatApiService {
     return this.handleResponse<ChatConversation[]>(response);
   }
 
-  async getConversation(conversationId: string): Promise<ChatConversation | null> {
-    console.log('ChatApiService: Getting conversation:', conversationId);
+  async initiateChat(listingId: string): Promise<{ conversationId: string }> {
+    console.log('🔌 CHAT API: initiateChat called with listingId:', listingId);
     
-    const response = await fetch(
-      `${API_BASE_URL}/chat/conversations/${conversationId}`,
-      {
-        headers: this.getAuthHeaders(),
-        credentials: 'include',
-      }
-    );
+    const requestBody = { listingId };
+    console.log('🔌 CHAT API: Request body:', requestBody);
+    console.log('🔌 CHAT API: Request URL:', `${API_BASE_URL}/chat/initiate`);
+    
+    const response = await fetch(`${API_BASE_URL}/chat/initiate`, {
+      method: 'POST',
+      headers: this.getAuthHeaders(),
+      credentials: 'include',
+      body: JSON.stringify(requestBody),
+    });
+
+    console.log('🔌 CHAT API: Response status:', response.status);
+    console.log('🔌 CHAT API: Response headers:', Object.fromEntries(response.headers.entries()));
+
+    const result = await this.handleResponse<{ conversationId: string }>(response);
+    console.log('🔌 CHAT API: Final result:', result);
+    
+    return result;
+  }
+
+  async getConversation(conversationId: string): Promise<ChatConversation | null> {
+    console.log('🔌 CHAT API: getConversation called with ID:', conversationId);
+    
+    const url = `${API_BASE_URL}/chat/conversations/${conversationId}`;
+    console.log('🔌 CHAT API: Request URL:', url);
+    
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+      credentials: 'include',
+    });
+
+    console.log('🔌 CHAT API: getConversation response status:', response.status);
 
     if (response.status === 404) {
-      console.log('ChatApiService: Conversation not found');
+      console.log('🔌 CHAT API: Conversation not found (404)');
       return null;
     }
 
-    return this.handleResponse<ChatConversation>(response);
+    const result = await this.handleResponse<ChatConversation>(response);
+    console.log('🔌 CHAT API: getConversation result:', {
+      id: result?.id,
+      participantsCount: result?.participants?.length,
+      hasMetadata: !!result?.metadata,
+      hasLastMessage: !!result?.lastMessage
+    });
+    
+    return result;
   }
 
   async createConversation(participants: CreateParticipantDto[], listingId?: string): Promise<ChatConversation> {
@@ -97,22 +130,35 @@ class ChatApiService {
 
   // Message methods
   async getMessages(conversationId: string, limit = 50, offset = 0): Promise<ChatMessage[]> {
-    console.log('ChatApiService: Getting messages for conversation:', conversationId);
+    console.log('🔌 CHAT API: getMessages called for conversation:', conversationId);
     
     const params = new URLSearchParams({
       limit: limit.toString(),
       offset: offset.toString(),
     });
 
-    const response = await fetch(
-      `${API_BASE_URL}/chat/conversations/${conversationId}/messages?${params.toString()}`,
-      {
-        headers: this.getAuthHeaders(),
-        credentials: 'include',
-      }
-    );
+    const url = `${API_BASE_URL}/chat/conversations/${conversationId}/messages?${params.toString()}`;
+    console.log('🔌 CHAT API: getMessages URL:', url);
 
-    return this.handleResponse<ChatMessage[]>(response);
+    const response = await fetch(url, {
+      headers: this.getAuthHeaders(),
+      credentials: 'include',
+    });
+
+    console.log('🔌 CHAT API: getMessages response status:', response.status);
+
+    const result = await this.handleResponse<ChatMessage[]>(response);
+    console.log('🔌 CHAT API: getMessages result:', {
+      messageCount: result?.length,
+      messages: result?.map(m => ({
+        id: m.id,
+        content: m.content,
+        messageType: m.messageType,
+        hasListingReference: !!m.listingReference
+      }))
+    });
+    
+    return result;
   }
 
   async sendMessage(conversationId: string, message: {
@@ -322,7 +368,7 @@ class ChatApiService {
           continue;
         }
 
-        const conversationParticipantIds = conversation.participants.map(p => p.userId).sort(); // Sort for consistent comparison
+        const conversationParticipantIds = conversation.participants.map(p => p.user_id).sort(); // Sort for consistent comparison
         console.log('ChatApiService: Checking conversation', conversation.id, 'participants:', conversationParticipantIds);
         
         // Check for exact participant match (same length and same elements)

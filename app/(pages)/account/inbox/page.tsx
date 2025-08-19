@@ -1,17 +1,34 @@
 "use client";
 import React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { ChatInterface } from '@/_components/chat/ChatInterface';
+import { useUser } from '@/_services/hooks/user/use-user';
 
 export default function InboxPage() {
-  // For now, using a hardcoded user ID - this should come from your auth system
-  const userId = "test-user-id"; // Replace with actual user ID from your auth
+  const { data: user, isLoading } = useUser();
+  const searchParams = useSearchParams();
+  const conversationId = searchParams.get('conversationId');
+
+  console.log('📧 INBOX PAGE: Loaded with params:', {
+    conversationId,
+    userId: user?.id,
+    isLoading,
+    allParams: Object.fromEntries(searchParams.entries())
+  });
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen ">
+      {isLoading ? (
+        <div className="flex justify-center items-center h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-gray-900"></div>
+        </div>
+      ) : (
       <ChatInterface 
-        userId={userId}
+        userId={user?.id || ''}
+        initialConversationId={conversationId || undefined}
         onBack={() => window.history.back()}
-      />
+        />
+      )}
     </div>
   );
 }
