@@ -1,5 +1,6 @@
 "use client";
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import EmojiPicker from 'emoji-picker-react';
 import { ChatConversation, ChatMessage, ChatParticipant } from '@/_types/chat';
 import { chatWebSocketService } from '@/_services/chat/chatWebSocketService';
 import { chatApiService } from '@/_services/chat/chatApiService';
@@ -60,6 +61,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [currentConversation, setCurrentConversation] = useState<ChatConversation | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingMessages, setLoadingMessages] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
@@ -71,12 +73,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadingAttachments, setUploadingAttachments] = useState<boolean>(false);
 
+  // Smart scrolling state
+  const [showNewMessageIndicator, setShowNewMessageIndicator] = useState(false);
+  const [isUserAtBottom, setIsUserAtBottom] = useState(true);
+  const [hasNewMessages, setHasNewMessages] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const emojiPickerRef = useRef<HTMLDivElement>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
   const currentConversationRef = useRef<ChatConversation | null>(null);
   const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const sendingMessageRef = useRef<boolean>(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const previousMessageCountRef = useRef<number>(0);
 
   // File upload hook
   const { uploadFile, isUploading, progress } = useFileUpload({
@@ -88,6 +99,167 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setUploadingAttachments(false);
     }
   });
+
+  // Smart scrolling functions
+  const checkIfUserAtBottom = useCallback(() => {
+    if (!messagesContainerRef.current) return true;
+    
+    const container = messagesContainerRef.current;
+    const threshold = 100; // 100px threshold to consider user "at bottom" (more forgiving)
+    
+    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    setIsUserAtBottom(isAtBottom);
+    return isAtBottom;
+  }, []);
+
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior });
+      setShowNewMessageIndicator(false);
+      setHasNewMessages(false);
+    }
+  }, []);
+
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    // Prevent scroll event from bubbling up to parent page
+    e.stopPropagation();
+    
+    const isAtBottom = checkIfUserAtBottom();
+    
+    // If user scrolled to bottom, hide the new message indicator
+    if (isAtBottom && showNewMessageIndicator) {
+      setShowNewMessageIndicator(false);
+      setHasNewMessages(true);
+    }
+    
+    // Update the user's scroll position state
+    setIsUserAtBottom(isAtBottom);
+  }, [checkIfUserAtBottom, showNewMessageIndicator]);
+
+  // Handle new messages with smart scrolling
+  const handleNewMessages = useCallback((newMessages: ChatMessage[]) => {
+    const wasAtBottom = checkIfUserAtBottom();
+    const hasNewIncomingMessages = newMessages.some(msg => msg.senderId !== userId);
+    
+    if (hasNewIncomingMessages) {
+      if (wasAtBottom) {
+        // User is at bottom, auto-scroll to show new message
+        setTimeout(() => {
+          if (messagesContainerRef.current) {
+            messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+          }
+        }, 100);
+      } else {
+        // User is scrolled up, show indicator
+        setShowNewMessageIndicator(true);
+        setHasNewMessages(true);
+      }
+    }
+  }, [checkIfUserAtBottom, scrollToBottom, userId]);
+
+  // Handle WebSocket new message with smart scrolling
+  const handleWebSocketNewMessage = useCallback((data: any) => {
+    // Check if user is at bottom before adding the message
+    const wasAtBottom = checkIfUserAtBottom();
+    
+    // Add the message to state
+    if (data.conversationId === currentConversationRef.current?.id) {
+      setMessages(prev => {
+        const normalizedMessage = {
+          id: data.message.id,
+          conversationId: data.message.conversation_id || data.conversationId,
+          senderId: data.message.sender_id,
+          content: data.message.content,
+          messageType: data.message.message_type,
+          replyTo: data.message.reply_to,
+          attachments: data.message.attachments,
+          listingReference: data.message.listing_reference,
+          isRead: data.message.is_read,
+          readBy: data.message.read_by,
+          timestamp: data.message.timestamp
+        };
+        
+        const newMessages = [...prev, normalizedMessage];
+        
+        // If user was at bottom, auto-scroll to show new message
+        if (wasAtBottom && data.message.sender_id !== userId) {
+          setTimeout(() => scrollToBottom('smooth'), 100);
+        } else if (data.message.sender_id !== userId) {
+          // User is scrolled up, show indicator
+          setShowNewMessageIndicator(true);
+          setHasNewMessages(true);
+        }
+        
+        return newMessages;
+      });
+    }
+  }, [checkIfUserAtBottom, scrollToBottom, userId]);
+
+  // Scroll to bottom when messages change (only if user is at bottom)
+  useEffect(() => {
+    const currentMessageCount = messages.length;
+    const previousMessageCount = previousMessageCountRef.current;
+    
+    if (currentMessageCount > previousMessageCount) {
+      // New messages were added
+      const newMessages = messages.slice(previousMessageCount);
+      handleNewMessages(newMessages);
+    }
+    
+    previousMessageCountRef.current = currentMessageCount;
+  }, [messages, handleNewMessages]);
+
+  // Initial scroll to bottom when conversation loads
+  useEffect(() => {
+    if (messages.length > 0 && isUserAtBottom) {
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
+    }
+  }, [currentConversation?.id, isUserAtBottom]);
+
+  // Check scroll position when messages container is available
+  useEffect(() => {
+    if (messagesContainerRef.current) {
+      checkIfUserAtBottom();
+    }
+  }, [messages.length, checkIfUserAtBottom]);
+
+  // Clean up scroll indicators when component unmounts
+  useEffect(() => {
+    return () => {
+      setShowNewMessageIndicator(false);
+      setHasNewMessages(false);
+      setIsUserAtBottom(true);
+    };
+  }, []);
+
+  // Handle clicking outside emoji picker to close it
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target as Node)) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [showEmojiPicker]);
 
 
   // Simple WebSocket connection
@@ -216,7 +388,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     console.log('📨 ChatInterface: Messages array changed:', messages);
     console.log('📨 ChatInterface: Messages count:', messages.length);
-  }, [messages]);
+    console.log('📨 ChatInterface: Loading messages state:', loadingMessages);
+  }, [messages, loadingMessages]);
 
   // Simple helper functions
   const getSessionId = (): string | null => {
@@ -328,6 +501,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
         // Load messages for this conversation
         setConversationId(conversationId);
+        setMessages([]); // Clear any previous messages
         await loadMessages(conversationId);
 
         // Join the WebSocket room for this conversation if connected
@@ -349,6 +523,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const loadMessages = async (conversationId: string) => {
     try {
       console.log('🔄 Loading messages for conversation:', conversationId);
+      setLoadingMessages(true);
+      
       const data = await chatApiService.getMessages(conversationId);
       console.log('📨 Raw messages from API:', data);
 
@@ -369,8 +545,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       console.log('✅ Normalized messages:', normalizedMessages);
       setMessages(normalizedMessages);
+      
+      // Scroll to bottom after messages are loaded
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 100);
     } catch (err) {
       console.error('Error loading messages:', err);
+    } finally {
+      setLoadingMessages(false);
     }
   };
 
@@ -408,9 +593,27 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // If this message is for the current conversation, add it to the UI
     if (data.conversationId === currentConversationRef.current?.id) {
       console.log('✅ Adding message from other user to current conversation UI');
+      
+      // Check if user is at bottom before adding the message
+      const wasAtBottom = checkIfUserAtBottom();
+      
       setMessages(prev => {
         const newMessages = [...prev, normalizedMessage];
         console.log('🔍 Updated messages array:', newMessages);
+        
+        // If user was at bottom, auto-scroll to show new message
+        if (wasAtBottom && data.message.sender_id !== userId) {
+          setTimeout(() => {
+            if (messagesContainerRef.current) {
+              messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+            }
+          }, 100);
+        } else if (data.message.sender_id !== userId) {
+          // User is scrolled up, show indicator
+          setShowNewMessageIndicator(true);
+          setHasNewMessages(true);
+        }
+        
         return newMessages;
       });
       console.log('✅ Message added to current conversation');
@@ -431,6 +634,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setMessages(prev => {
             const newMessages = [...prev, normalizedMessage];
             console.log('🔍 Added message after auto-selecting conversation:', newMessages);
+            
+            // Show new message indicator since this is a new conversation
+            if (data.message.sender_id !== userId) {
+              setShowNewMessageIndicator(true);
+              setHasNewMessages(true);
+            }
+            
             return newMessages;
           });
         }
@@ -509,6 +719,39 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     sendingMessageRef.current = true;
     setUploadingAttachments(true);
 
+    // Create a temporary loading message with attachments
+    const tempMessageId = `temp-${Date.now()}`;
+    const tempMessage: ChatMessage & { isTemp?: boolean } = {
+      id: tempMessageId,
+      conversationId: currentConversation.id,
+      senderId: userId,
+      content: content || '',
+      messageType: (attachmentPreviews.length > 0 ? (attachmentPreviews.some(p => p.type === 'image') ? 'image' : 'file') : 'text') as 'text' | 'image' | 'file' | 'listing',
+      replyTo: undefined,
+      attachments: attachmentPreviews.map((preview, index) => ({
+        id: `temp-attachment-${index}`,
+        type: preview.type === 'image' ? 'image' : 'file',
+        url: preview.preview,
+        name: preview.file.name,
+        size: preview.file.size
+      })),
+      listingReference: undefined,
+      isRead: false,
+      readBy: [],
+      timestamp: new Date(),
+      isTemp: true // Mark as temporary
+    };
+
+    // Add temporary message to UI immediately
+    setMessages(prev => [...prev, tempMessage]);
+    
+    // Force scroll to bottom immediately when temporary message is added
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 50);
+
     try {
       console.log('Sending message:', content);
       console.log('Attachments to upload:', attachmentPreviews);
@@ -579,11 +822,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('✅ Normalized sent message:', normalizedMessage);
       console.log('🔍 Sender ID in local message:', normalizedMessage.senderId, 'Current user ID:', userId);
 
-      // Add message to local state immediately
+      // Replace temporary message with real message
       setMessages(prev => {
-        console.log('💬 Adding message locally (sent by user)');
-        return [...prev, normalizedMessage];
+        console.log('💬 Replacing temporary message with real message');
+        return prev.map(msg => msg.id === tempMessageId ? normalizedMessage : msg);
       });
+
+      // Always scroll to bottom for user's own messages
+      setTimeout(() => {
+        if (messagesContainerRef.current) {
+          messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+        }
+      }, 50);
 
       // Update conversation's last message
       setCurrentConversation(prev => prev ? {
@@ -642,6 +892,43 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         chatWebSocketService.sendTyping(currentConversationRef.current.id, false);
       }
     }, 2000); // 2 seconds timeout
+  };
+
+  const handleEmojiSelect = (emojiObject: any) => {
+    // Try to find the active input field
+    let input = document.activeElement as HTMLInputElement;
+    
+    // If no active input, try to find the main chat input
+    if (!input || input.tagName !== 'INPUT') {
+      input = document.querySelector('input[placeholder="Type something..."]') as HTMLInputElement;
+    }
+    
+    // If still no input, try the modal input
+    if (!input) {
+      input = document.querySelector('input[placeholder="Add a message..."]') as HTMLInputElement;
+    }
+    
+    if (input) {
+      const cursorPos = input.selectionStart || 0;
+      const textBefore = input.value.substring(0, cursorPos);
+      const textAfter = input.value.substring(cursorPos);
+      input.value = textBefore + emojiObject.emoji + textAfter;
+      
+      // Set cursor position after the emoji
+      const newCursorPos = cursorPos + emojiObject.emoji.length;
+      input.setSelectionRange(newCursorPos, newCursorPos);
+      
+      // Focus back to input
+      input.focus();
+      
+      // Trigger typing indicator only for main chat input
+      if (input.placeholder === "Type something...") {
+        handleTyping();
+      }
+    }
+    
+    // Close emoji picker
+    setShowEmojiPicker(false);
   };
 
   // File validation utilities
@@ -784,6 +1071,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setCurrentConversation(conversation);
     setIsVisible(true);
 
+    // Reset scroll indicators for new conversation
+    setShowNewMessageIndicator(false);
+    setHasNewMessages(false);
+    setIsUserAtBottom(true);
+
+    // Clear previous messages and load new ones
+    setMessages([]);
+    setLoadingMessages(true);
+
     // Load messages for this conversation
     loadMessages(conversation.id);
 
@@ -792,6 +1088,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('🚪 Joining WebSocket room for selected conversation:', conversation.id);
       chatWebSocketService.joinConversation(conversation.id);
     }
+    
+    // Ensure scroll to bottom after a short delay to let messages load
+    setTimeout(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+      }
+    }, 200);
 
     console.log('✅ ChatInterface: Conversation selected and loaded:', conversation.id);
   };
@@ -800,6 +1103,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsVisible(false);
     setCurrentConversation(null);
     setMessages([]);
+    
+    // Reset scroll indicators
+    setShowNewMessageIndicator(false);
+    setHasNewMessages(false);
+    setIsUserAtBottom(true);
   };
 
   // Helper function to group messages by date
@@ -839,10 +1147,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // Scroll to bottom when messages change
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+
 
 
   // const MessageCard = ({ name, avatar, online, unreadCount, time, color, text, unread }: { name: string, avatar: string, online: boolean, unreadCount: number, time: string, color: string, text: string, unread: boolean }) => (
@@ -900,7 +1205,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
         </div>
         <span className={`text-sm whitespace-nowrap text-ellipsis block overflow-hidden ${isHighlighted ? 'text-black' : 'text-[#888787]'}`}>
-          {lastMessage?.content || 'No messages yet'}
+          {lastMessage ? (
+            lastMessage.content ? (
+              lastMessage.content
+            ) : lastMessage.attachments && lastMessage.attachments.length > 0 ? (
+              lastMessage.attachments.some(att => att.type === 'image' || att.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? 
+                'Image' : 
+                'Attachment'
+            ) : lastMessage.messageType === 'listing' ? 
+              'Listing' : 
+              'Message'
+          ) : 'No messages yet'}
         </span>
         <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">
           {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
@@ -993,16 +1308,43 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {/* Messages */}
               <div 
                 className={`flex w-full h-full max-h-[576px] max-md:max-h-fit p-4 flex-col gap-6 overflow-y-auto mb-6 relative ${isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-400' : ''}`}
+                style={{
+                  overscrollBehavior: 'contain' // Prevents scroll chaining
+                }}
                 onDragEnter={handleDragEnter}
                 onDragLeave={handleDragLeave}
                 onDragOver={handleDragOver}
                 onDrop={handleDrop}
+                onScroll={handleScroll}
+                onWheel={(e) => {
+                  // Prevent wheel events from scrolling the page when at container boundaries
+                  const container = e.currentTarget;
+                  const { scrollTop, scrollHeight, clientHeight } = container;
+                  
+                  // If scrolling up at the top or down at the bottom, prevent page scroll
+                  if (
+                    (e.deltaY < 0 && scrollTop <= 0) || // Scrolling up at top
+                    (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) // Scrolling down at bottom
+                  ) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }
+                }}
+                onTouchStart={(e) => {
+                  // Prevent touch events from interfering with scroll
+                  e.stopPropagation();
+                }}
+                ref={messagesContainerRef}
               >
                 {/* Drag overlay */}
                 {isDragOver && (
                   <div className="absolute inset-0 bg-blue-50/90 flex items-center justify-center z-50 pointer-events-none rounded-lg">
                     <div className="text-center">
-                      <div className="text-4xl mb-2">📎</div>
+                      <div className="mb-2">
+                        <svg className="w-12 h-12 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                        </svg>
+                      </div>
                       <p className="text-lg font-semibold text-blue-600">Drop files here</p>
                       <p className="text-sm text-blue-500">Max 3 files, 10MB each</p>
                     </div>
@@ -1057,7 +1399,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </span>
                 </div>
 
-                {messages.length === 0 ? (
+                {loadingMessages ? (
+                  <div className="text-center text-gray-500 py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-CPrimary mx-auto mb-4"></div>
+                    <p>Loading messages...</p>
+                  </div>
+                ) : messages.length === 0 ? (
                   <div className="text-center text-gray-500 py-8">
                     <p>No messages yet. Start the conversation!</p>
                   </div>
@@ -1161,12 +1508,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                             onClick={() => window.open(attachment.url, '_blank')}
                                           >
                                             <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
-                                              <span className="text-lg">
-                                                {attachment.name?.endsWith('.pdf') ? '📄' : 
-                                                 attachment.name?.match(/\.(doc|docx)$/i) ? '📝' : 
-                                                 attachment.name?.match(/\.(xls|xlsx)$/i) ? '📊' : 
-                                                 attachment.name?.match(/\.(ppt|pptx)$/i) ? '📈' : '📎'}
-                                              </span>
+                                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                {attachment.name?.endsWith('.pdf') ? (
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                                ) : attachment.name?.match(/\.(doc|docx)$/i) ? (
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                ) : attachment.name?.match(/\.(xls|xlsx)$/i) ? (
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                ) : attachment.name?.match(/\.(ppt|pptx)$/i) ? (
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                                ) : (
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                )}
+                                              </svg>
                                             </div>
                                             <div className="flex-1 min-w-0">
                                               <p className="font-medium text-sm truncate text-gray-800">{attachment.name}</p>
@@ -1176,7 +1530,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                             </div>
                                             <div className="flex-shrink-0 text-blue-600">
                                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                                               </svg>
                                             </div>
                                           </div>
@@ -1191,6 +1545,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               {message.content && (
                                 <span className="text-[#4A4A4A] font-medium text-[18px] max-md:text-sm">{message.content}</span>
                               )}
+
+                              {/* Loading Indicator for Temporary Messages */}
+                              {(message as any).isTemp && (
+                                <div className="flex items-center gap-2 mt-3 text-[#8B8B8B] text-sm">
+                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#B699CA]"></div>
+                                  <span>Sending...</span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}
@@ -1201,16 +1563,50 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
                 {/* Typing Indicators */}
                 {typingUsers.size > 0 && (
-                  <div className="flex items-center space-x-2 text-gray-500 text-sm p-2">
+                  <div className="flex items-center space-x-2 text-gray-500 text-sm p-2 bg-gray-50 rounded-lg border border-gray-200">
                     <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce"></div>
+                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
                     </div>
-                    <span>Someone is typing...</span>
+                    <span className="text-[#74D27E] font-medium">Someone is typing...</span>
                   </div>
                 )}
 
+                {/* New Message Indicator Arrow - Inside chat area */}
+                {showNewMessageIndicator && (
+                  <div 
+                    className="absolute bottom-4 right-4 z-10 cursor-pointer hover:scale-110 transition-transform duration-200 animate-bounce"
+                    onClick={() => scrollToBottom('smooth')}
+                    title="New messages below - Click to scroll down"
+                  >
+                    <div className="bg-[#74D27E] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                      {hasNewMessages && (
+                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
+                          {messages.filter(msg => msg.senderId !== userId).length}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Scroll to Bottom Button - Inside chat area when not at bottom */}
+                {!isUserAtBottom && !showNewMessageIndicator && (
+                  <div 
+                    className="absolute bottom-4 right-4 z-10 cursor-pointer hover:scale-110 transition-transform duration-200"
+                    onClick={() => scrollToBottom('smooth')}
+                    title="Scroll to bottom"
+                  >
+                    <div className="bg-gray-600 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -1248,7 +1644,28 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <img className='max-md:max-h-4' src="/images/vectors/attachment.png" alt="Attach files" />
                 </span>
                 <span className="h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative">
-                  <img className='max-md:max-h-4' src="/images/vectors/smile.png" alt="" />
+                  <button
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className="w-full h-full flex items-center justify-center hover:bg-gray-100 rounded transition-colors"
+                  >
+                    <img className='max-md:max-h-4' src="/images/vectors/smile.png" alt="Emoji" />
+                  </button>
+                  
+                  {/* Emoji Picker */}
+                  {showEmojiPicker && (
+                    <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                      <div className="bg-white rounded-[20px] shadow-xl border border-gray-200 overflow-hidden">
+                        <EmojiPicker
+                          onEmojiClick={handleEmojiSelect}
+                          autoFocusSearch={false}
+                          searchDisabled={false}
+                          skinTonesDisabled={true}
+                          width={320}
+                          height={400}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </span>
                 <hr className="bg-black/20 flex h-12 w-0.5 ml-4 max-md:ml-2" />
                 <span 
@@ -1275,66 +1692,82 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
-      {/* Attachment Preview Modal - WhatsApp Style */}
+      {/* Telegram-Style Attachment Preview Modal */}
       {showAttachmentPreview && attachmentPreviews.length > 0 && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-lg max-w-2xl w-full max-h-[80vh] overflow-hidden">
-            {/* Header */}
-            <div className="flex items-center justify-between p-4 border-b">
-              <h3 className="text-lg font-semibold">
-                {attachmentPreviews.length} file{attachmentPreviews.length > 1 ? 's' : ''} selected
-              </h3>
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[20px] max-w-lg w-full max-h-[85vh] overflow-hidden shadow-xl border border-black/10">
+            {/* Clean Header */}
+            <div className="flex items-center justify-between p-5 border-b border-black/20">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#F4F2F6] rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-[#4A4A4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-[#4A4A4A]">
+                    {attachmentPreviews.length} file{attachmentPreviews.length > 1 ? 's' : ''}
+                  </h3>
+                  <p className="text-sm text-[#8B8B8B]">Ready to send</p>
+                </div>
+              </div>
               <button 
                 onClick={() => {
                   setShowAttachmentPreview(false);
                   setAttachmentPreviews([]);
                 }}
-                className="text-gray-500 hover:text-gray-700 text-xl font-bold"
+                className="w-10 h-10 bg-[#F4F2F6] rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
               >
-                ×
+                <svg className="w-5 h-5 text-[#4A4A4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
               </button>
             </div>
 
-            {/* Attachments Preview */}
-            <div className="p-4 max-h-96 overflow-y-auto">
-              <div className="grid grid-cols-1 gap-4">
+            {/* Attachments List - Clean & Simple */}
+            <div className="p-5 max-h-80 overflow-y-auto">
+              <div className="space-y-4">
                 {attachmentPreviews.map((attachment, index) => (
-                  <div key={index} className="border rounded-lg p-3 flex items-center gap-3">
-                    {/* File Preview */}
-                    <div className="flex-shrink-0">
+                  <div key={index} className="flex items-center gap-4 p-4 bg-[#F4F2F6] rounded-[20px]">
+                    {/* File Icon */}
+                    <div className="w-16 h-16 bg-white rounded-[16px] flex items-center justify-center shadow-sm">
                       {attachment.type === 'image' ? (
                         <img 
                           src={attachment.preview} 
                           alt={attachment.file.name}
-                          className="w-16 h-16 object-cover rounded border"
+                          className="w-14 h-14 object-cover rounded-[12px]"
                         />
                       ) : (
-                        <div className="w-16 h-16 bg-gray-100 rounded border flex items-center justify-center">
-                          <span className="text-2xl">
-                            {attachment.file.name.endsWith('.pdf') ? '📄' : 
-                             attachment.file.name.match(/\.(doc|docx)$/i) ? '📝' : 
-                             attachment.file.name.match(/\.(xls|xlsx)$/i) ? '📊' : 
-                             attachment.file.name.match(/\.(ppt|pptx)$/i) ? '📈' : '📎'}
-                          </span>
-                        </div>
+                        <svg className="w-8 h-8 text-[#4A4A4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          {attachment.file.name.endsWith('.pdf') ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                          ) : attachment.file.name.match(/\.(doc|docx)$/i) ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          ) : attachment.file.name.match(/\.(xls|xlsx)$/i) ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          ) : attachment.file.name.match(/\.(ppt|pptx)$/i) ? (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                          ) : (
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          )}
+                        </svg>
                       )}
                     </div>
                     
-                    {/* File Info */}
+                    {/* File Details */}
                     <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">{attachment.file.name}</p>
-                      <p className="text-xs text-gray-500">{attachment.size}</p>
-                      <p className="text-xs text-gray-400 capitalize">{attachment.file.type.split('/')[1]} file</p>
+                      <p className="font-medium text-[#4A4A4A] text-base truncate">{attachment.file.name}</p>
+                      <p className="text-sm text-[#8B8B8B] mt-1">{attachment.size}</p>
                     </div>
 
                     {/* Remove Button */}
                     <button
                       onClick={() => removeAttachment(index)}
-                      className="flex-shrink-0 text-red-500 hover:text-red-700 p-1"
+                      className="w-8 h-8 bg-white rounded-full flex items-center justify-center hover:bg-red-50 transition-colors"
                       title="Remove file"
                     >
-                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
                   </div>
@@ -1342,73 +1775,125 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
             </div>
 
-            {/* Optional Message Input */}
-            <div className="p-4 border-t">
-              <input
-                type="text"
-                placeholder="Add a message (optional)..."
-                className="w-full p-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                onKeyPress={(e) => {
-                  if (e.key === 'Enter') {
-                    const target = e.target as HTMLInputElement;
-                    handleSendMessage(target.value);
-                    target.value = '';
-                  }
-                }}
-              />
-            </div>
-
-            {/* Progress Indicator */}
-            {(uploadingAttachments || isUploading) && (
-              <div className="p-4 border-t bg-gray-50">
-                <div className="flex items-center gap-3">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                  <span className="text-sm text-gray-600">
-                    {progress ? `Uploading... ${Math.round(progress.progress)}%` : 'Preparing upload...'}
-                  </span>
-                </div>
-                {progress && (
-                  <div className="w-full bg-gray-200 rounded-full h-2 mt-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full transition-all duration-300" 
-                      style={{ width: `${progress.progress}%` }}
-                    ></div>
+            {/* Message Input - Clean & Simple */}
+            <div className="px-5 pb-4">
+              <div className="relative flex items-center bg-[#F4F2F6] rounded-[20px] p-2">
+                <input
+                  type="text"
+                  placeholder="Add a message..."
+                  className="flex-1 bg-transparent border-0 px-3 py-2 text-[#4A4A4A] placeholder-[#8B8B8B] focus:outline-none focus:ring-0 text-base"
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      const target = e.target as HTMLInputElement;
+                      const message = target.value;
+                      
+                      if (message.trim() || attachmentPreviews.length > 0) {
+                        // Close modal immediately
+                        setShowAttachmentPreview(false);
+                        
+                        // Send message with attachments
+                        handleSendMessage(message);
+                        
+                        // Clear input
+                        target.value = '';
+                      }
+                    }
+                  }}
+                />
+                
+                {/* Emoji Button for Modal */}
+                <button
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  className="w-8 h-8 flex items-center justify-center hover:bg-gray-200 rounded-full transition-colors mr-2"
+                  title="Add emoji"
+                >
+                  <svg className="w-5 h-5 text-[#8B8B8B]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
+                
+                {/* Emoji Picker for Modal */}
+                {showEmojiPicker && (
+                  <div className="absolute bottom-full right-0 mb-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                    <div className="bg-white rounded-[20px] shadow-xl border border-gray-200 overflow-hidden">
+                                              <EmojiPicker
+                          onEmojiClick={handleEmojiSelect}
+                          autoFocusSearch={false}
+                          searchDisabled={false}
+                          skinTonesDisabled={true}
+                          width={280}
+                          height={350}
+                        />
+                    </div>
                   </div>
                 )}
               </div>
+            </div>
+
+            {/* Upload Progress - Clean & Simple */}
+            {(uploadingAttachments || isUploading) && (
+              <div className="px-5 pb-4">
+                <div className="bg-[#F4F2F6] p-4 rounded-[20px]">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#B699CA]"></div>
+                    <span className="text-sm text-[#4A4A4A]">
+                      {progress ? `Uploading ${Math.round(progress.progress)}%` : 'Preparing...'}
+                    </span>
+                  </div>
+                  {progress && (
+                    <div className="w-full bg-white rounded-full h-2">
+                      <div 
+                        className="bg-[#B699CA] h-2 rounded-full transition-all duration-300" 
+                        style={{ width: `${progress.progress}%` }}
+                      ></div>
+                    </div>
+                  )}
+                </div>
+              </div>
             )}
 
-            {/* Actions */}
-            <div className="flex justify-end gap-3 p-4 border-t bg-gray-50">
+            {/* Action Buttons - Clean & Simple */}
+            <div className="flex gap-3 p-5 border-t border-black/20">
               <button
                 onClick={() => {
                   setShowAttachmentPreview(false);
                   setAttachmentPreviews([]);
                 }}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-100"
+                className="flex-1 py-4 text-[#4A4A4A] bg-[#F4F2F6] rounded-[20px] hover:bg-gray-200 transition-colors font-medium text-base"
               >
                 Cancel
               </button>
               <button
                 onClick={() => {
-                  const messageInput = document.querySelector('input[placeholder="Add a message (optional)..."]') as HTMLInputElement;
+                  const messageInput = document.querySelector('input[placeholder="Add a message..."]') as HTMLInputElement;
                   const message = messageInput?.value || '';
+                  
+                  // Close modal immediately
+                  setShowAttachmentPreview(false);
+                  
+                  // Send message with attachments
                   handleSendMessage(message);
+                  
+                  // Clear input
                   if (messageInput) messageInput.value = '';
+                  
+                  // Clear attachment previews (they will be handled in handleSendMessage)
                 }}
                 disabled={uploadingAttachments || isUploading}
-                className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="flex-1 py-4 bg-black text-white rounded-[20px] hover:bg-primary disabled:opacity-50 disabled:cursor-not-allowed font-medium transition-colors text-base shadow-sm"
               >
                 {uploadingAttachments || isUploading ? (
-                  <>
+                  <span className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
                     Sending...
-                  </>
+                  </span>
                 ) : (
-                  <>
-                    <span>📎</span>
-                    Send {attachmentPreviews.length} file{attachmentPreviews.length > 1 ? 's' : ''}
-                  </>
+                  <span className="flex items-center justify-center gap-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                    </svg>
+                    Send
+                  </span>
                 )}
               </button>
             </div>
