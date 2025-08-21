@@ -31,7 +31,7 @@ export const VerificationGuard = ({ children }: VerificationGuardProps) => {
   // If user is not verified, show the VerifyEmailPage component in full screen
   if (user && user.status !== "active") {
     return (
-      <div className="fixed inset-0 z-50 bg-white">
+      <div className="fixed inset-0 z-50 bg-white overflow-y-auto">
         <VerifyEmailPage noshow={false} />
       </div>
     );

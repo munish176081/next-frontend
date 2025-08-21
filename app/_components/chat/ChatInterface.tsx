@@ -19,7 +19,7 @@ interface ChatInterfaceProps {
 interface AttachmentPreview {
   file: File;
   preview: string;
-  type: 'image' | 'document';
+  type: 'image' | 'document' | 'voice';
   size: string;
 }
 
@@ -35,7 +35,8 @@ const ALLOWED_FILE_TYPES = {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation'
-  ]
+  ],
+  voice: ['audio/webm', 'audio/mp3', 'audio/wav', 'audio/ogg']
 };
 
 const BLOCKED_FILE_TYPES = [
@@ -80,6 +81,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
 
+  // Voice recording state
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingDuration, setRecordingDuration] = useState(0);
+  const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
+  const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
+  const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
+  const recordingTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [showRecordingOverlay, setShowRecordingOverlay] = useState(false);
+  const [audioLevel, setAudioLevel] = useState(0);
+  const [showAudioPreview, setShowAudioPreview] = useState(false);
+  const [recordedAudioUrl, setRecordedAudioUrl] = useState<string | null>(null);
+  const [isPlayingAudio, setIsPlayingAudio] = useState(false);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const hasInitialized = useRef(false);
@@ -120,6 +135,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, []);
 
+  // Mark messages as read when they come into view
+  const markVisibleMessagesAsRead = useCallback(() => {
+    if (!messagesContainerRef.current) return;
+    
+    const container = messagesContainerRef.current;
+    const messageElements = container.querySelectorAll('[data-message-id]');
+    
+    messageElements.forEach((messageElement) => {
+      const messageId = messageElement.getAttribute('data-message-id');
+      if (!messageId) return;
+      
+      const rect = messageElement.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      
+      // Check if message is visible in the container
+      if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
+        // Message is visible, mark as read if it's from another user and not already read
+        const message = messages.find((m: ChatMessage) => m.id === messageId);
+        if (message && message.senderId !== userId && !message.isRead) {
+          markMessageAsRead(messageId);
+        }
+      }
+    });
+  }, [userId, messages]);
+
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     // Prevent scroll event from bubbling up to parent page
     e.stopPropagation();
@@ -134,7 +174,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     // Update the user's scroll position state
     setIsUserAtBottom(isAtBottom);
-  }, [checkIfUserAtBottom, showNewMessageIndicator]);
+    
+    // Mark visible messages as read when scrolling
+    markVisibleMessagesAsRead();
+  }, [checkIfUserAtBottom, showNewMessageIndicator, markVisibleMessagesAsRead]);
 
   // Handle new messages with smart scrolling
   const handleNewMessages = useCallback((newMessages: ChatMessage[]) => {
@@ -227,6 +270,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   }, [messages.length, checkIfUserAtBottom]);
 
+  // Mark visible messages as read when messages change or conversation changes
+  useEffect(() => {
+    if (messages.length > 0 && currentConversation) {
+      // Small delay to ensure DOM is updated
+      setTimeout(() => {
+        markVisibleMessagesAsRead();
+      }, 100);
+    }
+  }, [messages, currentConversation?.id, markVisibleMessagesAsRead]);
+
   // Clean up scroll indicators when component unmounts
   useEffect(() => {
     return () => {
@@ -235,6 +288,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       setIsUserAtBottom(true);
     };
   }, []);
+
+  // Clean up recording when component unmounts
+  useEffect(() => {
+    return () => {
+      if (isRecording) {
+        stopRecording();
+      }
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      if (recordingStream) {
+        recordingStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [isRecording, recordingStream]);
 
   // Handle clicking outside emoji picker to close it
   useEffect(() => {
@@ -546,6 +614,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('✅ Normalized messages:', normalizedMessages);
       setMessages(normalizedMessages);
       
+      // Mark conversation as read when messages are loaded
+      if (normalizedMessages.length > 0) {
+        markConversationAsRead(conversationId);
+        
+        // Mark individual messages as read
+        normalizedMessages.forEach(message => {
+          if (message.senderId !== userId && !message.isRead) {
+            markMessageAsRead(message.id);
+          }
+        });
+      }
+      
       // Scroll to bottom after messages are loaded
       setTimeout(() => {
         if (messagesContainerRef.current) {
@@ -608,6 +688,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
             }
           }, 100);
+          
+          // Mark message as read if user is at bottom (actively viewing)
+          if (data.message.sender_id !== userId) {
+            setTimeout(() => {
+              markMessageAsRead(data.message.id);
+            }, 500); // Small delay to ensure message is visible
+          }
         } else if (data.message.sender_id !== userId) {
           // User is scrolled up, show indicator
           setShowNewMessageIndicator(true);
@@ -651,7 +738,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setConversations(prev =>
       prev.map(conv =>
         conv.id === data.conversationId
-          ? { ...conv, lastMessage: normalizedMessage, updatedAt: new Date() }
+          ? { 
+              ...conv, 
+              lastMessage: normalizedMessage, 
+              updatedAt: new Date(),
+              // Increment unread count only for incoming messages (not from current user)
+              unreadCount: data.message.sender_id !== userId ? conv.unreadCount + 1 : conv.unreadCount
+            }
           : conv
       )
     );
@@ -842,11 +935,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         updatedAt: new Date()
       } : null);
 
-      // Update conversations list
+      // Update conversations list - don't increment unread count for sender's own messages
       setConversations(prev =>
         prev.map(conv =>
           conv.id === currentConversation.id
-            ? { ...conv, lastMessage: normalizedMessage, updatedAt: new Date() }
+            ? { 
+                ...conv, 
+                lastMessage: normalizedMessage, 
+                updatedAt: new Date(),
+                // Only increment unread count if this is a message from someone else
+                unreadCount: conv.unreadCount // Keep current unread count for sender
+              }
             : conv
         )
       );
@@ -1083,6 +1182,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Load messages for this conversation
     loadMessages(conversation.id);
 
+    // Mark conversation as read when selected
+    if (conversation.unreadCount > 0) {
+      markConversationAsRead(conversation.id);
+    }
+    
+    // Mark all incoming messages as read when conversation is selected
+    if (messages.length > 0) {
+      messages.forEach(message => {
+        if (message.senderId !== userId && !message.isRead) {
+          markMessageAsRead(message.id);
+        }
+      });
+    }
+
     // Join WebSocket room for this conversation if connected
     if (wsConnected) {
       console.log('🚪 Joining WebSocket room for selected conversation:', conversation.id);
@@ -1097,6 +1210,55 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }, 200);
 
     console.log('✅ ChatInterface: Conversation selected and loaded:', conversation.id);
+  };
+
+  // Mark conversation as read
+  const markConversationAsRead = async (conversationId: string) => {
+    try {
+      // Update local state immediately for better UX
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.id === conversationId
+            ? { ...conv, unreadCount: 0 }
+            : conv
+        )
+      );
+
+      // Update current conversation if it's the selected one
+      setCurrentConversation(prev => 
+        prev?.id === conversationId 
+          ? { ...prev, unreadCount: 0 }
+          : prev
+      );
+
+      // Call backend API to mark as read
+      await chatApiService.markConversationAsRead(conversationId, userId);
+      
+      console.log('✅ Conversation marked as read:', conversationId);
+    } catch (error) {
+      console.error('❌ Failed to mark conversation as read:', error);
+    }
+  };
+
+  // Mark individual message as read
+  const markMessageAsRead = async (messageId: string) => {
+    try {
+      // Update local message state
+      setMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId
+            ? { ...msg, isRead: true, readBy: [...(msg.readBy || []), userId] }
+            : msg
+        )
+      );
+
+      // Call backend API to mark message as read
+      await chatApiService.markMessageAsRead(messageId, userId);
+      
+      console.log('✅ Message marked as read:', messageId);
+    } catch (error) {
+      console.error('❌ Failed to mark message as read:', error);
+    }
   };
 
   const handleBackToList = () => {
@@ -1147,30 +1309,232 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  // Voice recording functions
+  const startRecording = async () => {
+    try {
+      console.log('🎤 Starting voice recording...');
+      
+      // Check if we're in a secure context (HTTPS required for media access)
+      if (typeof window !== 'undefined' && !window.isSecureContext) {
+        throw new Error('Microphone access requires a secure context (HTTPS). Please access this page via HTTPS.');
+      }
+      
+      // Check if browser supports required APIs
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        throw new Error('MediaDevices API not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+      }
+      
+      if (typeof MediaRecorder === 'undefined') {
+        throw new Error('MediaRecorder API not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
+      }
+      
+      console.log('✅ Browser APIs supported, requesting microphone access...');
+      
+      // Request microphone access
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      setRecordingStream(stream);
+      
+      // Create MediaRecorder
+      const recorder = new MediaRecorder(stream, {
+        mimeType: 'audio/webm;codecs=opus' // Good quality, small file size
+      });
+      
+      setMediaRecorder(recorder);
+      setAudioChunks([]);
+      
+      // Set up event handlers
+      recorder.ondataavailable = (event) => {
+        if (event.data.size > 0) {
+          setAudioChunks(prev => [...prev, event.data]);
+        }
+      };
+      
+      recorder.onstop = () => {
+        console.log('🎤 Recording stopped, chunks collected:', audioChunks.length);
+        
+        // Create audio blob and URL for preview
+        if (audioChunks.length > 0) {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          setRecordedAudioUrl(audioUrl);
+          setShowAudioPreview(true);
+        }
+      };
+      
+      // Start recording
+      recorder.start();
+      setIsRecording(true);
+      setRecordingDuration(0);
+      setShowRecordingOverlay(true);
+      
+      // Start timer
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingDuration(prev => prev + 1);
+      }, 1000);
+      
+      // Monitor audio levels for visualization
+      const audioContext = new AudioContext();
+      const analyser = audioContext.createAnalyser();
+      const source = audioContext.createMediaStreamSource(stream);
+      source.connect(analyser);
+      
+      const dataArray = new Uint8Array(analyser.frequencyBinCount);
+      const updateAudioLevel = () => {
+        if (isRecording) {
+          analyser.getByteFrequencyData(dataArray);
+          const average = dataArray.reduce((a, b) => a + b) / dataArray.length;
+          setAudioLevel(average);
+          requestAnimationFrame(updateAudioLevel);
+        }
+      };
+      updateAudioLevel();
+      
+      console.log('✅ Voice recording started successfully');
+      
+    } catch (error) {
+      console.error('❌ Failed to start voice recording:', error);
+      if (error instanceof Error) {
+        if (error.name === 'NotAllowedError') {
+          setError('Microphone access denied. Please allow microphone access to record voice messages.');
+        } else if (error.name === 'NotFoundError') {
+          setError('No microphone found. Please connect a microphone and try again.');
+        } else {
+          setError('Failed to start recording: ' + error.message);
+        }
+      } else {
+        setError('Failed to start recording. Please try again.');
+      }
+    }
+  };
 
+  const stopRecording = () => {
+    try {
+      console.log('🛑 Stopping voice recording...');
+      
+      if (mediaRecorder && mediaRecorder.state === 'recording') {
+        mediaRecorder.stop();
+      }
+      
+      // Stop timer
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+      
+      // Stop all tracks in the stream
+      if (recordingStream) {
+        recordingStream.getTracks().forEach(track => track.stop());
+      }
+      
+      setIsRecording(false);
+      setRecordingDuration(0);
+      setShowRecordingOverlay(false);
+      setAudioLevel(0);
+      
+      console.log('✅ Voice recording stopped successfully');
+      
+    } catch (error) {
+      console.error('❌ Error stopping recording:', error);
+      setError('Failed to stop recording. Please try again.');
+    }
+  };
 
+  const handleMicClick = () => {
+    console.log('🎤 Mic clicked! Current state:', { 
+      isRecording, 
+      mediaRecorder: !!mediaRecorder,
+      navigator: typeof navigator,
+      mediaDevices: navigator?.mediaDevices,
+      getUserMedia: navigator?.mediaDevices?.getUserMedia,
+      MediaRecorder: typeof MediaRecorder,
+      isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'unknown'
+    });
+    
+    if (isRecording) {
+      console.log('🛑 Stopping recording...');
+      stopRecording();
+    } else {
+      console.log('🎤 Starting recording...');
+      startRecording();
+    }
+  };
 
-  // const MessageCard = ({ name, avatar, online, unreadCount, time, color, text, unread }: { name: string, avatar: string, online: boolean, unreadCount: number, time: string, color: string, text: string, unread: boolean }) => (
-  //   <div onClick={() => setIsVisible(true)} className={`flex flex-col ${online ? "bg-[#F4F2F6] border-r-[#B699CA]" : "border-r-transparent"} pr-12 p-4 gap-1 border-r-[6px] border-b border-b-black/20 relative`}>
-  //     <div className="flex gap-2 font-medium items-center relative">
-  //       <span className="size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white" style={{ backgroundColor: color }}></span>
-  //       <span className="size-10 rounded-full overflow-hidden"><img className="w-full h-full object-cover" src={avatar} alt={name} /></span>
-  //       {name}
-  //       {unreadCount > 0 && (
-  //         <span className="size-5 rounded-full bg-[#EE5D50] flex items-center justify-center text-[8px] text-white">{unreadCount}</span>
-  //       )}
-  //     </div>
-  //     <span className={`text-sm whitespace-nowrap text-ellipsis block overflow-hidden ${!unread ? 'text-[#888787]' : ''}`}>{text}</span>
-  //     <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">{time}<svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={color}/></svg></span>
-  //   </div>
-  // );
+  const formatRecordingDuration = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  // Audio preview and playback functions
+  const playAudioPreview = () => {
+    if (audioRef.current && recordedAudioUrl) {
+      audioRef.current.play();
+      setIsPlayingAudio(true);
+    }
+  };
+
+  const pauseAudioPreview = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      setIsPlayingAudio(false);
+    }
+  };
+
+  const handleAudioEnded = () => {
+    setIsPlayingAudio(false);
+  };
+
+  const handleAudioTimeUpdate = () => {
+    // This will be used for progress bar if needed
+  };
+
+  const reRecordAudio = () => {
+    setShowAudioPreview(false);
+    setRecordedAudioUrl(null);
+    setAudioChunks([]);
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current.currentTime = 0;
+    }
+    setIsPlayingAudio(false);
+  };
+
+  const sendVoiceMessage = async () => {
+    if (audioChunks.length === 0) return;
+    
+    try {
+      console.log('🎤 Sending voice message...');
+      
+      // Create audio file from chunks
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const audioFile = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
+      
+      // Add to attachment previews (will be handled by existing send logic)
+      const voicePreview: AttachmentPreview = {
+        file: audioFile,
+        preview: recordedAudioUrl || '',
+        type: 'voice',
+        size: formatFileSize(audioFile.size)
+      };
+      
+      setAttachmentPreviews([voicePreview]);
+      setShowAttachmentPreview(true);
+      setShowAudioPreview(false);
+      
+      console.log('✅ Voice message prepared for sending');
+      
+    } catch (error) {
+      console.error('❌ Error preparing voice message:', error);
+      setError('Failed to prepare voice message. Please try again.');
+    }
+  };
 
   // Simple MessageCard component based on your design
   const MessageCard = ({ conversation }: { conversation: ChatConversation }) => {
     const otherParticipant = conversation.participants.find(p => p.user_id !== userId);
     const lastMessage = conversation.lastMessage;
     const isActive = currentConversation?.id === conversation.id;
-    const isHighlighted = isActive || conversation.unreadCount > 0;
+    const isHighlighted = isActive; // Only highlight the currently selected conversation
 
     return (
       <div
@@ -1179,6 +1543,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       >
         <div className="flex gap-2 font-medium items-center relative">
           <span className={`size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white ${otherParticipant?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+          {/* Unread indicator - subtle left border */}
           <span className="size-10 rounded-full overflow-hidden">
             {/* <img className="w-full h-full object-cover" src={otherParticipant?.avatar || <Avatar
               className="cursor-pointer !text-3xl "
@@ -1297,9 +1662,18 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </span>
                   {currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
                 </div>
-                <span className="text-[12px] ml-auto font-semibold h-11 px-4 gap-1 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:hidden">
-                  <img src="/images/vectors/doubleTick.png" alt="" /> Mark As Read
-                </span>
+                <button 
+                  onClick={() => markConversationAsRead(currentConversation.id)}
+                  disabled={currentConversation.unreadCount === 0}
+                  className={`text-[12px] ml-auto font-semibold h-11 px-4 gap-1 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:hidden transition-colors ${
+                    currentConversation.unreadCount > 0 
+                      ? 'hover:bg-[#F4F2F6] cursor-pointer' 
+                      : 'opacity-50 cursor-not-allowed'
+                  }`}
+                >
+                  <img src="/images/vectors/doubleTick.png" alt="" /> 
+                  {currentConversation.unreadCount > 0 ? 'Mark As Read' : 'All Read'}
+                </button>
                 <span className="text-[32px] font-semibold h-11 w-11 max-md:w-7 max-md:h-7 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:ml-auto">
                   <img className="max-md:w-2.5" src="/images/vectors/3dots.png" alt="" />
                 </span>
@@ -1317,16 +1691,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onDrop={handleDrop}
                 onScroll={handleScroll}
                 onWheel={(e) => {
-                  // Prevent wheel events from scrolling the page when at container boundaries
+                  // Handle wheel events for smooth scrolling within container
                   const container = e.currentTarget;
                   const { scrollTop, scrollHeight, clientHeight } = container;
                   
-                  // If scrolling up at the top or down at the bottom, prevent page scroll
+                  // If scrolling up at the top or down at the bottom, stop propagation
+                  // Note: preventDefault() is not allowed on passive wheel events
                   if (
                     (e.deltaY < 0 && scrollTop <= 0) || // Scrolling up at top
                     (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) // Scrolling down at bottom
                   ) {
-                    e.preventDefault();
                     e.stopPropagation();
                   }
                 }}
@@ -1424,7 +1798,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         
                         {/* Messages for this date */}
                         {group.messages.map((message) => (
-                          <div key={message.id} className={`flex flex-col relative ${message.senderId === userId ? 'pr-20 ml-auto' : 'pl-20'} w-full max-w-[650px] max-md:${message.senderId === userId ? 'pr-12' : 'pl-12'}`}>
+                          <div 
+                            key={message.id} 
+                            data-message-id={message.id}
+                            className={`flex flex-col relative ${message.senderId === userId ? 'pr-20 ml-auto' : 'pl-20'} w-full max-w-[650px] max-md:${message.senderId === userId ? 'pr-12' : 'pl-12'}`}
+                          >
                             <span className={`w-[60px] h-[60px] max-md:w-[30px] max-md:h-[30px] rounded-full overflow-hidden absolute ${message.senderId === userId ? 'right-0' : 'left-0'} bottom-0`}>
                               <Avatar
                                 className="cursor-pointer !text-3xl w-full h-full object-cover"
@@ -1439,12 +1817,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               {message.senderId === userId ? (
                                 <>
                                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  <strong className="font-medium">Seen</strong>
+                                  {/* Show read status based on message.readBy array */}
+                                  {message.readBy && message.readBy.length > 0 ? (
+                                    <strong className="font-medium text-green-600">Seen</strong>
+                                  ) : (
+                                    <strong className="font-medium text-gray-500">Delivered</strong>
+                                  )}
                                 </>
                               ) : (
                                 <>
                                   <strong className="font-semibold">{currentConversation.participants.find(p => p.user_id !== userId)?.name}</strong>
                                   {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                  {/* Show unread indicator for incoming messages */}
+                                  {!message.isRead && (
+                                    <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">New</span>
+                                  )}
                                 </>
                               )}
                             </span>
@@ -1514,7 +1901,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                                 ) : attachment.name?.match(/\.(doc|docx)$/i) ? (
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 ) : attachment.name?.match(/\.(xls|xlsx)$/i) ? (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                                 ) : attachment.name?.match(/\.(ppt|pptx)$/i) ? (
                                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
                                                 ) : (
@@ -1624,8 +2011,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     }
                   }}
                 />
-                <span className="h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative">
-                  <img className='max-md:max-h-4' src="/images/vectors/mic.png" alt="" />
+                <span 
+                  className={`h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative cursor-pointer transition-all duration-200 ${isRecording ? 'bg-red-100 hover:bg-red-200' : 'hover:bg-gray-100'}`}
+                  onClick={handleMicClick}
+                  title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
+                >
+                  {isRecording ? (
+                    // Recording state - red mic icon with timer
+                    <div className="flex flex-col items-center gap-1">
+                      <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                      <span className="text-xs text-red-600 font-medium">
+                        {formatRecordingDuration(recordingDuration)}
+                      </span>
+                    </div>
+                  ) : (
+                    // Normal state - mic icon
+                    <img className='max-md:max-h-4' src="/images/vectors/mic.png" alt="Voice message" />
+                  )}
                 </span>
                 <span className="h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative">
                   <input 
@@ -1633,7 +2035,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     className="absolute w-full h-full top-0 left-0 cursor-pointer opacity-0" 
                     type="file" 
                     multiple
-                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx"
+                    accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.webm,.mp3,.wav,.ogg"
                     onChange={(e) => {
                       if (e.target.files && e.target.files.length > 0) {
                         handleFileSelect(e.target.files);
@@ -1692,6 +2094,123 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </div>
       </div>
 
+      {/* Voice Recording Overlay */}
+      {showRecordingOverlay && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[20px] max-w-md w-full p-8 shadow-xl border border-black/10">
+            {/* Recording Header */}
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <div className="w-12 h-12 bg-red-500 rounded-full animate-pulse"></div>
+              </div>
+              <h3 className="text-xl font-semibold text-[#4A4A4A] mb-2">Recording Voice Message</h3>
+              <p className="text-sm text-[#8B8B8B]">Speak clearly into your microphone</p>
+            </div>
+
+            {/* Audio Level Visualization */}
+            <div className="flex items-center justify-center gap-1 mb-6">
+              {Array.from({ length: 20 }, (_, i) => (
+                <div
+                  key={i}
+                  className={`w-1 rounded-full transition-all duration-100 ${
+                    i < (audioLevel / 12.75) ? 'bg-red-500' : 'bg-gray-200'
+                  }`}
+                  style={{
+                    height: `${Math.max(8, (audioLevel / 12.75) * 2)}px`
+                  }}
+                />
+              ))}
+            </div>
+
+            {/* Recording Timer */}
+            <div className="text-center mb-6">
+              <div className="text-3xl font-mono font-bold text-red-500">
+                {formatRecordingDuration(recordingDuration)}
+              </div>
+              <p className="text-sm text-[#8B8B8B] mt-1">Recording duration</p>
+            </div>
+
+            {/* Recording Controls */}
+            <div className="flex gap-4">
+              <button
+                onClick={() => {
+                  setShowRecordingOverlay(false);
+                  setAudioChunks([]);
+                  setIsRecording(false);
+                  setRecordingDuration(0);
+                  if (recordingStream) {
+                    recordingStream.getTracks().forEach(track => track.stop());
+                  }
+                }}
+                className="flex-1 py-4 text-[#4A4A4A] bg-[#F4F2F6] rounded-[20px] hover:bg-gray-200 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={stopRecording}
+                className="flex-1 py-4 bg-red-500 text-white rounded-[20px] hover:bg-red-600 transition-colors font-medium"
+              >
+                Stop Recording
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Audio Preview Overlay */}
+      {showAudioPreview && recordedAudioUrl && (
+        <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[20px] max-w-md w-full p-8 shadow-xl border border-black/10">
+            {/* Audio Preview Header */}
+            <div className="text-center mb-6">
+              <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg className="w-10 h-10 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-[#4A4A4A] mb-2">Voice Message Preview</h3>
+              <p className="text-sm text-[#8B8B8B]">Listen to your recording</p>
+            </div>
+
+            {/* Audio Player */}
+            <div className="mb-6">
+              <audio
+                ref={audioRef}
+                src={recordedAudioUrl}
+                onEnded={handleAudioEnded}
+                onTimeUpdate={handleAudioTimeUpdate}
+                className="w-full"
+                controls
+              />
+            </div>
+
+            {/* Recording Info */}
+            <div className="text-center mb-6 p-4 bg-[#F4F2F6] rounded-[20px]">
+              <div className="text-lg font-semibold text-[#4A4A4A]">
+                Duration: {formatRecordingDuration(recordingDuration)}
+              </div>
+              <p className="text-sm text-[#8B8B8B] mt-1">Voice message ready to send</p>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex gap-4">
+              <button
+                onClick={reRecordAudio}
+                className="flex-1 py-4 text-[#4A4A4A] bg-[#F4F2F6] rounded-[20px] hover:bg-gray-200 transition-colors font-medium"
+              >
+                Re-record
+              </button>
+              <button
+                onClick={sendVoiceMessage}
+                className="flex-1 py-4 bg-blue-500 text-white rounded-[20px] hover:bg-blue-600 transition-colors font-medium"
+              >
+                Send Voice Message
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Telegram-Style Attachment Preview Modal */}
       {showAttachmentPreview && attachmentPreviews.length > 0 && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
@@ -1737,6 +2256,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                           alt={attachment.file.name}
                           className="w-14 h-14 object-cover rounded-[12px]"
                         />
+                      ) : attachment.type === 'voice' ? (
+                        <svg className="w-8 h-8 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
+                        </svg>
                       ) : (
                         <svg className="w-8 h-8 text-[#4A4A4A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           {attachment.file.name.endsWith('.pdf') ? (
