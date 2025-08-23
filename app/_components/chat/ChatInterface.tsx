@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, startTransition } from 'react';
 import EmojiPicker from 'emoji-picker-react';
 import { ChatConversation, ChatMessage, ChatParticipant } from '@/_types/chat';
 import { chatWebSocketService } from '@/_services/chat/chatWebSocketService';
@@ -8,6 +8,7 @@ import { DashboardLayout } from '../common/dashboard-layout';
 import { Avatar } from '../ui';
 import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { UploadResult } from '@/_services/upload/upload-utils';
+import { ArrowDown, ArrowDownIcon } from 'lucide-react';
 
 interface ChatInterfaceProps {
   userId: string;
@@ -67,7 +68,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [isVisible, setIsVisible] = useState(false);
   const [wsConnected, setWsConnected] = useState(false);
   const [typingUsers, setTypingUsers] = useState<Set<string>>(new Set());
-  
+
+  // Typing indicators for all conversations - use ref to prevent unnecessary re-renders
+  const [conversationTypingStates, setConversationTypingStates] = useState<Map<string, Set<string>>>(new Map());
+  const conversationTypingStatesRef = useRef<Map<string, Set<string>>>(new Map());
+
+  // Track processed messages to prevent duplicates
+  const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+
   // Attachment related state
   const [attachmentPreviews, setAttachmentPreviews] = useState<AttachmentPreview[]>([]);
   const [showAttachmentPreview, setShowAttachmentPreview] = useState(false);
@@ -80,6 +88,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const [hasNewMessages, setHasNewMessages] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef<HTMLDivElement>(null);
+
+  // New conversation notification state
+  const [showNewConversationNotification, setShowNewConversationNotification] = useState(false);
+  const [newConversationInfo, setNewConversationInfo] = useState<{ id: string; senderName: string } | null>(null);
 
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
@@ -118,37 +130,78 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Smart scrolling functions
   const checkIfUserAtBottom = useCallback(() => {
     if (!messagesContainerRef.current) return true;
-    
+
     const container = messagesContainerRef.current;
-    const threshold = 100; // 100px threshold to consider user "at bottom" (more forgiving)
-    
-    const isAtBottom = container.scrollHeight - container.scrollTop - container.clientHeight < threshold;
+    const threshold = 20; // Reduced threshold to 20px for more responsive detection
+
+    const scrollPosition = container.scrollTop;
+    const maxScroll = container.scrollHeight - container.clientHeight;
+    const distanceFromBottom = maxScroll - scrollPosition;
+
+    const isAtBottom = distanceFromBottom < threshold;
+
+    console.log('🔍 Scroll position check:', {
+      scrollTop: scrollPosition,
+      maxScroll,
+      distanceFromBottom,
+      threshold,
+      isAtBottom,
+      scrollHeight: container.scrollHeight,
+      clientHeight: container.clientHeight
+    });
+
     setIsUserAtBottom(isAtBottom);
     return isAtBottom;
   }, []);
 
   const scrollToBottom = useCallback((behavior: ScrollBehavior = 'smooth') => {
-    if (messagesEndRef.current) {
+    console.log('🔽 scrollToBottom called with behavior:', behavior);
+    console.log('🔽 messagesEndRef current:', messagesEndRef.current);
+    console.log('🔽 messagesContainerRef current:', messagesContainerRef.current);
+
+    if (messagesContainerRef.current) {
+      console.log('🔽 Scrolling messagesContainer to bottom');
+      const container = messagesContainerRef.current;
+      const targetScrollTop = container.scrollHeight - container.clientHeight;
+
+      if (behavior === 'smooth') {
+        // Smooth scrolling
+        container.scrollTo({
+          top: targetScrollTop,
+          behavior: 'smooth'
+        });
+      } else {
+        // Instant scrolling
+        container.scrollTop = targetScrollTop;
+      }
+
+      setShowNewMessageIndicator(false);
+      setHasNewMessages(false);
+      console.log('🔽 Scroll completed to position:', targetScrollTop);
+    } else if (messagesEndRef.current) {
+      console.log('🔽 Fallback: Using scrollIntoView on messagesEndRef');
       messagesEndRef.current.scrollIntoView({ behavior });
       setShowNewMessageIndicator(false);
       setHasNewMessages(false);
+    } else {
+      console.log('🔽 No refs available for scrolling');
     }
   }, []);
 
   // Mark messages as read when they come into view
   const markVisibleMessagesAsRead = useCallback(() => {
     if (!messagesContainerRef.current) return;
-    
+
     const container = messagesContainerRef.current;
     const messageElements = container.querySelectorAll('[data-message-id]');
-    
+
     messageElements.forEach((messageElement) => {
       const messageId = messageElement.getAttribute('data-message-id');
       if (!messageId) return;
-      
+
       const rect = messageElement.getBoundingClientRect();
       const containerRect = container.getBoundingClientRect();
-      
+
       // Check if message is visible in the container
       if (rect.top >= containerRect.top && rect.bottom <= containerRect.bottom) {
         // Message is visible, mark as read if it's from another user and not already read
@@ -160,21 +213,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     });
   }, [userId, messages, currentConversation]);
 
+  // Check scroll position when messages change
+  useEffect(() => {
+    if (messages.length > 0 && messagesContainerRef.current) {
+      console.log('📱 Messages changed, checking scroll position');
+      const isAtBottom = checkIfUserAtBottom();
+      console.log('📱 Initial scroll check result:', isAtBottom);
+    }
+  }, [messages, checkIfUserAtBottom]);
+
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     // Prevent scroll event from bubbling up to parent page
     e.stopPropagation();
-    
+
+    console.log('🔄 Scroll event triggered');
+
     const isAtBottom = checkIfUserAtBottom();
-    
+
+    console.log('🔄 Scroll result - isAtBottom:', isAtBottom);
+
     // If user scrolled to bottom, hide the new message indicator
     if (isAtBottom && showNewMessageIndicator) {
       setShowNewMessageIndicator(false);
       setHasNewMessages(true);
     }
-    
+
     // Update the user's scroll position state
     setIsUserAtBottom(isAtBottom);
-    
+
     // Mark visible messages as read when scrolling
     markVisibleMessagesAsRead();
   }, [checkIfUserAtBottom, showNewMessageIndicator, markVisibleMessagesAsRead]);
@@ -183,8 +249,42 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleNewMessages = useCallback((newMessages: ChatMessage[]) => {
     const wasAtBottom = checkIfUserAtBottom();
     console.log('🎯 new messages debug:', newMessages);
-    const hasNewIncomingMessages = newMessages.some(msg => msg.senderId !== userId);
-    
+    console.log('🔍 Current processed message IDs:', Array.from(processedMessageIds));
+
+    // Filter out messages that might have already been processed via WebSocket
+    const uniqueNewMessages = newMessages.filter(newMsg => {
+      // Check if this message already exists in the current messages array
+      const messageExists = messages.some(existingMsg => existingMsg.id === newMsg.id);
+      if (messageExists) {
+        console.log('⚠️ Skipping duplicate message (already in messages):', newMsg.id);
+        return false;
+      }
+
+      // Check if this message has already been processed via WebSocket
+      const alreadyProcessed = processedMessageIds.has(newMsg.id);
+      if (alreadyProcessed) {
+        console.log('⚠️ Skipping duplicate message (already processed via WebSocket):', newMsg.id);
+        return false;
+      }
+
+      console.log('✅ Message is unique and will be processed:', newMsg.id);
+      return true;
+    });
+
+    // If all messages were already processed via WebSocket, don't update conversations
+    if (newMessages.length > 0 && uniqueNewMessages.length === 0) {
+      console.log('🚫 All messages were already processed via WebSocket, skipping conversation list update');
+      return;
+    }
+
+    if (uniqueNewMessages.length === 0) {
+      console.log('⚠️ No unique new messages to process');
+      return;
+    }
+
+    console.log('✅ Processing unique new messages:', uniqueNewMessages.length);
+    const hasNewIncomingMessages = uniqueNewMessages.some(msg => msg.senderId !== userId);
+
     if (hasNewIncomingMessages) {
       if (wasAtBottom) {
         // User is at bottom, auto-scroll to show new message
@@ -199,18 +299,66 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         setHasNewMessages(true);
       }
     }
-  }, [checkIfUserAtBottom, scrollToBottom, userId]);
+  }, [checkIfUserAtBottom, scrollToBottom, userId, messages, processedMessageIds]);
+
+  // Function to join all conversation rooms
+  const joinAllConversationRooms = useCallback(() => {
+    if (wsConnected && conversations.length > 0) {
+      console.log('🚪 Joining all conversation rooms:', conversations.length);
+
+      // Track which conversations we've already joined to prevent duplicates
+      const joinedConversations = new Set();
+
+      conversations.forEach((conversation, index) => {
+        if (joinedConversations.has(conversation.id)) {
+          console.log(`🚪 [${index + 1}/${conversations.length}] Skipping duplicate join for conversation:`, conversation.id);
+          return;
+        }
+
+        console.log(`🚪 [${index + 1}/${conversations.length}] Joining room for conversation:`, conversation.id);
+        chatWebSocketService.joinConversation(conversation.id);
+        joinedConversations.add(conversation.id);
+      });
+
+      console.log('🚪 All conversation rooms joined');
+    }
+  }, [wsConnected, conversations, chatWebSocketService]);
+
+  // Function to handle new conversations being added
+  const handleNewConversation = useCallback((conversationId: string) => {
+    console.log('🚪 New conversation detected, joining room:', conversationId);
+    if (wsConnected) {
+      chatWebSocketService.joinConversation(conversationId);
+    }
+  }, [wsConnected, chatWebSocketService]);
+
+
 
   // Handle WebSocket new message with smart scrolling
   const handleWebSocketNewMessage = useCallback((data: any) => {
+    console.log('🔴 DEBUG: new_message event received!', data);
+
+    // Mark this message as processed to prevent duplicate handling
+    const messageId = data.message.id;
+
+    // Check if message was already processed
+    if (processedMessageIds.has(messageId)) {
+      console.log('⚠️ Message already processed, skipping:', messageId);
+      return;
+    }
+
+    setProcessedMessageIds(prev => new Set(prev).add(messageId));
+    console.log('✅ Message marked as processed:', messageId);
+
     // Check if user is at bottom before adding the message
     const wasAtBottom = checkIfUserAtBottom();
-    
-    // Add the message to state
+
+    // Add the message to state ONLY if it's for the currently active conversation
     if (data.conversationId === currentConversationRef.current?.id) {
+      console.log('💬 Adding message to active conversation:', messageId);
       setMessages(prev => {
         const normalizedMessage = {
-          id: data.message.id,
+          id: messageId,
           conversationId: data.message.conversation_id || data.conversationId,
           senderId: data.message.sender_id,
           content: data.message.content,
@@ -222,9 +370,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           readBy: data.message.read_by,
           timestamp: data.message.timestamp
         };
-        
+
         const newMessages = [...prev, normalizedMessage];
-        
+
         // If user was at bottom, auto-scroll to show new message
         if (wasAtBottom && data.message.sender_id !== userId) {
           setTimeout(() => scrollToBottom('smooth'), 100);
@@ -233,8 +381,45 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setShowNewMessageIndicator(true);
           setHasNewMessages(true);
         }
-        
+
         return newMessages;
+      });
+    } else {
+      console.log('💬 Message received for non-active conversation:', data.conversationId);
+      // Update conversation list to reflect new message and unread count
+      setConversations(prev => {
+        console.log('🔄 Updating conversation list for non-active conversation:', data.conversationId);
+        console.log('🔄 Previous unread count:', prev.find(c => c.id === data.conversationId)?.unreadCount);
+        console.log('🔄 Current conversations state:', prev.map(c => ({ id: c.id, unreadCount: c.unreadCount })));
+
+        return prev.map(conv => {
+          if (conv.id === data.conversationId) {
+            const newUnreadCount = (conv.unreadCount || 0) + 1;
+            console.log('🔄 New unread count will be:', newUnreadCount);
+            console.log('🔄 Updating conversation:', conv.id, 'from', conv.unreadCount, 'to', newUnreadCount);
+
+            // Update the conversation with new message info
+            return {
+              ...conv,
+              lastMessage: {
+                id: messageId,
+                conversationId: data.message.conversation_id || data.conversationId,
+                senderId: data.message.sender_id,
+                content: data.message.content,
+                messageType: data.message.message_type,
+                replyTo: data.message.reply_to,
+                attachments: data.message.attachments,
+                listingReference: data.message.listing_reference,
+                isRead: data.message.is_read,
+                readBy: data.message.read_by,
+                timestamp: data.message.timestamp
+              },
+              updatedAt: data.message.timestamp || new Date(),
+              unreadCount: newUnreadCount
+            };
+          }
+          return conv;
+        });
       });
     }
   }, [checkIfUserAtBottom, scrollToBottom, userId]);
@@ -243,13 +428,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     const currentMessageCount = messages.length;
     const previousMessageCount = previousMessageCountRef.current;
-    
+
     if (currentMessageCount > previousMessageCount) {
       // New messages were added
       const newMessages = messages.slice(previousMessageCount);
       handleNewMessages(newMessages);
     }
-    
+
     previousMessageCountRef.current = currentMessageCount;
   }, [messages, handleNewMessages]);
 
@@ -334,10 +519,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Simple WebSocket connection
   useEffect(() => {
     const connectWebSocket = async () => {
+      // Connection guard to prevent multiple simultaneous connections
+      let isConnecting = false;
+
       try {
+        // Prevent multiple simultaneous connection attempts
+        if (isConnecting) {
+          console.log('WebSocket connection already in progress, skipping');
+          return;
+        }
+
+        // Check if already connected
+        if (chatWebSocketService.isConnected()) {
+          console.log('WebSocket already connected, skipping connection attempt');
+          setWsConnected(true);
+          return;
+        }
+
+        isConnecting = true;
+        console.log('Starting WebSocket connection...');
+
         const sessionId = await getSessionId();
         if (!sessionId) {
           console.log('No session ID found, skipping WebSocket connection');
+          isConnecting = false;
           return;
         }
 
@@ -349,39 +554,53 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         if (connected) {
           console.log('WebSocket connected successfully');
           setWsConnected(true);
+          isConnecting = false;
 
           // Set up event listeners for real-time updates
           console.log('🔧 Setting up WebSocket event listeners...');
-          
+
           // Add debug wrapper for new_message event
           const debugHandleNewMessage = (data: any) => {
             console.log('🔴 DEBUG: new_message event received!', data);
             console.log('🔴 DEBUG: Event timestamp:', new Date().toISOString());
             handleNewMessage(data);
           };
-          
+
           // Add debug logging for the 'on' method to see if events are being registered
           const originalOn = chatWebSocketService.on;
-          chatWebSocketService.on = function(event: string, callback: Function) {
+          chatWebSocketService.on = function (event: string, callback: Function) {
             console.log('🔧 DEBUG: Registering event listener for:', event);
             return originalOn.call(this, event, callback);
           };
-          
+
           chatWebSocketService.on('new_message', debugHandleNewMessage);
           chatWebSocketService.on('user_typing', handleUserTyping);
+          chatWebSocketService.on('conversation_created', handleConversationCreated);
           chatWebSocketService.on('error', handleError);
           chatWebSocketService.on('connection_status_change', handleConnectionChange);
-          
+
+          // Note: Backend doesn't send conversation_created events, so we rely on
+          // the new_message event and automatic conversation refresh
+
           // Restore original method
           chatWebSocketService.on = originalOn;
-          
+
           console.log('🔧 Verifying event listeners are set up...');
           console.log('🔧 WebSocket service type:', typeof chatWebSocketService);
           console.log('🔧 WebSocket service connected:', chatWebSocketService.isConnected());
 
           console.log('✅ WebSocket event listeners set up successfully');
-          
-          // Join all conversation rooms to receive messages from all conversations
+
+          // Check initial scroll position after setup
+          setTimeout(() => {
+            if (messagesContainerRef.current) {
+              console.log('📱 Initial scroll position check after WebSocket setup');
+              const isAtBottom = checkIfUserAtBottom();
+              console.log('📱 Initial scroll state:', isAtBottom);
+            }
+          }, 1000);
+
+          // Join all conversation rooms to receive real-time messages from all conversations
           // Add a small delay to ensure WebSocket connection is fully established
           setTimeout(() => {
             if (conversations.length > 0) {
@@ -395,14 +614,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             } else {
               console.log('⚠️ No conversations available to join rooms for');
             }
-          }, 1000); // 1 second delay to ensure connection is ready
+          }, 500); // Reduced delay to 500ms for faster room joining
         } else {
           console.log('WebSocket connection failed');
           setWsConnected(false);
+          isConnecting = false;
         }
       } catch (error) {
         console.error('WebSocket connection failed:', error);
         setWsConnected(false);
+        isConnecting = false;
       }
     };
 
@@ -417,6 +638,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     }, 5000); // Retry every 5 seconds if not connected
 
+    // Prevent multiple connections by checking if already connected
+    const connectionCheckInterval = setInterval(() => {
+      const actualStatus = chatWebSocketService.isConnected();
+      if (actualStatus && wsConnected) {
+        // Already connected, no need to do anything
+        return;
+      }
+      if (actualStatus && !wsConnected) {
+        // WebSocket is connected but UI state is wrong, sync it
+        setWsConnected(true);
+      }
+    }, 2000); // Check every 2 seconds
+
     // Set up periodic connection status check to keep UI in sync
     const statusCheckInterval = setInterval(() => {
       const actualStatus = chatWebSocketService.isConnected();
@@ -425,9 +659,32 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       }
     }, 5000); // Check every 5 seconds instead of 2 seconds
 
+    // Set up periodic conversations refresh as backup for new conversations
+    const conversationsRefreshInterval = setInterval(() => {
+      if (wsConnected && conversations.length > 0) {
+        console.log('🔄 Periodic conversations refresh (backup mechanism)');
+        console.log('🔄 Current conversations count:', conversations.length);
+        console.log('🔄 Current conversation IDs:', conversations.map(c => c.id));
+        loadConversations();
+      } else {
+        console.log('🔄 Skipping periodic refresh - WebSocket not connected or no conversations');
+      }
+    }, 30000); // Refresh every 30 seconds
+
+    // Set up periodic scroll position check to keep button state in sync
+    const scrollCheckInterval = setInterval(() => {
+      if (messagesContainerRef.current && messages.length > 0) {
+        console.log('🔄 Periodic scroll position check');
+        checkIfUserAtBottom();
+      }
+    }, 2000); // Check every 2 seconds
+
     return () => {
       clearInterval(retryInterval);
+      clearInterval(connectionCheckInterval);
       clearInterval(statusCheckInterval);
+      clearInterval(conversationsRefreshInterval);
+      clearInterval(scrollCheckInterval);
       chatWebSocketService.disconnect();
     };
   }, []); // Remove wsConnected dependency to prevent infinite loop
@@ -476,29 +733,49 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Auto-join conversation room when WebSocket connects
   useEffect(() => {
+    if (wsConnected && conversations.length > 0) {
+      console.log('🚪 WebSocket connected, joining all conversation rooms:', conversations.length);
+      // Join all conversation rooms to receive messages from all conversations
+      conversations.forEach((conversation, index) => {
+        console.log(`🚪 [${index + 1}/${conversations.length}] Joining room for conversation:`, conversation.id);
+        chatWebSocketService.joinConversation(conversation.id);
+      });
+      console.log('🚪 All conversation rooms joined after WebSocket connection');
+    }
+  }, [wsConnected, conversations]);
+
+  // Auto-join new conversations when they're added to the list
+  useEffect(() => {
+    if (wsConnected && conversations.length > 0) {
+      // This effect will run whenever conversations change, ensuring new ones are joined
+      console.log('🚪 Conversations updated, ensuring all rooms are joined:', conversations.length);
+      joinAllConversationRooms();
+    }
+  }, [conversations, wsConnected, joinAllConversationRooms]);
+
+  // Auto-join conversation room when WebSocket connects
+  useEffect(() => {
     if (wsConnected && currentConversation?.id) {
       console.log('🚪 Auto-joining conversation room after WebSocket connection:', currentConversation.id);
       chatWebSocketService.joinConversation(currentConversation.id);
     }
   }, [wsConnected, currentConversation?.id]);
 
-  // Keep ref in sync with state to avoid stale closures in WebSocket handlers
+  // Keep refs in sync with state to avoid stale closures in WebSocket handlers
   useEffect(() => {
     currentConversationRef.current = currentConversation;
   }, [currentConversation]);
+
+  // Keep typing states ref in sync with state
+  useEffect(() => {
+    conversationTypingStatesRef.current = conversationTypingStates;
+  }, [conversationTypingStates]);
 
   // Debug: Log connection status changes
   useEffect(() => {
     console.log('🔍 ChatInterface: wsConnected state changed to:', wsConnected);
     console.log('🔍 ChatInterface: WebSocket service connected:', chatWebSocketService.isConnected());
   }, [wsConnected]);
-
-  // Debug: Log messages array changes
-  useEffect(() => {
-    console.log('📨 ChatInterface: Messages array changed:', messages);
-    console.log('📨 ChatInterface: Messages count:', messages.length);
-    console.log('📨 ChatInterface: Loading messages state:', loadingMessages);
-  }, [messages, loadingMessages]);
 
   // Simple helper functions
   const getSessionId = async (): Promise<string | null> => {
@@ -548,20 +825,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     console.log('❌ Available cookies:', document.cookie);
     console.log('❌ Available localStorage keys:', Object.keys(localStorage));
     console.log('❌ This means user is not properly authenticated!');
-    
+
     // Debug cookie visibility issues
     console.log('🔍 DEBUG: Cookie visibility check:');
     console.log('🔍 Current domain:', window.location.hostname);
     console.log('🔍 Current port:', window.location.port);
     console.log('🔍 Current protocol:', window.location.protocol);
     console.log('🔍 Full URL:', window.location.href);
-    
+
     // Try to access cookies in different ways
     try {
       const allCookies = document.cookie;
       console.log('🔍 document.cookie raw:', allCookies);
       console.log('🔍 document.cookie length:', allCookies.length);
-      
+
       if (allCookies.length === 0) {
         console.log('🔍 WARNING: document.cookie is completely empty!');
         console.log('🔍 This suggests a cookie visibility issue');
@@ -569,19 +846,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } catch (error) {
       console.error('🔍 Error accessing cookies:', error);
     }
-    
-          // Since cookies are HttpOnly, try to get session ID via API call
-      try {
-        console.log('🔧 Attempting to get session ID via API call...');
-        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
-        const response = await fetch(`${backendUrl}/api/v1/auth/session`, {
-          method: 'GET',
-          credentials: 'include', // Include cookies
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-      
+
+    // Since cookies are HttpOnly, try to get session ID via API call
+    try {
+      console.log('🔧 Attempting to get session ID via API call...');
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const response = await fetch(`${backendUrl}/api/v1/auth/session`, {
+        method: 'GET',
+        credentials: 'include', // Include cookies
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
       if (response.ok) {
         const data = await response.json();
         console.log('🔧 Session API response:', data);
@@ -593,7 +870,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     } catch (error) {
       console.error('🔧 Error getting session via API:', error);
     }
-    
+
     // Don't use test session - return null to see the real issue
     return null;
   };
@@ -608,7 +885,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (Array.isArray(data)) {
         console.log('✅ ChatInterface: Conversations loaded successfully, count:', data.length);
         setConversations(data);
-        
+
         // Join WebSocket rooms for all conversations to receive real-time messages
         if (wsConnected && data.length > 0) {
           console.log('🚪 Joining WebSocket rooms for all loaded conversations');
@@ -619,7 +896,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               chatWebSocketService.joinConversation(conversation.id);
             });
             console.log('🚪 Loading: All conversation rooms joined');
-          }, 500);
+          }, 200); // Reduced delay for faster room joining
         }
 
         // If we have conversations but no current conversation is set, 
@@ -690,7 +967,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     try {
       console.log('🔄 Loading messages for conversation:', conversationId);
       setLoadingMessages(true);
-      
+
       const data = await chatApiService.getMessages(conversationId);
       console.log('📨 Raw messages from API:', data);
 
@@ -711,11 +988,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       console.log('✅ Normalized messages:', normalizedMessages);
       setMessages(normalizedMessages);
-      
+
       // Mark conversation as read when messages are loaded
       if (normalizedMessages.length > 0) {
         markConversationAsRead(conversationId);
-        
+
         // Mark individual messages as read
         normalizedMessages.forEach(message => {
           if (message.senderId !== userId && !message.isRead) {
@@ -723,7 +1000,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           }
         });
       }
-      
+
       // Scroll to bottom after messages are loaded
       setTimeout(() => {
         if (messagesContainerRef.current) {
@@ -739,8 +1016,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Handle real-time messages from other users
   const handleNewMessage = (data: any) => {
-    console.log('📨 WEBSOCKET MESSAGE RECEIVED! Data:', data);
-    console.log('📨 Current conversation when message received:', currentConversationRef.current);
+
+    console.log('🔄 Handling new message:', data);
     // Validate message data structure
     if (!data.conversationId || !data.message) {
       console.error('❌ Invalid message data structure:', data);
@@ -762,8 +1039,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: data.message.timestamp
     };
 
-    // Skip if this message was sent by the current user (already added locally)
-    console.log('🔍 Checking message duplication: senderId=', normalizedMessage.senderId, 'userId=', userId, 'types:', typeof normalizedMessage.senderId, typeof userId);
     if (normalizedMessage.senderId === userId) {
       console.log('🔄 Skipping own message from WebSocket to prevent duplication');
       return;
@@ -772,36 +1047,42 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // If this message is for the current conversation, add it to the UI
     if (data.conversationId === currentConversationRef.current?.id) {
       console.log('✅ Adding message from other user to current conversation UI');
-      
+
       // Check if user is at bottom before adding the message
       const wasAtBottom = checkIfUserAtBottom();
-      
+
       setMessages(prev => {
+        const exists = prev.some(msg => msg.id === normalizedMessage.id);
+        if (exists) {
+          console.log('⚠️ Duplicate message ignored:', normalizedMessage.id);
+          return prev;
+        }
+      
         const newMessages = [...prev, normalizedMessage];
         console.log('🔍 Updated messages array:', newMessages);
-        
-        // If user was at bottom, auto-scroll to show new message
+      
+        // If user was at bottom, auto-scroll
         if (wasAtBottom && data.message.sender_id !== userId) {
           setTimeout(() => {
             if (messagesContainerRef.current) {
-              messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+              messagesContainerRef.current.scrollTop =
+                messagesContainerRef.current.scrollHeight;
             }
           }, 100);
-          
-          // Mark message as read if user is at bottom (actively viewing)
-          if (data.message.sender_id !== userId) {
-            setTimeout(() => {
-              markMessageAsRead(data.message.id);
-            }, 500); // Small delay to ensure message is visible
-          }
+      
+          // Mark as read
+          setTimeout(() => {
+            markMessageAsRead(data.message.id);
+          }, 500);
         } else if (data.message.sender_id !== userId) {
-          // User is scrolled up, show indicator
+          // User is scrolled up
           setShowNewMessageIndicator(true);
           setHasNewMessages(true);
         }
-        
+      
         return newMessages;
       });
+      
       console.log('✅ Message added to current conversation');
     } else {
       console.log('⚠️ Message not for current conversation or currentConversation is null');
@@ -820,41 +1101,102 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setMessages(prev => {
             const newMessages = [...prev, normalizedMessage];
             console.log('🔍 Added message after auto-selecting conversation:', newMessages);
-            
+
             // Show new message indicator since this is a new conversation
             if (data.message.sender_id !== userId) {
               setShowNewMessageIndicator(true);
               setHasNewMessages(true);
             }
-            
+
             return newMessages;
           });
         }
       }
     }
 
-    // Always update conversation list with new message (for all conversations)
+    // Update conversation list smoothly without causing flickering
     setConversations(prev => {
-      const updated = prev.map(conv =>
-        conv.id === data.conversationId
-          ? { 
-              ...conv, 
-              lastMessage: normalizedMessage, 
+      console.log('🔄 Updating conversations list with new message');
+      console.log('🔄 Message conversation ID:', data.conversationId);
+      console.log('🔄 Current conversations count:', prev.length);
+
+      // Check if this conversation already exists in our list
+      const existingConversation = prev.find(conv => conv.id === data.conversationId);
+
+      if (existingConversation) {
+        console.log('✅ Found existing conversation:', existingConversation.id);
+        
+        // Only update if there's an actual change to prevent unnecessary re-renders
+        const currentLastMessage = existingConversation.lastMessage;
+        const hasMessageChange = !currentLastMessage || 
+          currentLastMessage.id !== normalizedMessage.id ||
+          currentLastMessage.content !== normalizedMessage.content;
+        
+        if (!hasMessageChange) {
+          console.log('🔄 No message change detected, skipping update');
+          return prev;
+        }
+        
+        // Update existing conversation smoothly using Object.assign for better performance
+        const updated = prev.map(conv =>
+          conv.id === data.conversationId
+            ? Object.assign({}, conv, {
+              lastMessage: normalizedMessage,
               updatedAt: new Date(),
               // Increment unread count only for incoming messages (not from current user)
               unreadCount: data.message.sender_id !== userId ? conv.unreadCount + 1 : conv.unreadCount
-            }
-          : conv
-      );
-      
-      const targetConv = updated.find(c => c.id === data.conversationId);
-      console.log('✅ Updated conversation list with new message');
-      console.log('🔍 Target conversation unread count:', targetConv?.unreadCount);
-      console.log('🔍 Current conversation ID:', currentConversationRef.current?.id);
-      console.log('🔍 Message conversation ID:', data.conversationId);
-      
-      return updated;
+            })
+            : conv
+        );
+
+        console.log('✅ Updated existing conversation with new message');
+        return updated;
+      } else {
+        // This is a new conversation that we don't have locally
+        console.log('🆕 New conversation detected for message:', data.conversationId);
+        console.log('🆕 This should be handled by conversation_created event');
+        console.log('🆕 Waiting for conversation_created event instead of fetching manually');
+        
+        // Don't fetch here to avoid duplicates - let conversation_created event handle it
+        return prev;
+      }
     });
+
+    // Clear typing indicator for the sender when a message is received
+    console.log('📝 Message received, clearing typing indicator for sender:', normalizedMessage.senderId);
+    console.log('📝 Before clearing - conversationTypingStates for conversation:', conversationTypingStates.get(data.conversationId));
+    setConversationTypingStates(prev => {
+      const newMap = new Map(prev);
+      const currentTypingUsers = newMap.get(data.conversationId);
+      console.log('📝 Current typing users in conversation:', currentTypingUsers ? Array.from(currentTypingUsers) : 'none');
+      console.log('📝 Does sender have typing indicator?', currentTypingUsers?.has(normalizedMessage.senderId));
+      
+      if (currentTypingUsers && currentTypingUsers.has(normalizedMessage.senderId)) {
+        const newTypingUsers = new Set(currentTypingUsers);
+        newTypingUsers.delete(normalizedMessage.senderId);
+        if (newTypingUsers.size === 0) {
+          newMap.delete(data.conversationId);
+          console.log('📝 Deleted conversation from typing states (no more typing users)');
+        } else {
+          newMap.set(data.conversationId, newTypingUsers);
+          console.log('📝 Updated conversation typing users:', Array.from(newTypingUsers));
+        }
+        console.log('📝 Successfully cleared typing indicator for sender in conversation:', data.conversationId);
+      } else {
+        console.log('📝 No typing indicator found for sender, nothing to clear');
+      }
+      console.log('📝 Final conversationTypingStates:', Object.fromEntries(newMap));
+      return newMap;
+    });
+
+    // Also clear from active conversation typing if it's the current conversation
+    if (data.conversationId === currentConversationRef.current?.id) {
+      setTypingUsers(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(normalizedMessage.senderId);
+        return newSet;
+      });
+    }
 
     // If this message is for a conversation that's not currently loaded, 
     // we might want to refresh the conversations list to show the new message
@@ -863,15 +1205,84 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
+  // Handle new conversation creation events from WebSocket
+  const handleConversationCreated = (data: any) => {
+    console.log('🆕 Received conversation_created event:', data);
+    
+    if (!data.conversation) {
+      console.error('❌ Invalid conversation_created event data:', data);
+      return;
+    }
+
+    // Check if current user is a participant in this conversation
+    const participantUserIds = data.participantUserIds || [];
+    const isParticipant = participantUserIds.includes(userId);
+    
+    console.log('🔍 Checking if user is participant:', {
+      currentUserId: userId,
+      participantUserIds,
+      isParticipant
+    });
+    
+    if (!isParticipant) {
+      console.log('🚫 Current user is not a participant in this conversation, ignoring event');
+      return;
+    }
+    
+    const newConversation = data.conversation;
+    
+    // Check if conversation already exists in our list
+    const existingConversation = conversations.find(conv => conv.id === newConversation.id);
+    if (existingConversation) {
+      console.log('🔄 Conversation already exists in list, skipping:', newConversation.id);
+      return;
+    }
+    
+    // Add the new conversation to the beginning of the list (most recent)
+    setConversations(prev => {
+      console.log('🆕 Adding new conversation to list:', newConversation.id);
+      return [newConversation, ...prev];
+    });
+    
+    // Show notification about new conversation
+    const otherParticipant = newConversation.participants.find((p: any) => p.user_id !== userId);
+    const senderName = otherParticipant?.name || 'Someone';
+    setNewConversationInfo({ id: newConversation.id, senderName });
+    setShowNewConversationNotification(true);
+    
+    // Auto-hide notification after 10 seconds
+    setTimeout(() => {
+      setShowNewConversationNotification(false);
+      setNewConversationInfo(null);
+    }, 10000);
+    
+    console.log('✅ New conversation added to list:', newConversation.id);
+  };
+
+
+
   const handleUserTyping = (data: any) => {
     console.log('👥 Received typing indicator:', data);
     console.log('👥 Current conversation:', currentConversationRef.current?.id);
     console.log('👥 Data conversation:', data.conversationId);
     console.log('👥 Is typing:', data.isTyping);
     console.log('👥 User ID:', data.userId);
+    console.log('👥 Conversation ID match:', data.conversationId === currentConversationRef.current?.id);
+    console.log('👥 Before handleUserTyping - conversationTypingStates:', Object.fromEntries(conversationTypingStates));
+    console.log('👥 Conversation ID types:', {
+      dataConversationId: typeof data.conversationId,
+      currentConversationId: typeof currentConversationRef.current?.id,
+      dataConversationIdValue: data.conversationId,
+      currentConversationIdValue: currentConversationRef.current?.id
+    });
 
+    // Create a unique key for this typing event to prevent duplicates
+    const typingEventKey = `${data.conversationId}-${data.userId}-${data.isTyping}`;
+    console.log('🔑 Typing event key:', typingEventKey);
+
+    // Handle typing for active conversation
     if (data.conversationId === currentConversationRef.current?.id) {
-      console.log('✅ Conversation matches, updating typing users');
+      console.log('✅ Active conversation, updating typing users');
       setTypingUsers(prev => {
         const newSet = new Set(prev);
         if (data.isTyping) {
@@ -885,10 +1296,50 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         return newSet;
       });
     } else {
-      console.log('❌ Conversation ID mismatch, ignoring typing indicator');
+      console.log('❌ Not active conversation, skipping typingUsers update');
     }
-  };
 
+    // Handle typing for all conversations (including non-active ones)
+    console.log('⌨️ Updating typing state for conversation:', data.conversationId);
+    setConversationTypingStates(prev => {
+      // Only update if there's an actual change
+      const currentTypingUsers = prev.get(data.conversationId);
+      const hasUser = currentTypingUsers?.has(data.userId);
+
+      console.log('⌨️ Current typing users for conversation:', Array.from(currentTypingUsers || []));
+      console.log('⌨️ User already typing:', hasUser);
+
+      if (data.isTyping && !hasUser) {
+        // Add typing user to conversation
+        const newMap = new Map(prev);
+        const newTypingUsers = new Set(currentTypingUsers || []);
+        newTypingUsers.add(data.userId);
+        newMap.set(data.conversationId, newTypingUsers);
+        console.log(`⌨️ User ${data.username || data.userId} started typing in conversation ${data.conversationId}`);
+        console.log('⌨️ New conversation typing states:', Object.fromEntries(newMap));
+        return newMap;
+      } else if (!data.isTyping && hasUser) {
+        // Remove typing user from conversation
+        const newMap = new Map(prev);
+        const newTypingUsers = new Set(currentTypingUsers);
+        newTypingUsers.delete(data.userId);
+        if (newTypingUsers.size === 0) {
+          newMap.delete(data.conversationId);
+        } else {
+          newMap.set(data.conversationId, newTypingUsers);
+        }
+        console.log(`⌨️ User ${data.username || data.userId} stopped typing in conversation ${data.conversationId}`);
+        console.log('⌨️ New conversation typing states:', Object.fromEntries(newMap));
+        return newMap;
+      }
+
+      console.log('⌨️ No change in typing state, skipping update');
+      // No change, return the same reference to prevent unnecessary re-renders
+      return prev;
+    });
+    
+    console.log('👥 After handleUserTyping - final conversationTypingStates:', Object.fromEntries(conversationTypingStates));
+  };
   const handleError = (data: any) => {
     console.error('WebSocket error received:', data);
     setError(data.message || 'WebSocket error occurred');
@@ -905,16 +1356,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const handleSendMessage = async (content: string) => {
     if (!currentConversation?.id) return;
-    
+
     // Don't send empty message without attachments
     if (!content.trim() && attachmentPreviews.length === 0) return;
-    
+
     // Prevent double submission
     if (sendingMessageRef.current) {
       console.log('🚫 Message sending already in progress, skipping duplicate call');
       return;
     }
-    
+
     sendingMessageRef.current = true;
     setUploadingAttachments(true);
 
@@ -943,7 +1394,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
     // Add temporary message to UI immediately
     setMessages(prev => [...prev, tempMessage]);
-    
+
     // Force scroll to bottom immediately when temporary message is added
     setTimeout(() => {
       if (messagesContainerRef.current) {
@@ -960,10 +1411,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Upload attachments if any
       if (attachmentPreviews.length > 0) {
         console.log('📎 Uploading attachments...');
-        
+
         for (const preview of attachmentPreviews) {
           const fileType = preview.type === 'image' ? 'image' : 'document';
-          
+
           // Upload each file using the upload-utils directly
           const uploadResult = await new Promise<UploadResult>((resolve, reject) => {
             import('@/_services/upload/upload-utils').then(({ uploadFile: directUpload }) => {
@@ -972,15 +1423,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               }).then(resolve).catch(reject);
             });
           });
-          
+
           attachments.push(uploadResult);
         }
-        
+
         console.log('✅ All attachments uploaded:', attachments);
       }
 
       // Determine message type
-      const messageType = attachments.length > 0 
+      const messageType = attachments.length > 0
         ? (attachments.some(a => a.fileName.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? 'image' : 'file')
         : 'text';
 
@@ -1034,33 +1485,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }, 50);
 
-      // Update conversation's last message
-      setCurrentConversation(prev => prev ? {
-        ...prev,
-        lastMessage: normalizedMessage,
-        updatedAt: new Date()
-      } : null);
+      // Update conversation's last message - only if there's an actual change
+      setCurrentConversation(prev => {
+        if (!prev) return null;
+        
+        // Only update if there's an actual change
+        if (prev.lastMessage?.id === normalizedMessage.id) {
+          return prev; // No change needed
+        }
+        
+        // Use Object.assign for better performance and to prevent unnecessary re-renders
+        return Object.assign({}, prev, {
+          lastMessage: normalizedMessage,
+          updatedAt: new Date()
+        });
+      });
 
-      // Update conversations list - don't increment unread count for sender's own messages
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === currentConversation.id
-            ? { 
-                ...conv, 
-                lastMessage: normalizedMessage, 
-                updatedAt: new Date(),
-                // Only increment unread count if this is a message from someone else
-                unreadCount: conv.unreadCount // Keep current unread count for sender
-              }
-            : conv
-        )
-      );
+      // Don't update conversations list immediately - let the WebSocket handle it
+      // This prevents the sudden reload behavior in the chat list
+      // The conversation will be updated when the WebSocket sends the new_message event
+      console.log('Skipping immediate conversation list update to prevent flickering');
 
       console.log('Local state updated with new message');
 
       // Clear attachments after successful send
       setAttachmentPreviews([]);
       setShowAttachmentPreview(false);
+      
+      // Clear typing indicator after message is sent
+      console.log('📝 Message sent, clearing typing indicator for conversation:', currentConversation.id);
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      // Send typing false to clear typing indicator
+      chatWebSocketService.sendTyping(currentConversation.id, false);
 
     } catch (err) {
       setError('Failed to send message');
@@ -1075,7 +1534,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleTyping = () => {
     console.log('🎯 handleTyping called, conversationId:', currentConversationRef.current?.id);
     console.log('🎯 WebSocket connected:', wsConnected);
-    
+
     if (!currentConversationRef.current?.id) {
       console.log('❌ No conversation ID, skipping typing indicator');
       return;
@@ -1102,36 +1561,36 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleEmojiSelect = (emojiObject: any) => {
     // Try to find the active input field
     let input = document.activeElement as HTMLInputElement;
-    
+
     // If no active input, try to find the main chat input
     if (!input || input.tagName !== 'INPUT') {
       input = document.querySelector('input[placeholder="Type something..."]') as HTMLInputElement;
     }
-    
+
     // If still no input, try the modal input
     if (!input) {
       input = document.querySelector('input[placeholder="Add a message..."]') as HTMLInputElement;
     }
-    
+
     if (input) {
       const cursorPos = input.selectionStart || 0;
       const textBefore = input.value.substring(0, cursorPos);
       const textAfter = input.value.substring(cursorPos);
       input.value = textBefore + emojiObject.emoji + textAfter;
-      
+
       // Set cursor position after the emoji
       const newCursorPos = cursorPos + emojiObject.emoji.length;
       input.setSelectionRange(newCursorPos, newCursorPos);
-      
+
       // Focus back to input
       input.focus();
-      
+
       // Trigger typing indicator only for main chat input
       if (input.placeholder === "Type something...") {
         handleTyping();
       }
     }
-    
+
     // Close emoji picker
     setShowEmojiPicker(false);
   };
@@ -1151,7 +1610,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Check if it's an allowed type
     const isImage = ALLOWED_FILE_TYPES.image.includes(file.type);
     const isDocument = ALLOWED_FILE_TYPES.document.includes(file.type);
-    
+
     if (!isImage && !isDocument) {
       return { valid: false, error: `${file.name}: File type not supported` };
     }
@@ -1170,7 +1629,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const createFilePreview = (file: File): Promise<AttachmentPreview> => {
     return new Promise((resolve) => {
       const isImage = ALLOWED_FILE_TYPES.image.includes(file.type);
-      
+
       if (isImage) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -1197,7 +1656,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Handle file selection
   const handleFileSelect = async (files: FileList | File[]) => {
     const fileArray = Array.from(files);
-    
+
     // Check total number of attachments
     if (attachmentPreviews.length + fileArray.length > MAX_ATTACHMENTS) {
       setError(`Maximum ${MAX_ATTACHMENTS} attachments allowed`);
@@ -1227,7 +1686,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       const newPreviews = await Promise.all(
         validFiles.map(file => createFilePreview(file))
       );
-      
+
       setAttachmentPreviews(prev => [...prev, ...newPreviews]);
       setShowAttachmentPreview(true);
       setError(null);
@@ -1256,7 +1715,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     e.preventDefault();
     e.stopPropagation();
     setIsDragOver(false);
-    
+
     const files = Array.from(e.dataTransfer.files);
     handleFileSelect(files);
   };
@@ -1293,13 +1752,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('🎯 Conversation has unread messages, marking as read:', conversation.unreadCount);
       markConversationAsRead(conversation.id);
     }
-    
+
     // Mark all incoming messages as read when conversation is selected
     if (messages.length > 0) {
-      const unreadMessages = messages.filter(message => 
+      const unreadMessages = messages.filter(message =>
         message.senderId !== userId && !message.isRead
       );
-      
+
       if (unreadMessages.length > 0) {
         console.log('🎯 Found unread messages, marking them as read:', unreadMessages.length);
         unreadMessages.forEach(message => {
@@ -1313,7 +1772,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       console.log('🚪 Joining WebSocket room for selected conversation:', conversation.id);
       chatWebSocketService.joinConversation(conversation.id);
     }
-    
+
     // Ensure scroll to bottom after a short delay to let messages load
     setTimeout(() => {
       if (messagesContainerRef.current) {
@@ -1337,15 +1796,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       );
 
       // Update current conversation if it's the selected one
-      setCurrentConversation(prev => 
-        prev?.id === conversationId 
+      setCurrentConversation(prev =>
+        prev?.id === conversationId
           ? { ...prev, unreadCount: 0 }
           : prev
       );
 
       // Call backend API to mark as read
       await chatApiService.markConversationAsRead(conversationId, userId);
-      
+
       console.log('✅ Conversation marked as read:', conversationId);
     } catch (error) {
       console.error('❌ Failed to mark conversation as read:', error);
@@ -1358,7 +1817,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       // Check if message was unread before marking as read
       const messageToRead = messages.find(msg => msg.id === messageId);
       const wasUnread = messageToRead && messageToRead.senderId !== userId && !messageToRead.isRead;
-      
+
       // Update local message state
       setMessages(prev =>
         prev.map(msg =>
@@ -1379,23 +1838,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         );
 
         // Also update current conversation state
-        setCurrentConversation(prev => 
+        setCurrentConversation(prev =>
           prev ? { ...prev, unreadCount: Math.max(0, prev.unreadCount - 1) } : prev
         );
       }
 
       // Call backend API to mark message as read
       await chatApiService.markMessageAsRead(messageId, userId);
-      
+
       console.log('✅ Message marked as read:', messageId);
-      
+
       // Check if all messages in current conversation are now read
       // If so, ensure conversation unread count is 0
       if (currentConversation) {
-        const allMessagesRead = messages.every(msg => 
+        const allMessagesRead = messages.every(msg =>
           msg.senderId === userId || msg.isRead || msg.id === messageId
         );
-        
+
         if (allMessagesRead) {
           console.log('🎯 All messages read, ensuring conversation unread count is 0');
           setConversations(prev =>
@@ -1405,7 +1864,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 : conv
             )
           );
-          setCurrentConversation(prev => 
+          setCurrentConversation(prev =>
             prev ? { ...prev, unreadCount: 0 } : prev
           );
         }
@@ -1419,7 +1878,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setIsVisible(false);
     setCurrentConversation(null);
     setMessages([]);
-    
+
     // Reset scroll indicators
     setShowNewMessageIndicator(false);
     setHasNewMessages(false);
@@ -1429,11 +1888,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Helper function to group messages by date
   const groupMessagesByDate = (messages: ChatMessage[]) => {
     const groups: { date: string; messages: ChatMessage[] }[] = [];
-    
+
     messages.forEach((message) => {
       const messageDate = new Date(message.timestamp).toDateString();
       const lastGroup = groups[groups.length - 1];
-      
+
       if (lastGroup && lastGroup.date === messageDate) {
         lastGroup.messages.push(message);
       } else {
@@ -1443,7 +1902,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         });
       }
     });
-    
+
     return groups;
   };
 
@@ -1453,7 +1912,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const today = new Date();
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     if (date.toDateString() === today.toDateString()) {
       return 'Today';
     } else if (date.toDateString() === yesterday.toDateString()) {
@@ -1467,45 +1926,45 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const startRecording = async () => {
     try {
       console.log('🎤 Starting voice recording...');
-      
+
       // Check if we're in a secure context (HTTPS required for media access)
       if (typeof window !== 'undefined' && !window.isSecureContext) {
         throw new Error('Microphone access requires a secure context (HTTPS). Please access this page via HTTPS.');
       }
-      
+
       // Check if browser supports required APIs
       if (typeof navigator === 'undefined' || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         throw new Error('MediaDevices API not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
       }
-      
+
       if (typeof MediaRecorder === 'undefined') {
         throw new Error('MediaRecorder API not supported in this browser. Please use a modern browser like Chrome, Firefox, or Safari.');
       }
-      
+
       console.log('✅ Browser APIs supported, requesting microphone access...');
-      
+
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       setRecordingStream(stream);
-      
+
       // Create MediaRecorder
       const recorder = new MediaRecorder(stream, {
         mimeType: 'audio/webm;codecs=opus' // Good quality, small file size
       });
-      
+
       setMediaRecorder(recorder);
       setAudioChunks([]);
-      
+
       // Set up event handlers
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           setAudioChunks(prev => [...prev, event.data]);
         }
       };
-      
+
       recorder.onstop = () => {
         console.log('🎤 Recording stopped, chunks collected:', audioChunks.length);
-        
+
         // Create audio blob and URL for preview
         if (audioChunks.length > 0) {
           const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
@@ -1514,24 +1973,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setShowAudioPreview(true);
         }
       };
-      
+
       // Start recording
       recorder.start();
       setIsRecording(true);
       setRecordingDuration(0);
       setShowRecordingOverlay(true);
-      
+
       // Start timer
       recordingTimerRef.current = setInterval(() => {
         setRecordingDuration(prev => prev + 1);
       }, 1000);
-      
+
       // Monitor audio levels for visualization
       const audioContext = new AudioContext();
       const analyser = audioContext.createAnalyser();
       const source = audioContext.createMediaStreamSource(stream);
       source.connect(analyser);
-      
+
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       const updateAudioLevel = () => {
         if (isRecording) {
@@ -1542,9 +2001,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       };
       updateAudioLevel();
-      
+
       console.log('✅ Voice recording started successfully');
-      
+
     } catch (error) {
       console.error('❌ Failed to start voice recording:', error);
       if (error instanceof Error) {
@@ -1564,29 +2023,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const stopRecording = () => {
     try {
       console.log('🛑 Stopping voice recording...');
-      
+
       if (mediaRecorder && mediaRecorder.state === 'recording') {
         mediaRecorder.stop();
       }
-      
+
       // Stop timer
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
         recordingTimerRef.current = null;
       }
-      
+
       // Stop all tracks in the stream
       if (recordingStream) {
         recordingStream.getTracks().forEach(track => track.stop());
       }
-      
+
       setIsRecording(false);
       setRecordingDuration(0);
       setShowRecordingOverlay(false);
       setAudioLevel(0);
-      
+
       console.log('✅ Voice recording stopped successfully');
-      
+
     } catch (error) {
       console.error('❌ Error stopping recording:', error);
       setError('Failed to stop recording. Please try again.');
@@ -1594,8 +2053,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const handleMicClick = () => {
-    console.log('🎤 Mic clicked! Current state:', { 
-      isRecording, 
+    console.log('🎤 Mic clicked! Current state:', {
+      isRecording,
       mediaRecorder: !!mediaRecorder,
       navigator: typeof navigator,
       mediaDevices: navigator?.mediaDevices,
@@ -1603,7 +2062,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       MediaRecorder: typeof MediaRecorder,
       isSecureContext: typeof window !== 'undefined' ? window.isSecureContext : 'unknown'
     });
-    
+
     if (isRecording) {
       console.log('🛑 Stopping recording...');
       stopRecording();
@@ -1655,14 +2114,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   const sendVoiceMessage = async () => {
     if (audioChunks.length === 0) return;
-    
+
     try {
       console.log('🎤 Sending voice message...');
-      
+
       // Create audio file from chunks
       const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
       const audioFile = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
-      
+
       // Add to attachment previews (will be handled by existing send logic)
       const voicePreview: AttachmentPreview = {
         file: audioFile,
@@ -1670,13 +2129,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         type: 'voice',
         size: formatFileSize(audioFile.size)
       };
-      
+
       setAttachmentPreviews([voicePreview]);
       setShowAttachmentPreview(true);
       setShowAudioPreview(false);
-      
+
       console.log('✅ Voice message prepared for sending');
-      
+
     } catch (error) {
       console.error('❌ Error preparing voice message:', error);
       setError('Failed to prepare voice message. Please try again.');
@@ -1684,11 +2143,29 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   // Simple MessageCard component based on your design - Memoized to prevent unnecessary re-renders
-  const MessageCard = React.memo(({ conversation }: { conversation: ChatConversation }) => {
+  const MessageCard = React.memo(({ 
+    conversation, 
+    currentConversationId, 
+    userId 
+  }: { 
+    conversation: ChatConversation;
+    currentConversationId?: string;
+    userId: string;
+  }) => {
     const otherParticipant = conversation.participants.find(p => p.user_id !== userId);
     const lastMessage = conversation.lastMessage;
-    const isActive = currentConversation?.id === conversation.id;
+    const isActive = currentConversationId === conversation.id;
     const isHighlighted = isActive; // Only highlight the currently selected conversation
+
+    // Get typing state for this conversation - use useMemo to prevent unnecessary recalculations
+    const typingState = React.useMemo(() => {
+      const typingUsers = conversationTypingStates.get(conversation.id);
+      // Only show typing indicator for other users, not the current user
+      const otherUserTyping = typingUsers && Array.from(typingUsers).some(typingUserId => typingUserId !== userId);
+      return { isTyping: otherUserTyping };
+    }, [conversation.id, userId, conversationTypingStates]);
+    
+    const { isTyping } = typingState;
 
     return (
       <div
@@ -1724,17 +2201,30 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           )}
         </div>
         <span className={`text-sm whitespace-nowrap text-ellipsis block overflow-hidden ${isHighlighted ? 'text-black' : 'text-[#888787]'}`}>
-          {lastMessage ? (
-            lastMessage.content ? (
-              lastMessage.content
-            ) : lastMessage.attachments && lastMessage.attachments.length > 0 ? (
-              lastMessage.attachments.some(att => att.type === 'image' || att.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? 
-                'Image' : 
-                'Attachment'
-            ) : lastMessage.messageType === 'listing' ? 
-              'Listing' : 
-              'Message'
-          ) : 'No messages yet'}
+          {!isActive && isTyping ? (
+            // Show typing indicator instead of last message when typing
+            <span className="flex items-center space-x-1 text-[#74D27E]">
+              <div className="flex space-x-1">
+                <div className="w-1 h-1 bg-[#74D27E] rounded-full animate-bounce"></div>
+                <div className="w-1 h-1 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                <div className="w-1 h-1 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+              </div>
+              <span className="text-[#74D27E] font-normal">typing...</span>
+            </span>
+          ) : (
+            // Show last message when not typing
+            lastMessage ? (
+              lastMessage.content ? (
+                lastMessage.content
+              ) : lastMessage.attachments && lastMessage.attachments.length > 0 ? (
+                lastMessage.attachments.some(att => att.type === 'image' || att.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ?
+                  'Image' :
+                  'Attachment'
+              ) : lastMessage.messageType === 'listing' ?
+                'Listing' :
+                'Message'
+            ) : 'No messages yet'
+          )}
         </span>
         <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">
           {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
@@ -1747,12 +2237,31 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   });
 
   // Memoize conversation list to prevent re-renders when only typing indicator changes
-  const conversationList = React.useMemo(() => 
-    conversations.map((conversation) => (
-      <MessageCard key={conversation.id} conversation={conversation} />
-    )), 
-    [conversations, currentConversation?.id]
-  );
+  const conversationList = React.useMemo(() => {
+    console.log('🔄 conversationList memoized, dependencies changed:', {
+      conversationsCount: conversations.length,
+      currentConversationId: currentConversation?.id
+    });
+    
+    // Create a stable reference for the conversation list
+    // This prevents unnecessary re-renders when the array reference changes but content is the same
+    const stableConversations = conversations.map(conversation => ({
+      id: conversation.id,
+      lastMessageId: conversation.lastMessage?.id || 'no-message',
+      unreadCount: conversation.unreadCount,
+      conversation: conversation
+    }));
+    
+    return stableConversations.map(({ id, lastMessageId, unreadCount, conversation }) => (
+      <MessageCard 
+        key={`${id}-${lastMessageId}-${unreadCount}`}
+        conversation={conversation}
+        // Pass stable references to prevent unnecessary re-renders
+        currentConversationId={currentConversation?.id}
+        userId={userId}
+      />
+    ));
+  }, [conversations, currentConversation?.id, userId]); // Add userId for stability
 
   if (loading && conversations.length === 0) {
     return (
@@ -1780,6 +2289,65 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   return (
     <DashboardLayout title="Inbox" showTimeFilter={false}>
+      {/* New Conversation Notification */}
+      {showNewConversationNotification && newConversationInfo && (
+        <div className="fixed top-20 right-4 z-50 bg-white border border-green-200 rounded-lg shadow-lg p-4 max-w-sm animate-in slide-in-from-right duration-300">
+          <div className="flex items-start gap-3">
+            <div className="flex-shrink-0 w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+              <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+              </svg>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-gray-900">
+                New message from {newConversationInfo.senderName}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Click to view the conversation
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                setShowNewConversationNotification(false);
+                setNewConversationInfo(null);
+              }}
+              className="flex-shrink-0 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-3 flex gap-2">
+            <button
+              onClick={() => {
+                // Find and select the new conversation
+                const newConversation = conversations.find(c => c.id === newConversationInfo.id);
+                if (newConversation) {
+                  setCurrentConversation(newConversation);
+                  setIsVisible(true);
+                  loadMessages(newConversation.id);
+                  setShowNewConversationNotification(false);
+                  setNewConversationInfo(null);
+                }
+              }}
+              className="flex-1 bg-green-600 text-white text-xs px-3 py-2 rounded-md hover:bg-green-700 transition-colors"
+            >
+              View Conversation
+            </button>
+            <button
+              onClick={() => {
+                setShowNewConversationNotification(false);
+                setNewConversationInfo(null);
+              }}
+              className="flex-1 bg-gray-200 text-gray-700 text-xs px-3 py-2 rounded-md hover:bg-gray-300 transition-colors"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Chat Layout */}
       <div className="flex gap-6 max-md:flex-col">
         {/* Conversation List */}
@@ -1803,7 +2371,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div className={`flex flex-col border border-black/20 rounded-[20px] w-full ${!isVisible ? 'max-md:hidden' : ''}`}>
           {currentConversation ? (
             <>
-                            {/* Simple Chat Header - Matching Static Design */}
+              {/* Simple Chat Header - Matching Static Design */}
               <div className="flex gap-4 border-b border-black/20 p-4 items-center">
                 <div className="flex gap-4 font-semibold items-center relative text-[22px] max-md:text-base">
                   <span className="size-6 max-md:size-4 absolute max-md:left-[20px] left-[42px] -top-1">
@@ -1823,28 +2391,50 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <div className="flex flex-col">
                     <span>{currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}</span>
                     {/* Typing Indicator under user name */}
-                    {typingUsers.size > 0 && (
-                      <div className="flex items-center space-x-2 text-sm mt-1">
-                        <div className="flex space-x-1">
-                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce"></div>
-                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                    {(() => {
+                      console.log('🔍 Rendering typing indicator check:');
+                      console.log('🔍 typingUsers.size:', typingUsers.size);
+                      console.log('🔍 typingUsers contents:', Array.from(typingUsers));
+                      console.log('🔍 currentConversation.id:', currentConversation.id);
+                      console.log('🔍 conversationTypingStates for current conversation:', conversationTypingStates.get(currentConversation.id));
+
+                      // Check both typingUsers and conversationTypingStates for current conversation
+                      const currentConversationTypingUsers = conversationTypingStates.get(currentConversation.id);
+                      const shouldShowTypingIndicator = typingUsers.size > 0 || (currentConversationTypingUsers && currentConversationTypingUsers.size > 0);
+
+                      console.log('🔍 Should show typing indicator:', shouldShowTypingIndicator);
+                      console.log('🔍 Current conversation typing users:', currentConversationTypingUsers ? Array.from(currentConversationTypingUsers) : []);
+
+                      return null;
+                    })()}
+                    {(() => {
+                      // Get typing users for current conversation, excluding current user
+                      const currentConversationTypingUsers = conversationTypingStates.get(currentConversation.id);
+                      const otherUsersTyping = currentConversationTypingUsers && 
+                        Array.from(currentConversationTypingUsers).some(typingUserId => typingUserId !== userId);
+                      
+                      return otherUsersTyping ? (
+                        <div className="flex items-center space-x-2 text-sm mt-1">
+                          <div className="flex space-x-1">
+                            <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce"></div>
+                            <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                            <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                          </div>
+                          <span className="text-[#74D27E] font-normal text-xs">typing...</span>
                         </div>
-                        <span className="text-[#74D27E] font-normal text-xs">typing...</span>
-                      </div>
-                    )}
+                      ) : null;
+                    })()}
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => markConversationAsRead(currentConversation.id)}
                   disabled={currentConversation.unreadCount === 0}
-                  className={`text-[12px] ml-auto font-semibold h-11 px-4 gap-1 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:hidden transition-colors ${
-                    currentConversation.unreadCount > 0 
-                      ? 'hover:bg-[#F4F2F6] cursor-pointer' 
+                  className={`text-[12px] ml-auto font-semibold h-11 px-4 gap-1 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:hidden transition-colors ${currentConversation.unreadCount > 0
+                      ? 'hover:bg-[#F4F2F6] cursor-pointer'
                       : 'opacity-50 cursor-not-allowed'
-                  }`}
+                    }`}
                 >
-                  <img src="/images/vectors/doubleTick.png" alt="" /> 
+                  <img src="/images/vectors/doubleTick.png" alt="" />
                   {currentConversation.unreadCount > 0 ? 'Mark As Read' : 'All Read'}
                 </button>
                 <span className="text-[32px] font-semibold h-11 w-11 max-md:w-7 max-md:h-7 border border-[#CBCACA] rounded-full flex items-center justify-center max-md:ml-auto">
@@ -1853,311 +2443,331 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </div>
 
               {/* Messages */}
-              <div 
-                className={`flex w-full h-full max-h-[576px] max-md:max-h-fit p-4 flex-col gap-6 overflow-y-auto mb-6 relative ${isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-400' : ''}`}
-                style={{
-                  overscrollBehavior: 'contain' // Prevents scroll chaining
-                }}
-                onDragEnter={handleDragEnter}
-                onDragLeave={handleDragLeave}
-                onDragOver={handleDragOver}
-                onDrop={handleDrop}
-                onScroll={handleScroll}
-                onWheel={(e) => {
-                  // Handle wheel events for smooth scrolling within container
-                  const container = e.currentTarget;
-                  const { scrollTop, scrollHeight, clientHeight } = container;
-                  
-                  // If scrolling up at the top or down at the bottom, stop propagation
-                  // Note: preventDefault() is not allowed on passive wheel events
-                  if (
-                    (e.deltaY < 0 && scrollTop <= 0) || // Scrolling up at top
-                    (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) // Scrolling down at bottom
-                  ) {
-                    e.stopPropagation();
-                  }
-                }}
-                onTouchStart={(e) => {
-                  // Prevent touch events from interfering with scroll
-                  e.stopPropagation();
-                }}
-                ref={messagesContainerRef}
-              >
-                {/* Drag overlay */}
-                {isDragOver && (
-                  <div className="absolute inset-0 bg-blue-50/90 flex items-center justify-center z-50 pointer-events-none rounded-lg">
-                    <div className="text-center">
-                      <div className="mb-2">
-                        <svg className="w-12 h-12 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                        </svg>
-                      </div>
-                      <p className="text-lg font-semibold text-blue-600">Drop files here</p>
-                      <p className="text-sm text-blue-500">Max 3 files, 10MB each</p>
-                    </div>
-                  </div>
-                )}
-                {/* Centered User Profile Section - Matching Static Design */}
-                <div className="flex flex-col items-center min-h-[175px] max-md:gap-1">
-                  <div className="relative flex">
-                    <span className="size-6 absolute left-[42px] -top-1 max-md:hidden">
-                      <img src="/images/vectors/blueTick.png" alt="" />
-                    </span>
-                    <span className={`size-4 rounded-full absolute left-[46px] bottom-[4px] border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
-                    <span className="w-[60px] h-[60px] min-w-[60px] rounded-full overflow-hidden">
-                      <Avatar
-                        className="cursor-pointer !text-3xl w-full h-full object-cover"
-                        name={currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
-                        src={currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
-                        rounded="full"
-                        textSizeRatio={3}
-                        size="100%"
-                      />
-                    </span>
-                  </div>
-                  <span className="text-[20px] font-semibold mt-2 max-md:mt-1">
-                    {currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'} (
-                    <text className="text-base text-[#8B8B8B] font-normal">
-                      {currentConversation.participants.find(p => p.user_id !== userId)?.role === 'buyer' ? 'Buyer' : 
-                       currentConversation.participants.find(p => p.user_id !== userId)?.role === 'seller' ? 'Seller' : 'User'}
-                    </text>)
-                  </span>
-                  <span className="text-base text-[#8B8B8B] font-medium">
-                    Joined on {(() => {
-                      const otherParticipant = currentConversation.participants.find(p => p.user_id !== userId);
-                      const joinDate = currentConversation.metadata?.participants && otherParticipant?.role === 'buyer' ? 
-                        currentConversation.metadata.participants.buyer?.joinedPlatform : 
-                        currentConversation.metadata?.participants?.seller?.joinedPlatform;
-                      return joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown';
-                    })()}
-                  </span>
-                  {/* Always show current inquiry section with fallback */}
-                  <span className="text-sm text-[#8B8B8B] font-medium text-center max-md:leading-loose">
-                    Current Inquiry: {currentConversation.metadata?.listingDetails?.title || 'General Inquiry'} - 
-                    <u className="text-black">
-                      Listing ID {currentConversation.metadata?.listingDetails?.id?.slice(-8) || 
-                                  currentConversation.listingId?.slice(-8) || 
-                                  'GR-2025-001'}
-                    </u>
-                  </span>
-                  <span className="text-sm text-[#8B8B8B] font-medium flex items-center gap-1">
-                    <span className={`size-4 rounded-full border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span> 
-                    {currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'Active' : 'Offline'}
-                  </span>
-                </div>
+              <div className="relative flex-1">
+                <div
+                  className={`flex w-full h-full max-h-[576px] max-md:max-h-fit p-4 flex-col gap-6 overflow-y-auto mb-6 relative ${isDragOver ? 'bg-blue-50 border-2 border-dashed border-blue-400' : ''}`}
+                  style={{
+                    overscrollBehavior: 'contain' // Prevents scroll chaining
+                  }}
+                  onDragEnter={handleDragEnter}
+                  onDragLeave={handleDragLeave}
+                  onDragOver={handleDragOver}
+                  onDrop={handleDrop}
+                  onScroll={handleScroll}
+                  onWheel={(e) => {
+                    // Handle wheel events for smooth scrolling within container
+                    const container = e.currentTarget;
+                    const { scrollTop, scrollHeight, clientHeight } = container;
 
-                {loadingMessages ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-CPrimary mx-auto mb-4"></div>
-                    <p>Loading messages...</p>
+                    // If scrolling up at the top or down at the bottom, stop propagation
+                    // Note: preventDefault() is not allowed on passive wheel events
+                    if (
+                      (e.deltaY < 0 && scrollTop <= 0) || // Scrolling up at top
+                      (e.deltaY > 0 && scrollTop + clientHeight >= scrollHeight - 1) // Scrolling down at bottom
+                    ) {
+                      e.stopPropagation();
+                    }
+
+                    // Force scroll position check on wheel events
+                    setTimeout(() => {
+                      console.log('🔄 Wheel event triggered, checking scroll position');
+                      checkIfUserAtBottom();
+                    }, 50);
+                  }}
+                  onTouchStart={(e) => {
+                    // Prevent touch events from interfering with scroll
+                    e.stopPropagation();
+                  }}
+                  ref={messagesContainerRef}
+                >
+                  {/* Drag overlay */}
+                  {isDragOver && (
+                    <div className="absolute inset-0 bg-blue-50/90 flex items-center justify-center z-50 pointer-events-none rounded-lg">
+                      <div className="text-center">
+                        <div className="mb-2">
+                          <svg className="w-12 h-12 text-blue-600 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                          </svg>
+                        </div>
+                        <p className="text-lg font-semibold text-blue-600">Drop files here</p>
+                        <p className="text-sm text-blue-500">Max 3 files, 10MB each</p>
+                      </div>
+                    </div>
+                  )}
+                  {/* Centered User Profile Section - Matching Static Design */}
+                  <div className="flex flex-col items-center min-h-[175px] max-md:gap-1">
+                    <div className="relative flex">
+                      <span className="size-6 absolute left-[42px] -top-1 max-md:hidden">
+                        <img src="/images/vectors/blueTick.png" alt="" />
+                      </span>
+                      <span className={`size-4 rounded-full absolute left-[46px] bottom-[4px] border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                      <span className="w-[60px] h-[60px] min-w-[60px] rounded-full overflow-hidden">
+                        <Avatar
+                          className="cursor-pointer !text-3xl w-full h-full object-cover"
+                          name={currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                          src={currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
+                          rounded="full"
+                          textSizeRatio={3}
+                          size="100%"
+                        />
+                      </span>
+                    </div>
+                    <span className="text-[20px] font-semibold mt-2 max-md:mt-1">
+                      {currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'} (
+                      <text className="text-base text-[#8B8B8B] font-normal">
+                        {currentConversation.participants.find(p => p.user_id !== userId)?.role === 'buyer' ? 'Buyer' :
+                          currentConversation.participants.find(p => p.user_id !== userId)?.role === 'seller' ? 'Seller' : 'User'}
+                      </text>)
+                    </span>
+                    <span className="text-base text-[#8B8B8B] font-medium">
+                      Joined on {(() => {
+                        const otherParticipant = currentConversation.participants.find(p => p.user_id !== userId);
+                        const joinDate = currentConversation.metadata?.participants && otherParticipant?.role === 'buyer' ?
+                          currentConversation.metadata.participants.buyer?.joinedPlatform :
+                          currentConversation.metadata?.participants?.seller?.joinedPlatform;
+                        return joinDate ? new Date(joinDate).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }) : 'Unknown';
+                      })()}
+                    </span>
+                    {/* Always show current inquiry section with fallback */}
+                    <span className="text-sm text-[#8B8B8B] font-medium text-center max-md:leading-loose">
+                      Current Inquiry: {currentConversation.metadata?.listingDetails?.title || 'General Inquiry'} -
+                      <u className="text-black">
+                        Listing ID {currentConversation.metadata?.listingDetails?.id?.slice(-8) ||
+                          currentConversation.listingId?.slice(-8) ||
+                          'GR-2025-001'}
+                      </u>
+                    </span>
+                    <span className="text-sm text-[#8B8B8B] font-medium flex items-center gap-1">
+                      <span className={`size-4 rounded-full border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                      {currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'Active' : 'Offline'}
+                    </span>
                   </div>
-                ) : messages.length === 0 ? (
-                  <div className="text-center text-gray-500 py-8">
-                    <p>No messages yet. Start the conversation!</p>
-                  </div>
-                ) : (
-                  <div className="flex flex-col h-full gap-6">
-                    {groupMessagesByDate(messages).map((group, groupIndex) => (
-                      <div key={`group-${groupIndex}`} className="flex flex-col gap-6">
-                        {/* Date Separator - Matching Static Design */}
-                        {groupIndex > 0 && (
-                          <div className="flex items-center justify-center relative">
-                            <span className="text-sm font-semibold text-[#878787] px-4 py-2 flex relative z-10 bg-white border-2 border-[#CBCACA] rounded-full">
-                              {formatDateSeparator(group.date)}
-                            </span>
-                            <hr className="bg-red-300 absolute w-full h-px" />
+
+                  {loadingMessages ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-CPrimary mx-auto mb-4"></div>
+                      <p>Loading messages...</p>
+                    </div>
+                  ) : messages.length === 0 ? (
+                    <div className="text-center text-gray-500 py-8">
+                      <p>No messages yet. Start the conversation!</p>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col h-full gap-6">
+                      {groupMessagesByDate(messages).map((group, groupIndex) => (
+                        <div key={`group-${groupIndex}`} className="flex flex-col gap-6">
+                          {/* Date Separator - Matching Static Design */}
+                          {groupIndex > 0 && (
+                            <div className="flex items-center justify-center relative">
+                              <span className="text-sm font-semibold text-[#878787] px-4 py-2 flex relative z-10 bg-white border-2 border-[#CBCACA] rounded-full">
+                                {formatDateSeparator(group.date)}
+                              </span>
+                              <hr className="bg-red-300 absolute w-full h-px" />
+                            </div>
+                          )}
+
+                          {/* Messages for this date */}
+                          {group.messages.map((message) => (
+                            <div
+                              key={message.id}
+                              data-message-id={message.id}
+                              className={`flex flex-col relative ${message.senderId === userId ? 'pr-20 ml-auto' : 'pl-20'} w-full max-w-[650px] max-md:${message.senderId === userId ? 'pr-12' : 'pl-12'}`}
+                            >
+                              <span className={`w-[60px] h-[60px] max-md:w-[30px] max-md:h-[30px] rounded-full overflow-hidden absolute ${message.senderId === userId ? 'right-0' : 'left-0'} bottom-0`}>
+                                <Avatar
+                                  className="cursor-pointer !text-3xl w-full h-full object-cover"
+                                  name={message.senderId === userId ? currentConversation.participants.find(p => p.user_id === userId)?.name : currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                                  src={message.senderId === userId ? currentConversation.participants.find(p => p.user_id === userId)?.avatar : currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
+                                  rounded="full"
+                                  textSizeRatio={3}
+                                  size="100%"
+                                />
+                              </span>
+                              <span className={`text-[#8B8B8B] font-medium flex gap-2 max-md:text-sm ${message.senderId === userId ? 'ml-auto mr-6' : 'ml-6'}`}>
+                                {message.senderId === userId ? (
+                                  <>
+                                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {/* Show read status based on message.readBy array */}
+                                    {message.readBy && message.readBy.length > 0 ? (
+                                      <strong className="font-medium text-green-600">Seen</strong>
+                                    ) : (
+                                      <strong className="font-medium text-gray-500">Delivered</strong>
+                                    )}
+                                  </>
+                                ) : (
+                                  <>
+                                    <strong className="font-semibold">{currentConversation.participants.find(p => p.user_id !== userId)?.name}</strong>
+                                    {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                    {/* Show unread indicator for incoming messages */}
+                                    {!message.isRead && (
+                                      <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">New</span>
+                                    )}
+                                  </>
+                                )}
+                              </span>
+                              <div className={`flex rounded-40 ${message.messageType === 'listing' && message.listingReference ? 'flex-col gap-3' : 'flex-col'} max-md:rounded-[20px] bg-[#F4F2F6] p-6 max-md:p-4 relative ${message.senderId === userId ? 'before:w-0 before:h-0 before:border-t-[12px] before:border-t-transparent before:border-b-[12px] before:border-b-transparent before:border-r-[20px] before:border-r-[#F4F2F6] before:absolute before:bottom-[5px] before:-right-[6px] before:-rotate-[30deg]' : 'before:w-0 before:h-0 before:border-t-[12px] before:border-t-transparent before:border-b-[12px] before:border-b-transparent before:border-r-[20px] before:border-r-[#F4F2F6] before:absolute before:bottom-[5px] before:-left-[10px] before:-rotate-[26deg]'}`}>
+                                {/* Enhanced Listing Card - Matching Static Design - Show first for listing messages */}
+                                {message.messageType === 'listing' && message.listingReference && (
+                                  <div className="flex bg-white rounded-[20px] border-l-[16px] max-md:border-l-8 border-l-[#EFC951] p-4 w-full gap-4 max-md:flex-col-reverse">
+                                    <div className="flex flex-col justify-between">
+                                      <span className="text-2xl font-medium max-md:flex-col max-md:flex max-md:text-lg">
+                                        {message.listingReference.title}
+                                        <text className="text-base max-md:text-sm text-[#736E6E]"> {message.listingReference.location}</text>
+                                      </span>
+                                      <span className="text-[#A6A4A4] text-sm max-md:mt-2">
+                                        A gentle and playful {message.listingReference.title.split(' ')[0]} pup,
+                                        fully vaccinated and ready to join your family.
+                                      </span>
+                                      <span className="text-[22px] max-md:mt-2">${message.listingReference.price?.toLocaleString()}</span>
+                                    </div>
+                                    {message.listingReference.image && (
+                                      <span className="w-[127px] min-w-[127px] rounded-xl h-[110px] max-md:w-full max-md:h-auto max-md:min-w-full overflow-hidden relative">
+                                        <div className="absolute max-md:w-20 max-md:h-20 w-10 h-10 z-10 flex items-center justify-center">
+                                          <span className="bg-yellow-400 max-md:text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min text-[8px]">
+                                            Litter Listing
+                                          </span>
+                                        </div>
+                                        <img
+                                          className="w-full h-full object-cover"
+                                          src={message.listingReference.image}
+                                          alt={message.listingReference.title}
+                                        />
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+
+                                {/* Attachments */}
+                                {message.attachments && message.attachments.length > 0 && (
+                                  <div className="flex flex-col gap-2 mb-2">
+                                    {message.attachments.map((attachment: any, attachIndex: number) => {
+                                      const isImage = attachment.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i) || attachment.type === 'image';
+
+                                      return (
+                                        <div key={attachIndex} className="relative">
+                                          {isImage ? (
+                                            // Image attachment
+                                            <div className="relative max-w-sm rounded-lg overflow-hidden border">
+                                              <img
+                                                src={attachment.url}
+                                                alt={attachment.name}
+                                                className="w-full h-auto max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
+                                                onClick={() => window.open(attachment.url, '_blank')}
+                                              />
+                                              <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2">
+                                                <p className="text-xs truncate">{attachment.name}</p>
+                                              </div>
+                                            </div>
+                                          ) : (
+                                            // Document attachment
+                                            <div
+                                              className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors max-w-sm"
+                                              onClick={() => window.open(attachment.url, '_blank')}
+                                            >
+                                              <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
+                                                <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  {attachment.name?.endsWith('.pdf') ? (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
+                                                  ) : attachment.name?.match(/\.(doc|docx)$/i) ? (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  ) : attachment.name?.match(/\.(xls|xlsx)$/i) ? (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                                                  ) : attachment.name?.match(/\.(ppt|pptx)$/i) ? (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
+                                                  ) : (
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                                                  )}
+                                                </svg>
+                                              </div>
+                                              <div className="flex-1 min-w-0">
+                                                <p className="font-medium text-sm truncate text-gray-800">{attachment.name}</p>
+                                                <p className="text-xs text-gray-500">
+                                                  {attachment.size ? formatFileSize(attachment.size) : 'Click to download'}
+                                                </p>
+                                              </div>
+                                              <div className="flex-shrink-0 text-blue-600">
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                                                </svg>
+                                              </div>
+                                            </div>
+                                          )}
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                )}
+
+                                {/* Message Content */}
+                                {message.content && (
+                                  <span className="text-[#4A4A4A] font-medium text-[18px] max-md:text-sm">{message.content}</span>
+                                )}
+
+                                {/* Loading Indicator for Temporary Messages */}
+                                {(message as any).isTemp && (
+                                  <div className="flex items-center gap-2 mt-3 text-[#8B8B8B] text-sm">
+                                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#B699CA]"></div>
+                                    <span>Sending...</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+
+
+                  {/* New Message Indicator Arrow - Inside chat area */}
+                  {showNewMessageIndicator && (
+                    <div
+                      className="absolute bottom-4 right-4 z-10 cursor-pointer hover:scale-110 transition-transform duration-200 animate-bounce"
+                      onClick={() => scrollToBottom('smooth')}
+                      title="New messages below - Click to scroll down"
+                    >
+                      <div className="bg-[#74D27E] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                        {hasNewMessages && (
+                          <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
+                            {messages.filter(msg => msg.senderId !== userId).length}
                           </div>
                         )}
-                        
-                        {/* Messages for this date */}
-                        {group.messages.map((message) => (
-                          <div 
-                            key={message.id} 
-                            data-message-id={message.id}
-                            className={`flex flex-col relative ${message.senderId === userId ? 'pr-20 ml-auto' : 'pl-20'} w-full max-w-[650px] max-md:${message.senderId === userId ? 'pr-12' : 'pl-12'}`}
-                          >
-                            <span className={`w-[60px] h-[60px] max-md:w-[30px] max-md:h-[30px] rounded-full overflow-hidden absolute ${message.senderId === userId ? 'right-0' : 'left-0'} bottom-0`}>
-                              <Avatar
-                                className="cursor-pointer !text-3xl w-full h-full object-cover"
-                                name={message.senderId === userId ?  currentConversation.participants.find(p => p.user_id === userId)?.name : currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
-                                src={message.senderId === userId ? currentConversation.participants.find(p => p.user_id === userId)?.avatar : currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
-                                rounded="full"
-                                textSizeRatio={3}
-                                size="100%"
-                              />
-                            </span>
-                            <span className={`text-[#8B8B8B] font-medium flex gap-2 max-md:text-sm ${message.senderId === userId ? 'ml-auto mr-6' : 'ml-6'}`}>
-                              {message.senderId === userId ? (
-                                <>
-                                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  {/* Show read status based on message.readBy array */}
-                                  {message.readBy && message.readBy.length > 0 ? (
-                                    <strong className="font-medium text-green-600">Seen</strong>
-                                  ) : (
-                                    <strong className="font-medium text-gray-500">Delivered</strong>
-                                  )}
-                                </>
-                              ) : (
-                                <>
-                                  <strong className="font-semibold">{currentConversation.participants.find(p => p.user_id !== userId)?.name}</strong>
-                                  {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                  {/* Show unread indicator for incoming messages */}
-                                  {!message.isRead && (
-                                    <span className="text-xs bg-blue-500 text-white px-2 py-1 rounded-full">New</span>
-                                  )}
-                                </>
-                              )}
-                            </span>
-                            <div className={`flex rounded-40 ${message.messageType === 'listing' && message.listingReference ? 'flex-col gap-3' : 'flex-col'} max-md:rounded-[20px] bg-[#F4F2F6] p-6 max-md:p-4 relative ${message.senderId === userId ? 'before:w-0 before:h-0 before:border-t-[12px] before:border-t-transparent before:border-b-[12px] before:border-b-transparent before:border-r-[20px] before:border-r-[#F4F2F6] before:absolute before:bottom-[5px] before:-right-[6px] before:-rotate-[30deg]' : 'before:w-0 before:h-0 before:border-t-[12px] before:border-t-transparent before:border-b-[12px] before:border-b-transparent before:border-r-[20px] before:border-r-[#F4F2F6] before:absolute before:bottom-[5px] before:-left-[10px] before:-rotate-[26deg]'}`}>
-                              {/* Enhanced Listing Card - Matching Static Design - Show first for listing messages */}
-                              {message.messageType === 'listing' && message.listingReference && (
-                                <div className="flex bg-white rounded-[20px] border-l-[16px] max-md:border-l-8 border-l-[#EFC951] p-4 w-full gap-4 max-md:flex-col-reverse">
-                                  <div className="flex flex-col justify-between">
-                                    <span className="text-2xl font-medium max-md:flex-col max-md:flex max-md:text-lg">
-                                      {message.listingReference.title} 
-                                      <text className="text-base max-md:text-sm text-[#736E6E]"> {message.listingReference.location}</text>
-                                    </span>
-                                    <span className="text-[#A6A4A4] text-sm max-md:mt-2">
-                                      A gentle and playful {message.listingReference.title.split(' ')[0]} pup, 
-                                      fully vaccinated and ready to join your family.
-                                    </span>
-                                    <span className="text-[22px] max-md:mt-2">${message.listingReference.price?.toLocaleString()}</span>
-                                  </div>
-                                  {message.listingReference.image && (
-                                    <span className="w-[127px] min-w-[127px] rounded-xl h-[110px] max-md:w-full max-md:h-auto max-md:min-w-full overflow-hidden relative">
-                                      <div className="absolute max-md:w-20 max-md:h-20 w-10 h-10 z-10 flex items-center justify-center">
-                                        <span className="bg-yellow-400 max-md:text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min text-[8px]">
-                                          Litter Listing
-                                        </span>
-                                      </div>
-                                      <img 
-                                        className="w-full h-full object-cover" 
-                                        src={message.listingReference.image} 
-                                        alt={message.listingReference.title} 
-                                      />
-                                    </span>
-                                  )}
-                                </div>
-                              )}
-
-                              {/* Attachments */}
-                              {message.attachments && message.attachments.length > 0 && (
-                                <div className="flex flex-col gap-2 mb-2">
-                                  {message.attachments.map((attachment: any, attachIndex: number) => {
-                                    const isImage = attachment.name?.match(/\.(jpg|jpeg|png|gif|webp)$/i) || attachment.type === 'image';
-                                    
-                                    return (
-                                      <div key={attachIndex} className="relative">
-                                        {isImage ? (
-                                          // Image attachment
-                                          <div className="relative max-w-sm rounded-lg overflow-hidden border">
-                                            <img 
-                                              src={attachment.url} 
-                                              alt={attachment.name}
-                                              className="w-full h-auto max-h-64 object-cover cursor-pointer hover:opacity-90 transition-opacity"
-                                              onClick={() => window.open(attachment.url, '_blank')}
-                                            />
-                                            <div className="absolute bottom-0 left-0 right-0 bg-black/50 text-white p-2">
-                                              <p className="text-xs truncate">{attachment.name}</p>
-                                            </div>
-                                          </div>
-                                        ) : (
-                                          // Document attachment
-                                          <div 
-                                            className="flex items-center gap-3 p-3 border rounded-lg bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors max-w-sm"
-                                            onClick={() => window.open(attachment.url, '_blank')}
-                                          >
-                                            <div className="flex-shrink-0 w-10 h-10 bg-blue-100 rounded flex items-center justify-center">
-                                              <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                {attachment.name?.endsWith('.pdf') ? (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                                                ) : attachment.name?.match(/\.(doc|docx)$/i) ? (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                ) : attachment.name?.match(/\.(xls|xlsx)$/i) ? (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                                ) : attachment.name?.match(/\.(ppt|pptx)$/i) ? (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z" />
-                                                ) : (
-                                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-                                                )}
-                                              </svg>
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                              <p className="font-medium text-sm truncate text-gray-800">{attachment.name}</p>
-                                              <p className="text-xs text-gray-500">
-                                                {attachment.size ? formatFileSize(attachment.size) : 'Click to download'}
-                                              </p>
-                                            </div>
-                                            <div className="flex-shrink-0 text-blue-600">
-                                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                                              </svg>
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    );
-                                  })}
-                                </div>
-                              )}
-                              
-                              {/* Message Content */}
-                              {message.content && (
-                                <span className="text-[#4A4A4A] font-medium text-[18px] max-md:text-sm">{message.content}</span>
-                              )}
-
-                              {/* Loading Indicator for Temporary Messages */}
-                              {(message as any).isTemp && (
-                                <div className="flex items-center gap-2 mt-3 text-[#8B8B8B] text-sm">
-                                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#B699CA]"></div>
-                                  <span>Sending...</span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
                       </div>
-                    ))}
-                  </div>
-                )}
-
-
-
-                {/* New Message Indicator Arrow - Inside chat area */}
-                {showNewMessageIndicator && (
-                  <div 
-                    className="absolute bottom-4 right-4 z-10 cursor-pointer hover:scale-110 transition-transform duration-200 animate-bounce"
-                    onClick={() => scrollToBottom('smooth')}
-                    title="New messages below - Click to scroll down"
-                  >
-                    <div className="bg-[#74D27E] text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                      {hasNewMessages && (
-                        <div className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center animate-pulse">
-                          {messages.filter(msg => msg.senderId !== userId).length}
-                        </div>
-                      )}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* Scroll to Bottom Button - Inside chat area when not at bottom */}
+                  {/* Scroll to Bottom Button - Inside chat area when not at bottom */}
+                  {(() => {
+                    console.log('🔍 Rendering scroll-to-bottom button check:');
+                    console.log('🔍 isUserAtBottom:', isUserAtBottom);
+                    console.log('🔍 showNewMessageIndicator:', showNewMessageIndicator);
+                    console.log('🔍 Should show scroll button:', !isUserAtBottom && !showNewMessageIndicator);
+                    return null;
+                  })()}
+
+
+                  <div ref={messagesEndRef} />
+
+                </div>
                 {!isUserAtBottom && !showNewMessageIndicator && (
-                  <div 
-                    className="absolute bottom-4 right-4 z-10 cursor-pointer hover:scale-110 transition-transform duration-200"
-                    onClick={() => scrollToBottom('smooth')}
+                  <div
+                    className="absolute bottom-4 left-1/2 transform -translate-x-1/2 z-10 cursor-pointer hover:scale-110 transition-transform duration-200"
+                    onClick={() => {
+                      console.log('🔽 Scroll to bottom button clicked');
+                      console.log('🔽 messagesEndRef current:', messagesEndRef.current);
+                      scrollToBottom('smooth');
+                    }}
                     title="Scroll to bottom"
                   >
                     <div className="bg-gray-600 text-white rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow duration-200 flex items-center justify-center">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M7 14l5-5 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
+                      <ArrowDownIcon className='w-4 h-4' />
                     </div>
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Chat Input */}
@@ -2174,7 +2784,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     }
                   }}
                 />
-                <span 
+                <span
                   className={`h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative cursor-pointer transition-all duration-200 ${isRecording ? 'bg-red-100 hover:bg-red-200' : 'hover:bg-gray-100'}`}
                   onClick={handleMicClick}
                   title={isRecording ? 'Click to stop recording' : 'Click to start recording'}
@@ -2193,10 +2803,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   )}
                 </span>
                 <span className="h-full w-16 max-md:w-7 max-md:min-w-7 min-w-16 flex items-center justify-center relative">
-                  <input 
+                  <input
                     ref={fileInputRef}
-                    className="absolute w-full h-full top-0 left-0 cursor-pointer opacity-0" 
-                    type="file" 
+                    className="absolute w-full h-full top-0 left-0 cursor-pointer opacity-0"
+                    type="file"
                     multiple
                     accept=".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.txt,.xls,.xlsx,.ppt,.pptx,.webm,.mp3,.wav,.ogg"
                     onChange={(e) => {
@@ -2215,7 +2825,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   >
                     <img className='max-md:max-h-4' src="/images/vectors/smile.png" alt="Emoji" />
                   </button>
-                  
+
                   {/* Emoji Picker */}
                   {showEmojiPicker && (
                     <div ref={emojiPickerRef} className="absolute bottom-full right-0 mb-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
@@ -2233,7 +2843,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   )}
                 </span>
                 <hr className="bg-black/20 flex h-12 w-0.5 ml-4 max-md:ml-2" />
-                <span 
+                <span
                   className="h-full w-24 max-md:w-10 max-md:min-w-10 min-w-24 flex items-center justify-center cursor-pointer"
                   onClick={() => {
                     const input = document.querySelector('input[placeholder="Type something..."]') as HTMLInputElement;
@@ -2275,9 +2885,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               {Array.from({ length: 20 }, (_, i) => (
                 <div
                   key={i}
-                  className={`w-1 rounded-full transition-all duration-100 ${
-                    i < (audioLevel / 12.75) ? 'bg-red-500' : 'bg-gray-200'
-                  }`}
+                  className={`w-1 rounded-full transition-all duration-100 ${i < (audioLevel / 12.75) ? 'bg-red-500' : 'bg-gray-200'
+                    }`}
                   style={{
                     height: `${Math.max(8, (audioLevel / 12.75) * 2)}px`
                   }}
@@ -2393,7 +3002,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <p className="text-sm text-[#8B8B8B]">Ready to send</p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => {
                   setShowAttachmentPreview(false);
                   setAttachmentPreviews([]);
@@ -2414,8 +3023,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     {/* File Icon */}
                     <div className="w-16 h-16 bg-white rounded-[16px] flex items-center justify-center shadow-sm">
                       {attachment.type === 'image' ? (
-                        <img 
-                          src={attachment.preview} 
+                        <img
+                          src={attachment.preview}
                           alt={attachment.file.name}
                           className="w-14 h-14 object-cover rounded-[12px]"
                         />
@@ -2439,7 +3048,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                         </svg>
                       )}
                     </div>
-                    
+
                     {/* File Details */}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-[#4A4A4A] text-base truncate">{attachment.file.name}</p>
@@ -2472,21 +3081,21 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     if (e.key === 'Enter') {
                       const target = e.target as HTMLInputElement;
                       const message = target.value;
-                      
+
                       if (message.trim() || attachmentPreviews.length > 0) {
                         // Close modal immediately
                         setShowAttachmentPreview(false);
-                        
+
                         // Send message with attachments
                         handleSendMessage(message);
-                        
+
                         // Clear input
                         target.value = '';
                       }
                     }
                   }}
                 />
-                
+
                 {/* Emoji Button for Modal */}
                 <button
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -2497,19 +3106,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.828 14.828a4 4 0 01-5.656 0M9 10h1m4 0h1m-6 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                 </button>
-                
+
                 {/* Emoji Picker for Modal */}
                 {showEmojiPicker && (
                   <div className="absolute bottom-full right-0 mb-2 z-50 animate-in slide-in-from-bottom-2 duration-200">
                     <div className="bg-white rounded-[20px] shadow-xl border border-gray-200 overflow-hidden">
-                                              <EmojiPicker
-                          onEmojiClick={handleEmojiSelect}
-                          autoFocusSearch={false}
-                          searchDisabled={false}
-                          skinTonesDisabled={true}
-                          width={280}
-                          height={350}
-                        />
+                      <EmojiPicker
+                        onEmojiClick={handleEmojiSelect}
+                        autoFocusSearch={false}
+                        searchDisabled={false}
+                        skinTonesDisabled={true}
+                        width={280}
+                        height={350}
+                      />
                     </div>
                   </div>
                 )}
@@ -2528,8 +3137,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                   {progress && (
                     <div className="w-full bg-white rounded-full h-2">
-                      <div 
-                        className="bg-[#B699CA] h-2 rounded-full transition-all duration-300" 
+                      <div
+                        className="bg-[#B699CA] h-2 rounded-full transition-all duration-300"
                         style={{ width: `${progress.progress}%` }}
                       ></div>
                     </div>
@@ -2553,16 +3162,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                 onClick={() => {
                   const messageInput = document.querySelector('input[placeholder="Add a message..."]') as HTMLInputElement;
                   const message = messageInput?.value || '';
-                  
+
                   // Close modal immediately
                   setShowAttachmentPreview(false);
-                  
+
                   // Send message with attachments
                   handleSendMessage(message);
-                  
+
                   // Clear input
                   if (messageInput) messageInput.value = '';
-                  
+
                   // Clear attachment previews (they will be handled in handleSendMessage)
                 }}
                 disabled={uploadingAttachments || isUploading}

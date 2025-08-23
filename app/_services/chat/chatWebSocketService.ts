@@ -163,6 +163,12 @@ class ChatWebSocketService {
       this.emit('user_status_changed', data);
     });
 
+    // Conversation creation events
+    this.socket.on('conversation_created', (data: any) => {
+      console.log('ChatWebSocketService: Received conversation_created event:', data);
+      this.emit('conversation_created', data);
+    });
+
     // Room events
     this.socket.on('joined_conversation', (data: { conversationId: string }) => {
       console.log('ChatWebSocketService: Joined conversation:', data);
