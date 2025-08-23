@@ -216,33 +216,62 @@ class ChatWebSocketService {
   }
 
   private getSessionId(): string | null {
+    console.log('🔧 DEBUG: Getting session ID...');
+    
     // Try to get session ID from various sources
     if (typeof window !== 'undefined') {
       // Check cookies first - this is how the backend session system works
+      console.log('🔧 DEBUG: All cookies:', document.cookie);
       const cookies = document.cookie.split(';');
       for (const cookie of cookies) {
         const [name, value] = cookie.trim().split('=');
-        if (name === 'connect.sid') {
-          return value;
+        console.log('🔧 DEBUG: Checking cookie:', name, '=', value);
+        // Check for both 'token' and 'connect.sid' cookies
+        if (name === 'token' || name === 'connect.sid') {
+          console.log('🔧 DEBUG: Found session cookie:', name, '=', value);
+          return decodeURIComponent(value); // Decode URL encoded session ID
         }
       }
       
       // Check localStorage as fallback
       const localSessionId = localStorage.getItem('sessionId');
+      console.log('🔧 DEBUG: localStorage sessionId:', localSessionId);
       if (localSessionId) return localSessionId;
     }
+    
+    console.log('🔧 DEBUG: No session ID found, returning null');
     return null;
   }
 
   // Room management
   async joinConversation(conversationId: string): Promise<void> {
+    console.log('🚪 DEBUG: joinConversation called with:', conversationId);
+    console.log('🚪 DEBUG: Socket connected:', !!this.socket?.connected);
+    console.log('🚪 DEBUG: Socket exists:', !!this.socket);
+    
     if (!this.socket?.connected) {
       console.warn('ChatWebSocketService: Cannot join conversation, not connected');
+      console.warn('🚪 DEBUG: Socket state:', {
+        exists: !!this.socket,
+        connected: this.socket?.connected,
+        id: this.socket?.id
+      });
       return;
     }
 
     console.log('ChatWebSocketService: Joining conversation:', conversationId);
+    console.log('🚪 DEBUG: Emitting join_conversation event to backend...');
     this.socket.emit('join_conversation', { conversationId });
+    console.log('🚪 DEBUG: join_conversation event emitted successfully');
+    
+    // Add listener for join confirmation
+    this.socket.once('joined_conversation', (data) => {
+      console.log('🚪 DEBUG: Received joined_conversation confirmation:', data);
+    });
+    
+    this.socket.once('error', (error) => {
+      console.error('🚪 DEBUG: Received error after join_conversation:', error);
+    });
   }
 
   async leaveConversation(conversationId: string): Promise<void> {

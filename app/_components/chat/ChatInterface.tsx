@@ -158,7 +158,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       }
     });
-  }, [userId, messages]);
+  }, [userId, messages, currentConversation]);
 
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     // Prevent scroll event from bubbling up to parent page
@@ -182,6 +182,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Handle new messages with smart scrolling
   const handleNewMessages = useCallback((newMessages: ChatMessage[]) => {
     const wasAtBottom = checkIfUserAtBottom();
+    console.log('🎯 new messages debug:', newMessages);
     const hasNewIncomingMessages = newMessages.some(msg => msg.senderId !== userId);
     
     if (hasNewIncomingMessages) {
@@ -334,13 +335,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   useEffect(() => {
     const connectWebSocket = async () => {
       try {
-        const sessionId = getSessionId();
+        const sessionId = await getSessionId();
         if (!sessionId) {
           console.log('No session ID found, skipping WebSocket connection');
           return;
         }
 
         console.log('Attempting WebSocket connection with session ID:', sessionId);
+        console.log('🔧 DEBUG: Session ID type:', typeof sessionId, 'value:', sessionId);
+        console.log('🔧 DEBUG: Session ID starts with test-session-:', sessionId?.startsWith('test-session-'));
         const connected = await chatWebSocketService.connect(sessionId);
 
         if (connected) {
@@ -348,12 +351,51 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           setWsConnected(true);
 
           // Set up event listeners for real-time updates
-          chatWebSocketService.on('new_message', handleNewMessage);
+          console.log('🔧 Setting up WebSocket event listeners...');
+          
+          // Add debug wrapper for new_message event
+          const debugHandleNewMessage = (data: any) => {
+            console.log('🔴 DEBUG: new_message event received!', data);
+            console.log('🔴 DEBUG: Event timestamp:', new Date().toISOString());
+            handleNewMessage(data);
+          };
+          
+          // Add debug logging for the 'on' method to see if events are being registered
+          const originalOn = chatWebSocketService.on;
+          chatWebSocketService.on = function(event: string, callback: Function) {
+            console.log('🔧 DEBUG: Registering event listener for:', event);
+            return originalOn.call(this, event, callback);
+          };
+          
+          chatWebSocketService.on('new_message', debugHandleNewMessage);
           chatWebSocketService.on('user_typing', handleUserTyping);
           chatWebSocketService.on('error', handleError);
           chatWebSocketService.on('connection_status_change', handleConnectionChange);
+          
+          // Restore original method
+          chatWebSocketService.on = originalOn;
+          
+          console.log('🔧 Verifying event listeners are set up...');
+          console.log('🔧 WebSocket service type:', typeof chatWebSocketService);
+          console.log('🔧 WebSocket service connected:', chatWebSocketService.isConnected());
 
-          console.log('WebSocket event listeners set up');
+          console.log('✅ WebSocket event listeners set up successfully');
+          
+          // Join all conversation rooms to receive messages from all conversations
+          // Add a small delay to ensure WebSocket connection is fully established
+          setTimeout(() => {
+            if (conversations.length > 0) {
+              console.log('🚪 Joining all conversation rooms for real-time updates:', conversations.length);
+              conversations.forEach((conversation, index) => {
+                console.log(`🚪 [${index + 1}/${conversations.length}] Attempting to join room for conversation:`, conversation.id);
+                chatWebSocketService.joinConversation(conversation.id);
+                console.log(`🚪 [${index + 1}/${conversations.length}] Join command sent for conversation:`, conversation.id);
+              });
+              console.log('🚪 All room join commands completed');
+            } else {
+              console.log('⚠️ No conversations available to join rooms for');
+            }
+          }, 1000); // 1 second delay to ensure connection is ready
         } else {
           console.log('WebSocket connection failed');
           setWsConnected(false);
@@ -379,7 +421,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     const statusCheckInterval = setInterval(() => {
       const actualStatus = chatWebSocketService.isConnected();
       if (actualStatus !== wsConnected) {
-        console.log('🔄 Syncing connection status:', { actual: actualStatus, ui: wsConnected });
         setWsConnected(actualStatus);
       }
     }, 5000); // Check every 5 seconds instead of 2 seconds
@@ -460,7 +501,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   }, [messages, loadingMessages]);
 
   // Simple helper functions
-  const getSessionId = (): string | null => {
+  const getSessionId = async (): Promise<string | null> => {
     if (typeof window === 'undefined') return null;
 
     // Try cookies first - this is how the backend session system works
@@ -503,14 +544,58 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       return metaSessionId;
     }
 
-    console.log('No session ID found in any source. Available cookies:', document.cookie);
-    console.log('Available localStorage keys:', Object.keys(localStorage));
-
-    // For testing purposes, return a default session ID
-    // Remove this in production and handle the case properly
-    const testSessionId = 'test-session-' + Date.now();
-    console.log('Using test session ID for development:', testSessionId);
-    return testSessionId;
+    console.log('❌ CRITICAL: No session ID found in any source!');
+    console.log('❌ Available cookies:', document.cookie);
+    console.log('❌ Available localStorage keys:', Object.keys(localStorage));
+    console.log('❌ This means user is not properly authenticated!');
+    
+    // Debug cookie visibility issues
+    console.log('🔍 DEBUG: Cookie visibility check:');
+    console.log('🔍 Current domain:', window.location.hostname);
+    console.log('🔍 Current port:', window.location.port);
+    console.log('🔍 Current protocol:', window.location.protocol);
+    console.log('🔍 Full URL:', window.location.href);
+    
+    // Try to access cookies in different ways
+    try {
+      const allCookies = document.cookie;
+      console.log('🔍 document.cookie raw:', allCookies);
+      console.log('🔍 document.cookie length:', allCookies.length);
+      
+      if (allCookies.length === 0) {
+        console.log('🔍 WARNING: document.cookie is completely empty!');
+        console.log('🔍 This suggests a cookie visibility issue');
+      }
+    } catch (error) {
+      console.error('🔍 Error accessing cookies:', error);
+    }
+    
+          // Since cookies are HttpOnly, try to get session ID via API call
+      try {
+        console.log('🔧 Attempting to get session ID via API call...');
+        const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+        const response = await fetch(`${backendUrl}/api/v1/auth/session`, {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+      
+      if (response.ok) {
+        const data = await response.json();
+        console.log('🔧 Session API response:', data);
+        if (data.sessionId) {
+          console.log('✅ Got session ID via API:', data.sessionId);
+          return data.sessionId;
+        }
+      }
+    } catch (error) {
+      console.error('🔧 Error getting session via API:', error);
+    }
+    
+    // Don't use test session - return null to see the real issue
+    return null;
   };
 
   const loadConversations = async () => {
@@ -523,6 +608,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (Array.isArray(data)) {
         console.log('✅ ChatInterface: Conversations loaded successfully, count:', data.length);
         setConversations(data);
+        
+        // Join WebSocket rooms for all conversations to receive real-time messages
+        if (wsConnected && data.length > 0) {
+          console.log('🚪 Joining WebSocket rooms for all loaded conversations');
+          // Add small delay to ensure WebSocket is ready
+          setTimeout(() => {
+            data.forEach((conversation, index) => {
+              console.log(`🚪 Loading: [${index + 1}/${data.length}] Joining room for conversation:`, conversation.id);
+              chatWebSocketService.joinConversation(conversation.id);
+            });
+            console.log('🚪 Loading: All conversation rooms joined');
+          }, 500);
+        }
 
         // If we have conversations but no current conversation is set, 
         // and we have an initialConversationId, try to load it
@@ -641,7 +739,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Handle real-time messages from other users
   const handleNewMessage = (data: any) => {
-    console.log('📨 Received new message via WebSocket and currentConversation:', data, currentConversationRef.current);
+    console.log('📨 WEBSOCKET MESSAGE RECEIVED! Data:', data);
+    console.log('📨 Current conversation when message received:', currentConversationRef.current);
     // Validate message data structure
     if (!data.conversationId || !data.message) {
       console.error('❌ Invalid message data structure:', data);
@@ -735,8 +834,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
 
     // Always update conversation list with new message (for all conversations)
-    setConversations(prev =>
-      prev.map(conv =>
+    setConversations(prev => {
+      const updated = prev.map(conv =>
         conv.id === data.conversationId
           ? { 
               ...conv, 
@@ -746,9 +845,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               unreadCount: data.message.sender_id !== userId ? conv.unreadCount + 1 : conv.unreadCount
             }
           : conv
-      )
-    );
-    console.log('✅ Updated conversation list with new message');
+      );
+      
+      const targetConv = updated.find(c => c.id === data.conversationId);
+      console.log('✅ Updated conversation list with new message');
+      console.log('🔍 Target conversation unread count:', targetConv?.unreadCount);
+      console.log('🔍 Current conversation ID:', currentConversationRef.current?.id);
+      console.log('🔍 Message conversation ID:', data.conversationId);
+      
+      return updated;
+    });
 
     // If this message is for a conversation that's not currently loaded, 
     // we might want to refresh the conversations list to show the new message
@@ -1182,18 +1288,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     // Load messages for this conversation
     loadMessages(conversation.id);
 
-    // Mark conversation as read when selected
+    // Mark conversation as read when selected - do this immediately for better UX
     if (conversation.unreadCount > 0) {
+      console.log('🎯 Conversation has unread messages, marking as read:', conversation.unreadCount);
       markConversationAsRead(conversation.id);
     }
     
     // Mark all incoming messages as read when conversation is selected
     if (messages.length > 0) {
-      messages.forEach(message => {
-        if (message.senderId !== userId && !message.isRead) {
+      const unreadMessages = messages.filter(message => 
+        message.senderId !== userId && !message.isRead
+      );
+      
+      if (unreadMessages.length > 0) {
+        console.log('🎯 Found unread messages, marking them as read:', unreadMessages.length);
+        unreadMessages.forEach(message => {
           markMessageAsRead(message.id);
-        }
-      });
+        });
+      }
     }
 
     // Join WebSocket room for this conversation if connected
@@ -1243,6 +1355,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Mark individual message as read
   const markMessageAsRead = async (messageId: string) => {
     try {
+      // Check if message was unread before marking as read
+      const messageToRead = messages.find(msg => msg.id === messageId);
+      const wasUnread = messageToRead && messageToRead.senderId !== userId && !messageToRead.isRead;
+      
       // Update local message state
       setMessages(prev =>
         prev.map(msg =>
@@ -1252,10 +1368,48 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         )
       );
 
+      // If message was unread, decrement the conversation unread count
+      if (wasUnread && currentConversation) {
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.id === currentConversation.id
+              ? { ...conv, unreadCount: Math.max(0, conv.unreadCount - 1) }
+              : conv
+          )
+        );
+
+        // Also update current conversation state
+        setCurrentConversation(prev => 
+          prev ? { ...prev, unreadCount: Math.max(0, prev.unreadCount - 1) } : prev
+        );
+      }
+
       // Call backend API to mark message as read
       await chatApiService.markMessageAsRead(messageId, userId);
       
       console.log('✅ Message marked as read:', messageId);
+      
+      // Check if all messages in current conversation are now read
+      // If so, ensure conversation unread count is 0
+      if (currentConversation) {
+        const allMessagesRead = messages.every(msg => 
+          msg.senderId === userId || msg.isRead || msg.id === messageId
+        );
+        
+        if (allMessagesRead) {
+          console.log('🎯 All messages read, ensuring conversation unread count is 0');
+          setConversations(prev =>
+            prev.map(conv =>
+              conv.id === currentConversation.id
+                ? { ...conv, unreadCount: 0 }
+                : conv
+            )
+          );
+          setCurrentConversation(prev => 
+            prev ? { ...prev, unreadCount: 0 } : prev
+          );
+        }
+      }
     } catch (error) {
       console.error('❌ Failed to mark message as read:', error);
     }
@@ -1529,8 +1683,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     }
   };
 
-  // Simple MessageCard component based on your design
-  const MessageCard = ({ conversation }: { conversation: ChatConversation }) => {
+  // Simple MessageCard component based on your design - Memoized to prevent unnecessary re-renders
+  const MessageCard = React.memo(({ conversation }: { conversation: ChatConversation }) => {
     const otherParticipant = conversation.participants.find(p => p.user_id !== userId);
     const lastMessage = conversation.lastMessage;
     const isActive = currentConversation?.id === conversation.id;
@@ -1563,7 +1717,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             />
           </span>
           <span className="font-semibold">{otherParticipant?.name || 'Unknown User'}</span>
-          {conversation.unreadCount > 0 && (
+          {conversation.unreadCount > 0 && !isActive && (
             <span className="size-5 rounded-full bg-[#EE5D50] flex items-center justify-center text-[8px] text-white font-bold">
               {conversation.unreadCount}
             </span>
@@ -1590,7 +1744,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </span>
       </div>
     );
-  };
+  });
+
+  // Memoize conversation list to prevent re-renders when only typing indicator changes
+  const conversationList = React.useMemo(() => 
+    conversations.map((conversation) => (
+      <MessageCard key={conversation.id} conversation={conversation} />
+    )), 
+    [conversations, currentConversation?.id]
+  );
 
   if (loading && conversations.length === 0) {
     return (
@@ -1633,9 +1795,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             </span>
           </div>
           <div className="flex flex-col">
-            {conversations.map((conversation) => (
-              <MessageCard key={conversation.id} conversation={conversation} />
-            ))}
+            {conversationList}
           </div>
         </div>
 
@@ -1660,7 +1820,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       size="100%"
                     />
                   </span>
-                  {currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                  <div className="flex flex-col">
+                    <span>{currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}</span>
+                    {/* Typing Indicator under user name */}
+                    {typingUsers.size > 0 && (
+                      <div className="flex items-center space-x-2 text-sm mt-1">
+                        <div className="flex space-x-1">
+                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce"></div>
+                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
+                          <div className="w-1.5 h-1.5 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
+                        </div>
+                        <span className="text-[#74D27E] font-normal text-xs">typing...</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <button 
                   onClick={() => markConversationAsRead(currentConversation.id)}
@@ -1948,17 +2121,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   </div>
                 )}
 
-                {/* Typing Indicators */}
-                {typingUsers.size > 0 && (
-                  <div className="flex items-center space-x-2 text-gray-500 text-sm p-2 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="flex space-x-1">
-                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce"></div>
-                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.1s' }}></div>
-                      <div className="w-2 h-2 bg-[#74D27E] rounded-full animate-bounce" style={{ animationDelay: '0.2s' }}></div>
-                    </div>
-                    <span className="text-[#74D27E] font-medium">Someone is typing...</span>
-                  </div>
-                )}
+
 
                 {/* New Message Indicator Arrow - Inside chat area */}
                 {showNewMessageIndicator && (
