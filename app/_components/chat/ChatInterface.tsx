@@ -1261,21 +1261,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
 
   const handleUserTyping = (data: any) => {
-    console.log('👥 Received typing indicator:', data);
-    console.log('👥 Current conversation:', currentConversationRef.current?.id);
-    console.log('👥 Data conversation:', data.conversationId);
-    console.log('👥 Is typing:', data.isTyping);
-    console.log('👥 User ID:', data.userId);
-    console.log('👥 Conversation ID match:', data.conversationId === currentConversationRef.current?.id);
-    console.log('👥 Before handleUserTyping - conversationTypingStates:', Object.fromEntries(conversationTypingStates));
-    console.log('👥 Conversation ID types:', {
-      dataConversationId: typeof data.conversationId,
-      currentConversationId: typeof currentConversationRef.current?.id,
-      dataConversationIdValue: data.conversationId,
-      currentConversationIdValue: currentConversationRef.current?.id
-    });
-
-    // Create a unique key for this typing event to prevent duplicates
     const typingEventKey = `${data.conversationId}-${data.userId}-${data.isTyping}`;
     console.log('🔑 Typing event key:', typingEventKey);
 
@@ -1307,6 +1292,12 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       console.log('⌨️ Current typing users for conversation:', Array.from(currentTypingUsers || []));
       console.log('⌨️ User already typing:', hasUser);
+      console.log('condition check:', {
+        isTyping: data.isTyping,
+        hasUser: hasUser,
+        shouldAdd: data.isTyping && !hasUser,
+        shouldRemove: !data.isTyping && hasUser
+      });
 
       if (data.isTyping && !hasUser) {
         // Add typing user to conversation
@@ -1319,13 +1310,26 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         return newMap;
       } else if (!data.isTyping && hasUser) {
         // Remove typing user from conversation
+        console.log('🛑 STOPPING TYPING - Before removal:', {
+          conversationId: data.conversationId,
+          userId: data.userId,
+          hasUser,
+          currentTypingUsers: Array.from(currentTypingUsers || [])
+        });
+        
         const newMap = new Map(prev);
         const newTypingUsers = new Set(currentTypingUsers);
         newTypingUsers.delete(data.userId);
+        
+        console.log('🛑 After deletion, newTypingUsers size:', newTypingUsers.size);
+        console.log('🛑 After deletion, newTypingUsers:', Array.from(newTypingUsers));
+        
         if (newTypingUsers.size === 0) {
           newMap.delete(data.conversationId);
+          console.log('🛑 Deleted conversation from typing map entirely');
         } else {
           newMap.set(data.conversationId, newTypingUsers);
+          console.log('🛑 Updated conversation with remaining typing users');
         }
         console.log(`⌨️ User ${data.username || data.userId} stopped typing in conversation ${data.conversationId}`);
         console.log('⌨️ New conversation typing states:', Object.fromEntries(newMap));
@@ -1337,7 +1341,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       return prev;
     });
     
-    console.log('👥 After handleUserTyping - final conversationTypingStates:', Object.fromEntries(conversationTypingStates));
+    // Use setTimeout to log the actual updated state after React processes the update
+    setTimeout(() => {
+      console.log('👥 After handleUserTyping - ACTUAL final conversationTypingStates:', Object.fromEntries(conversationTypingStatesRef.current));
+    }, 0);
   };
   const handleError = (data: any) => {
     console.error('WebSocket error received:', data);
@@ -2273,11 +2280,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const MessageCard = React.memo(({ 
     conversation, 
     currentConversationId, 
-    userId 
+    userId,
+    conversationTypingStates
   }: { 
     conversation: ChatConversation;
     currentConversationId?: string;
     userId: string;
+    conversationTypingStates: Map<string, Set<string>>;
   }) => {
     const otherParticipant = conversation.participants.find(p => p.user_id !== userId);
     const lastMessage = conversation.lastMessage;
@@ -2386,9 +2395,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         // Pass stable references to prevent unnecessary re-renders
         currentConversationId={currentConversation?.id}
         userId={userId}
+        conversationTypingStates={conversationTypingStates}
       />
     ));
-  }, [conversations, currentConversation?.id, userId]); // Add userId for stability
+  }, [conversations, currentConversation?.id, userId, conversationTypingStates]); // Add conversationTypingStates for typing indicators
 
   if (loading && conversations.length === 0) {
     return (
