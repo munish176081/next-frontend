@@ -1412,20 +1412,23 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       if (attachmentPreviews.length > 0) {
         console.log('📎 Uploading attachments...');
 
-        for (const preview of attachmentPreviews) {
-          const fileType = preview.type === 'image' ? 'image' : 'document';
+                 for (const preview of attachmentPreviews) {
+           // Upload voice files as documents since the upload utility doesn't have a voice type
+           const fileType = preview.type === 'image' ? 'image' : 'document';
 
-          // Upload each file using the upload-utils directly
-          const uploadResult = await new Promise<UploadResult>((resolve, reject) => {
-            import('@/_services/upload/upload-utils').then(({ uploadFile: directUpload }) => {
-              directUpload(preview.file, fileType, (progress) => {
-                console.log(`📊 Upload progress for ${preview.file.name}:`, progress);
-              }).then(resolve).catch(reject);
-            });
-          });
+           console.log('📎 Uploading file:', preview.file.name, 'original type:', preview.type, 'upload type:', fileType);
 
-          attachments.push(uploadResult);
-        }
+           // Upload each file using the upload-utils directly
+           const uploadResult = await new Promise<UploadResult>((resolve, reject) => {
+             import('@/_services/upload/upload-utils').then(({ uploadFile: directUpload }) => {
+               directUpload(preview.file, fileType, (progress) => {
+                 console.log(`📊 Upload progress for ${preview.file.name}:`, progress);
+               }).then(resolve).catch(reject);
+             });
+           });
+
+           attachments.push(uploadResult);
+         }
 
         console.log('✅ All attachments uploaded:', attachments);
       }
@@ -1962,17 +1965,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         }
       };
 
-      recorder.onstop = () => {
-        console.log('🎤 Recording stopped, chunks collected:', audioChunks.length);
+             recorder.onstop = () => {
+         console.log('🎤 Recording stopped, chunks collected:', audioChunks.length);
 
-        // Create audio blob and URL for preview
-        if (audioChunks.length > 0) {
-          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-          const audioUrl = URL.createObjectURL(audioBlob);
-          setRecordedAudioUrl(audioUrl);
-          setShowAudioPreview(true);
-        }
-      };
+         // Create audio blob and URL for preview
+         setTimeout(() => {
+           if (audioChunks.length > 0) {
+             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+             const audioUrl = URL.createObjectURL(audioBlob);
+             setRecordedAudioUrl(audioUrl);
+             setShowAudioPreview(true);
+           }
+         }, 100); // Small delay to ensure chunks are collected
+       };
 
       // Start recording
       recorder.start();
@@ -1982,7 +1987,11 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       // Start timer
       recordingTimerRef.current = setInterval(() => {
-        setRecordingDuration(prev => prev + 1);
+        setRecordingDuration(prev => {
+          const newDuration = prev + 1;
+          console.log('🕐 Timer tick:', newDuration);
+          return newDuration;
+        });
       }, 1000);
 
       // Monitor audio levels for visualization
@@ -2354,7 +2363,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <div className={`flex flex-col border border-black/20 rounded-[20px] max-w-[400px] max-md:max-w-full w-full h-[800px] max-md:h-auto max-md:overflow-hidden ${isVisible ? 'max-md:hidden' : ''}`}>
           <div className="flex items-center justify-between p-4">
             <select className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 max-md:h-9 max-md:w-28 rounded-full border-[#CBCACA] border-[1px] bg-white w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium">
-              <option>{conversations.filter(c => c.unreadCount > 0).length} Unread</option>
+              <option>{conversations.filter(c => c.unreadCount > 0).length} Unread (tetung)</option>
             </select>
             <span className="text-[32px] font-semibold h-14 max-md:h-9 max-md:w-9 w-14 border border-[#CBCACA] rounded-full flex items-center justify-center">
               <svg className="max-md:h-4" width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2894,13 +2903,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               ))}
             </div>
 
-            {/* Recording Timer */}
-            <div className="text-center mb-6">
-              <div className="text-3xl font-mono font-bold text-red-500">
-                {formatRecordingDuration(recordingDuration)}
-              </div>
-              <p className="text-sm text-[#8B8B8B] mt-1">Recording duration</p>
-            </div>
+                         {/* Recording Timer */}
+             <div className="text-center mb-6">
+               <div className="text-3xl font-mono font-bold text-red-500">
+                 {formatRecordingDuration(recordingDuration)}
+               </div>
+               <p className="text-sm text-[#8B8B8B] mt-1">Recording duration ({recordingDuration}s)</p>
+             </div>
 
             {/* Recording Controls */}
             <div className="flex gap-4">
