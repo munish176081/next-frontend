@@ -96,6 +96,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Voice recording state
   const [isRecording, setIsRecording] = useState(false);
   const [recordingDuration, setRecordingDuration] = useState(0);
+  const [lastRecordingDuration, setLastRecordingDuration] = useState(0); // Preserve duration for preview
   const [mediaRecorder, setMediaRecorder] = useState<MediaRecorder | null>(null);
   const [audioChunks, setAudioChunks] = useState<Blob[]>([]);
   const [recordingStream, setRecordingStream] = useState<MediaStream | null>(null);
@@ -478,9 +479,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   // Clean up recording when component unmounts
   useEffect(() => {
     return () => {
-      if (isRecording) {
-        stopRecording();
-      }
+      // Only cleanup on component unmount (no dependencies)
       if (recordingTimerRef.current) {
         clearInterval(recordingTimerRef.current);
       }
@@ -488,7 +487,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         recordingStream.getTracks().forEach(track => track.stop());
       }
     };
-  }, [isRecording, recordingStream]);
+  }, []); // Empty dependency array - only runs on mount/unmount
 
   // Handle clicking outside emoji picker to close it
   useEffect(() => {
@@ -1929,6 +1928,41 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const startRecording = async () => {
     try {
       console.log('🎤 Starting voice recording...');
+      console.log('🎤 Current state before start:', {
+        isRecording,
+        hasMediaRecorder: !!mediaRecorder,
+        hasStream: !!recordingStream,
+        recordingDuration,
+        audioChunksLength: audioChunks.length
+      });
+
+      // Clean up any existing recording state first
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+        recordingTimerRef.current = null;
+      }
+
+      if (recordingStream) {
+        recordingStream.getTracks().forEach(track => track.stop());
+        setRecordingStream(null);
+      }
+
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') {
+        mediaRecorder.stop();
+        setMediaRecorder(null);
+      }
+
+      // Reset all recording state
+      setIsRecording(false);
+      setRecordingDuration(0);
+      setLastRecordingDuration(0);
+      setAudioChunks([]);
+      setShowRecordingOverlay(false);
+      setAudioLevel(0);
+      setShowAudioPreview(false);
+      setRecordedAudioUrl(null);
+
+      console.log('🎤 State cleaned up, starting fresh recording...');
 
       // Check if we're in a secure context (HTTPS required for media access)
       if (typeof window !== 'undefined' && !window.isSecureContext) {
@@ -1948,51 +1982,90 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
       // Request microphone access
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      console.log('✅ Microphone access granted, stream obtained:', stream);
       setRecordingStream(stream);
 
-      // Create MediaRecorder
-      const recorder = new MediaRecorder(stream, {
-        mimeType: 'audio/webm;codecs=opus' // Good quality, small file size
-      });
+            // Create MediaRecorder with proper error handling
+      let recorder: MediaRecorder;
+      try {
+        recorder = new MediaRecorder(stream, {
+          mimeType: 'audio/webm;codecs=opus' // Good quality, small file size
+        });
+      } catch (e) {
+        // Fallback to default settings if codec not supported
+        console.warn('🎤 Opus codec not supported, falling back to default');
+        recorder = new MediaRecorder(stream);
+      }
 
-      setMediaRecorder(recorder);
-      setAudioChunks([]);
+      console.log('🎤 MediaRecorder created with mimeType:', recorder.mimeType);
+
+      // Create a local chunks array to avoid state race conditions
+      let localAudioChunks: Blob[] = [];
 
       // Set up event handlers
       recorder.ondataavailable = (event) => {
+        console.log('🎤 Data available:', event.data.size, 'bytes');
         if (event.data.size > 0) {
-          setAudioChunks(prev => [...prev, event.data]);
+          localAudioChunks.push(event.data);
+          setAudioChunks(prev => {
+            console.log('🎤 Adding chunk, total chunks:', prev.length + 1);
+            return [...prev, event.data];
+          });
         }
       };
 
-             recorder.onstop = () => {
-         console.log('🎤 Recording stopped, chunks collected:', audioChunks.length);
+      recorder.onstop = () => {
+        console.log('🎤 Recording stopped, chunks collected:', localAudioChunks.length);
 
-         // Create audio blob and URL for preview
-         setTimeout(() => {
-           if (audioChunks.length > 0) {
-             const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-             const audioUrl = URL.createObjectURL(audioBlob);
-             setRecordedAudioUrl(audioUrl);
-             setShowAudioPreview(true);
-           }
-         }, 100); // Small delay to ensure chunks are collected
-       };
+        // Use local chunks array instead of state to avoid race conditions
+        if (localAudioChunks.length > 0) {
+          const audioBlob = new Blob(localAudioChunks, { type: recorder.mimeType || 'audio/webm' });
+          const audioUrl = URL.createObjectURL(audioBlob);
+          console.log('🎤 Created audio URL:', audioUrl);
+          
+          setRecordedAudioUrl(audioUrl);
+          setShowAudioPreview(true);
+          
+          // Also update the state with the local chunks
+          setAudioChunks(localAudioChunks);
+        } else {
+          console.error('🎤 No audio chunks available!');
+        }
+      };
+
+      recorder.onerror = (event) => {
+        console.error('🎤 MediaRecorder error:', event);
+        setError('Recording failed. Please try again.');
+      };
+
+      setMediaRecorder(recorder);
 
       // Start recording
-      recorder.start();
+      console.log('🎤 Starting MediaRecorder...');
+      recorder.start(100); // Request data every 100ms for better chunking
+      
+      // Set recording state
       setIsRecording(true);
       setRecordingDuration(0);
       setShowRecordingOverlay(true);
-
-      // Start timer
+      
+      console.log('🎤 Setting up timer...');
+      
+      // Start timer with proper cleanup
+      if (recordingTimerRef.current) {
+        clearInterval(recordingTimerRef.current);
+      }
+      
       recordingTimerRef.current = setInterval(() => {
+        console.log('🕐 Timer interval executing...');
         setRecordingDuration(prev => {
           const newDuration = prev + 1;
-          console.log('🕐 Timer tick:', newDuration);
+          console.log('🕐 Timer tick - prev:', prev, 'new:', newDuration);
           return newDuration;
         });
       }, 1000);
+      
+      console.log('🎤 Timer started, ref:', !!recordingTimerRef.current);
 
       // Monitor audio levels for visualization
       const audioContext = new AudioContext();
@@ -2032,24 +2105,42 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const stopRecording = () => {
     try {
       console.log('🛑 Stopping voice recording...');
+      console.log('🛑 Current state before stop:', {
+        isRecording,
+        hasMediaRecorder: !!mediaRecorder,
+        mediaRecorderState: mediaRecorder?.state,
+        hasTimer: !!recordingTimerRef.current,
+        recordingDuration
+      });
 
+      // Stop MediaRecorder
       if (mediaRecorder && mediaRecorder.state === 'recording') {
+        console.log('🛑 Stopping MediaRecorder...');
         mediaRecorder.stop();
       }
 
       // Stop timer
       if (recordingTimerRef.current) {
+        console.log('🛑 Clearing timer...');
         clearInterval(recordingTimerRef.current);
         recordingTimerRef.current = null;
       }
 
       // Stop all tracks in the stream
       if (recordingStream) {
-        recordingStream.getTracks().forEach(track => track.stop());
+        console.log('🛑 Stopping stream tracks...');
+        recordingStream.getTracks().forEach(track => {
+          console.log('🛑 Stopping track:', track.kind, track.readyState);
+          track.stop();
+        });
       }
 
+      // Save the current duration for preview before resetting
+      setLastRecordingDuration(recordingDuration);
+      console.log('🛑 Saving duration for preview:', recordingDuration);
+
+      // Update UI state
       setIsRecording(false);
-      setRecordingDuration(0);
       setShowRecordingOverlay(false);
       setAudioLevel(0);
 
@@ -2111,25 +2202,52 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   };
 
   const reRecordAudio = () => {
+    console.log('🔄 Re-recording audio...');
+    
+    // Clean up current audio preview
     setShowAudioPreview(false);
-    setRecordedAudioUrl(null);
+    if (recordedAudioUrl) {
+      URL.revokeObjectURL(recordedAudioUrl);
+      setRecordedAudioUrl(null);
+    }
     setAudioChunks([]);
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current.currentTime = 0;
     }
     setIsPlayingAudio(false);
+    
+    // Reset recording state
+    setRecordingDuration(0);
+    setLastRecordingDuration(0);
+    setAudioLevel(0);
+    
+    // Start new recording
+    startRecording();
   };
 
   const sendVoiceMessage = async () => {
-    if (audioChunks.length === 0) return;
+    if (audioChunks.length === 0) {
+      console.error('❌ No audio chunks available for sending');
+      setError('No audio recorded. Please try recording again.');
+      return;
+    }
 
     try {
       console.log('🎤 Sending voice message...');
+      console.log('🎤 Audio chunks available:', audioChunks.length);
+      console.log('🎤 Total audio size:', audioChunks.reduce((total, chunk) => total + chunk.size, 0), 'bytes');
 
-      // Create audio file from chunks
-      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-      const audioFile = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: 'audio/webm' });
+      // Create audio file from chunks with proper MIME type
+      const mimeType = mediaRecorder?.mimeType || 'audio/webm';
+      const audioBlob = new Blob(audioChunks, { type: mimeType });
+      const audioFile = new File([audioBlob], `voice-message-${Date.now()}.webm`, { type: mimeType });
+
+      console.log('🎤 Created audio file:', {
+        name: audioFile.name,
+        size: audioFile.size,
+        type: audioFile.type
+      });
 
       // Add to attachment previews (will be handled by existing send logic)
       const voicePreview: AttachmentPreview = {
@@ -2914,15 +3032,20 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
             {/* Recording Controls */}
             <div className="flex gap-4">
               <button
-                onClick={() => {
-                  setShowRecordingOverlay(false);
-                  setAudioChunks([]);
-                  setIsRecording(false);
-                  setRecordingDuration(0);
-                  if (recordingStream) {
-                    recordingStream.getTracks().forEach(track => track.stop());
-                  }
-                }}
+                                 onClick={() => {
+                   setShowRecordingOverlay(false);
+                   setAudioChunks([]);
+                   setIsRecording(false);
+                   setRecordingDuration(0);
+                   setLastRecordingDuration(0);
+                   if (recordingStream) {
+                     recordingStream.getTracks().forEach(track => track.stop());
+                   }
+                   if (recordingTimerRef.current) {
+                     clearInterval(recordingTimerRef.current);
+                     recordingTimerRef.current = null;
+                   }
+                 }}
                 className="flex-1 py-4 text-[#4A4A4A] bg-[#F4F2F6] rounded-[20px] hover:bg-gray-200 transition-colors font-medium"
               >
                 Cancel
@@ -2965,13 +3088,13 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               />
             </div>
 
-            {/* Recording Info */}
-            <div className="text-center mb-6 p-4 bg-[#F4F2F6] rounded-[20px]">
-              <div className="text-lg font-semibold text-[#4A4A4A]">
-                Duration: {formatRecordingDuration(recordingDuration)}
-              </div>
-              <p className="text-sm text-[#8B8B8B] mt-1">Voice message ready to send</p>
-            </div>
+                         {/* Recording Info */}
+             <div className="text-center mb-6 p-4 bg-[#F4F2F6] rounded-[20px]">
+               <div className="text-lg font-semibold text-[#4A4A4A]">
+                 Duration: {formatRecordingDuration(lastRecordingDuration)}
+               </div>
+               <p className="text-sm text-[#8B8B8B] mt-1">Voice message ready to send (Debug: {lastRecordingDuration}s)</p>
+             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-4">
