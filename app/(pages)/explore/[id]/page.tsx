@@ -25,6 +25,10 @@ const ExploreDetail = () => {
   const params = useParams();
   const listingId = params.id as string;
   const router = useRouter();
+  
+  // Get current user
+  const { data: currentUser } = useUser();
+  
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
 
@@ -335,7 +339,6 @@ const ExploreDetail = () => {
             <span className="flex justify-center text-xl font-medium max-md:text-base">Or</span>
                           <button
                 onClick={async () => {
-                  console.log('🚀 LIVE CHAT: Button clicked for listing:', listing?.id);
                   if (listing) {
                     try {
                       console.log('🚀 LIVE CHAT: Calling initiateChat API with listingId:', listing.id);
@@ -361,10 +364,14 @@ const ExploreDetail = () => {
                     console.error('🚀 LIVE CHAT: No listing found!');
                   }
                 }}
-              className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 hover:bg-gray-800 transition-colors cursor-pointer"
+                disabled={!!(currentUser && listing?.user?.id && currentUser.id === listing.user.id)}
+                className={`h-20 max-md:h-10 max-md:text-base w-full rounded-full text-xl font-semibold flex items-center justify-center gap-2 transition-colors
+                bg-black text-white hover:bg-gray-800 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed`}
             >
-              <img className='max-md:w-3' src="/images/vectors/liveChat.png" />Live Chat
+              <img className='max-md:w-3' src="/images/vectors/liveChat.png" />
+              Live Chat
             </button>
+             
           </div>
         </div>
       </section >

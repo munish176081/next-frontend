@@ -514,6 +514,40 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
   }, [showEmojiPicker]);
 
+  // Handle user online/offline status changes
+  const handleUserStatusChanged = (data: { userId: string; isOnline: boolean; lastSeen: Date }) => {
+    console.log('👤 User status changed:', data);
+    console.log('👤 Current conversations count:', conversations.length);
+    console.log('👤 Current conversation:', currentConversation?.id);
+    
+    // Update conversations with the new online status
+    setConversations(prevConversations => {
+      console.log('👤 Updating conversations with new status for user:', data.userId);
+      const updated = prevConversations.map(conversation => ({
+        ...conversation,
+        participants: conversation.participants.map(participant => 
+          participant.user_id === data.userId 
+            ? { ...participant, isOnline: data.isOnline, lastSeen: data.lastSeen }
+            : participant
+        )
+      }));
+      console.log('👤 Updated conversations:', updated);
+      return updated;
+    });
+
+    // Update current conversation if it contains the user whose status changed
+    if (currentConversation && currentConversation.participants.some(p => p.user_id === data.userId)) {
+      console.log('👤 Updating current conversation for user:', data.userId);
+      setCurrentConversation(prev => prev ? ({
+        ...prev,
+        participants: prev.participants.map(participant => 
+          participant.user_id === data.userId 
+            ? { ...participant, isOnline: data.isOnline, lastSeen: data.lastSeen }
+            : participant
+        )
+      }) : null);
+    }
+  };
 
   // Simple WebSocket connection
   useEffect(() => {
@@ -577,6 +611,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           chatWebSocketService.on('conversation_created', handleConversationCreated);
           chatWebSocketService.on('error', handleError);
           chatWebSocketService.on('connection_status_change', handleConnectionChange);
+          chatWebSocketService.on('user_status_changed', handleUserStatusChanged);
+          console.log('🔧 Registered user_status_changed event listener');
 
           // Note: Backend doesn't send conversation_created events, so we rely on
           // the new_message event and automatic conversation refresh
@@ -1258,8 +1294,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     console.log('✅ New conversation added to list:', newConversation.id);
   };
 
-
-
   const handleUserTyping = (data: any) => {
     const typingEventKey = `${data.conversationId}-${data.userId}-${data.isTyping}`;
     console.log('🔑 Typing event key:', typingEventKey);
@@ -1359,6 +1393,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     setWsConnected(status);
     console.log('🔍 wsConnected state after setState:', wsConnected); // Note: This will show old value due to React's async nature
   };
+
+
 
   const handleSendMessage = async (content: string) => {
     if (!currentConversation?.id) return;
@@ -2312,14 +2348,6 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           <span className={`size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white ${otherParticipant?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
           {/* Unread indicator - subtle left border */}
           <span className="size-10 rounded-full overflow-hidden">
-            {/* <img className="w-full h-full object-cover" src={otherParticipant?.avatar || <Avatar
-              className="cursor-pointer !text-3xl "
-              name={otherParticipant?.name || 'Unknown User'}
-              src={otherParticipant?.avatar || ''}
-              rounded="full"
-              textSizeRatio={3}
-              size="100%"
-            />} alt={otherParticipant?.name || 'User'} /> */}
             <Avatar
               className="cursor-pointer !text-3xl w-full h-full object-cover"
               name={otherParticipant?.name || 'Unknown User'}
@@ -2365,7 +2393,14 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         <span className="flex text-[#ADA7A7] flex-col absolute right-3 h-full gap-6">
           {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
           <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={otherParticipant?.isOnline ? '#74D27E' : '#CFCFCF'} />
+            <path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={(() => {
+              // If this is the current conversation, use its online status
+              if (conversation.id === currentConversationId && currentConversation) {
+                return currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? '#74D27E' : '#CFCFCF';
+              }
+              // Otherwise use the conversation's own online status
+              return conversation.participants.find(p => p.user_id !== userId)?.isOnline ? '#74D27E' : '#CFCFCF';
+            })()} />
           </svg>
         </span>
       </div>
