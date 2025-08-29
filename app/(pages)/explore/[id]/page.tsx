@@ -20,6 +20,7 @@ import { useUser } from "@/_services/hooks/user/use-user";
 import { useGetListingById } from "@/_services/hooks/listings/use-get-listing-by-id";
 import { chatApiService } from "@/_services/chat/chatApiService";
 import { toast } from '@/_hooks/use-toast';
+import MeetingScheduleForm from "@/_components/meetings/meeting-schedule-form";
 
 const ExploreDetail = () => {
   const params = useParams();
@@ -28,6 +29,9 @@ const ExploreDetail = () => {
   
   // Get current user
   const { data: currentUser } = useUser();
+  
+  // Meeting scheduling state
+  const [showMeetingForm, setShowMeetingForm] = useState(false);
   
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
@@ -309,33 +313,56 @@ const ExploreDetail = () => {
               }
             })()}
             <span className="text-[34px] font-medium mt-3 max-md:text-xl">Schedule Meeting</span>
-            <div className="flex gap-4 w-full max-md:gap-2 max-md:grid max-md:grid-cols-2">
-              <div className="flex w-full relative">
-                <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
-                  <img className="max-md:w-4" src="/images/vectors/selectDate.png" />
-                </span>
-                <input
-                  className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
-                  type="date"
-                  placeholder="Select Date"
-                  defaultValue={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              <div className="flex w-full relative">
-                <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
-                  <img className="max-md:w-4" src="/images/vectors/selectTime.png" />
-                </span>
-                <input
-                  className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
-                  type="time"
-                  placeholder="Select Time"
-                  defaultValue={new Date().toTimeString().slice(0, 5)}
-                />
-              </div>
-            </div>
-            <button className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2">
-              <img className='max-md:w-3' src="/images/vectors/scheduleMeeting.png" />Schedule meeting
-            </button>
+            
+            {showMeetingForm ? (
+              <MeetingScheduleForm
+                listingId={listingId}
+                listingTitle={transformedListing.title}
+                sellerName={transformedListing.user?.name || "Seller"}
+                onMeetingScheduled={() => {
+                  setShowMeetingForm(false);
+                  toast({
+                    title: "Success!",
+                    description: "Meeting scheduled successfully. Check your meetings page for details.",
+                  });
+                }}
+                onCancel={() => setShowMeetingForm(false)}
+              />
+            ) : (
+              <>
+                <div className="flex gap-4 w-full max-md:gap-2 max-md:grid max-md:grid-cols-2">
+                  <div className="flex w-full relative">
+                    <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
+                      <img className="max-md:w-4" src="/images/vectors/selectDate.png" />
+                    </span>
+                    <input
+                      className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
+                      type="date"
+                      placeholder="Select Date"
+                      defaultValue={new Date().toISOString().split('T')[0]}
+                    />
+                  </div>
+                  <div className="flex w-full relative">
+                    <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
+                      <img className="max-md:w-4" src="/images/vectors/selectTime.png" />
+                    </span>
+                    <input
+                      className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
+                      type="time"
+                      placeholder="Select Time"
+                      defaultValue={new Date().toTimeString().slice(0, 5)}
+                    />
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setShowMeetingForm(true)}
+                  disabled={!!(currentUser && listing?.user?.id && currentUser.id === listing.user.id)} 
+                  className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2 hover:bg-gray-800 transition-colors"
+                >
+                  <img className='max-md:w-3' src="/images/vectors/scheduleMeeting.png" />Schedule meeting
+                </button>
+              </>
+            )}
             <span className="flex justify-center text-xl font-medium max-md:text-base">Or</span>
                           <button
                 onClick={async () => {

@@ -1,12 +1,42 @@
-export type MeetingStatusEnum = "confirmed" | "pending" | "cancelled";
+export type MeetingStatusEnum = "confirmed" | "pending" | "cancelled" | "completed" | "expired";
 
 export interface Meeting {
   id: string;
-  listing: string;
-  type: string;
+  listingId: string;
+  listingTitle: string;
+  listingType: string;
+  buyerId: string;
+  buyerName: string;
+  buyerEmail: string;
+  sellerId: string;
+  sellerName: string;
+  sellerEmail: string;
   date: string;
   time: string;
-  meetingWith: string;
+  duration: number; // in minutes
+  timezone: string;
   status: MeetingStatusEnum;
-  action: string;
+  googleMeetLink?: string;
+  meetingId?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateMeetingDto {
+  listingId: string;
+  date: string;
+  time: string;
+  duration: number;
+  timezone: string;
+  notes?: string;
+}
+
+export interface UpdateMeetingDto {
+  date?: string;
+  time?: string;
+  duration?: number;
+  timezone?: string;
+  status?: MeetingStatusEnum;
+  notes?: string;
 }

@@ -2,16 +2,31 @@
 
 import { DashboardLayout } from "@/_components/common/dashboard-layout";
 import { DashboardCard, DashboardTable } from "@/_components/common/dashboard-widgets";
-
-const meetingRows = [
-  { buyer: "John Smith", puppy: "Golden Retriever", date: "2024-01-20", time: "14:00", status: "Confirmed", action: "•••" },
-  { buyer: "Sarah Wilson", puppy: "Labrador", date: "2024-01-22", time: "10:30", status: "Pending", action: "•••" },
-  { buyer: "Mike Johnson", puppy: "German Shepherd", date: "2024-01-25", time: "16:00", status: "Confirmed", action: "•••" },
-  { buyer: "Emma Davis", puppy: "Poodle", date: "2024-01-28", time: "11:00", status: "Cancelled", action: "•••" },
-  { buyer: "David Brown", puppy: "Border Collie", date: "2024-01-30", time: "13:30", status: "Pending", action: "•••" }
-];
+import { useMeetings } from '@/_services/hooks/meetings/use-meetings';
 
 const Meetings = () => {
+  const { meetings, isLoading } = useMeetings();
+
+  // Transform meetings data to match the original table format
+  const meetingRows = meetings.map(meeting => ({
+    buyer: meeting.buyerName || "Unknown",
+    puppy: meeting.listingTitle || "Unknown Listing",
+    date: meeting.date,
+    time: meeting.time,
+    status: meeting.status.charAt(0).toUpperCase() + meeting.status.slice(1),
+    action: "•••"
+  }));
+
+  if (isLoading) {
+    return (
+      <DashboardLayout title="Meetings" showTimeFilter={false}>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout title="Meetings" showTimeFilter={false}>
       <div className="flex gap-4 min-w-min max-md:flex-col max-md:min-w-full">
