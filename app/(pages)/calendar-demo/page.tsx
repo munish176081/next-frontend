@@ -153,19 +153,25 @@ function CalendarDemoContent() {
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2">
-            <Input
-              label="Date"
-              type="date"
-              value={testMeetingData.date}
-              onChange={(e) => handleInputChange('date', e.target.value)}
-            />
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1.5">Date</label>
+              <input
+                type="date"
+                value={testMeetingData.date}
+                onChange={(e) => handleInputChange('date', e.target.value)}
+                className="px-4 py-2 text-sm h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
             
-            <Input
-              label="Time"
-              type="time"
-              value={testMeetingData.time}
-              onChange={(e) => handleInputChange('time', e.target.value)}
-            />
+            <div className="flex flex-col">
+              <label className="text-sm font-medium mb-1.5">Time</label>
+              <input
+                type="time"
+                value={testMeetingData.time}
+                onChange={(e) => handleInputChange('time', e.target.value)}
+                className="px-4 py-2 text-sm h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              />
+            </div>
             
             <Input
               label="Duration (minutes)"
@@ -288,7 +294,4 @@ export default function CalendarDemoPage() {
   );
 }
 
-export const metadata = {
-  title: 'Calendar Integration Demo - Pups4Sale',
-  description: 'Test OAuth calendar integration functionality',
-};
+
