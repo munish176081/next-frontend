@@ -48,7 +48,7 @@ class ChatWebSocketService {
 
     try {
       this.isConnecting = true;
-      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://10.20.20.188:3001';
+      const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
       console.log('ChatWebSocketService: Connecting to WebSocket at:', backendUrl);
       console.log('ChatWebSocketService: Using session ID:', sessionId);
 

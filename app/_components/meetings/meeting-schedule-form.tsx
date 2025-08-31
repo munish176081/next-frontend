@@ -7,6 +7,9 @@ import { z } from 'zod';
 import { toast } from '@/_hooks/use-toast';
 import { meetingApiService } from '@/_services/meetings/meetingApiService';
 import { CreateMeetingDto } from '@/_types/meeting';
+import { useMeetingsWithCalendar } from '@/_services/hooks/meetings/use-meetings-with-calendar';
+import { useCalendar } from '@/_contexts/calendar-context';
+import { CalendarAuthorizationCompact } from '../calendar/calendar-authorization-compact';
 
 const meetingSchema = z.object({
   date: z.string().min(1, 'Date is required'),
@@ -35,6 +38,10 @@ const MeetingScheduleForm: React.FC<MeetingScheduleFormProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [availableSlots, setAvailableSlots] = useState<string[]>([]);
   const [selectedDate, setSelectedDate] = useState('');
+  
+  // Calendar integration hooks
+  const { scheduleMeetingWithCalendar } = useMeetingsWithCalendar();
+  const { isAuthorized: isCalendarAuthorized } = useCalendar();
 
   const {
     register,
@@ -53,14 +60,15 @@ const MeetingScheduleForm: React.FC<MeetingScheduleFormProps> = ({
   });
 
   const watchedDate = watch('date');
+  const watchedDuration = watch('duration');
 
-  // Fetch available time slots when date changes
+  // Fetch available time slots when date or duration changes
   useEffect(() => {
     if (watchedDate) {
       setSelectedDate(watchedDate);
       fetchAvailableSlots(watchedDate);
     }
-  }, [watchedDate]);
+  }, [watchedDate, watchedDuration]);
 
   const fetchAvailableSlots = async (date: string) => {
     try {
@@ -99,31 +107,31 @@ const MeetingScheduleForm: React.FC<MeetingScheduleFormProps> = ({
         sanitizedNotes = '';
       }
 
-      const meetingData: CreateMeetingDto = {
+      const meetingData = {
         listingId,
         date: data.date,
         time: data.time,
         duration: data.duration,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         notes: sanitizedNotes,
+        enableCalendarIntegration: isCalendarAuthorized, // Enable if user has authorized calendar
       };
 
       console.log('Meeting data being sent to API:', meetingData);
-      const meeting = await meetingApiService.scheduleMeeting(meetingData);
+      console.log('Calendar authorized:', isCalendarAuthorized);
       
-      toast({
-        title: "Meeting Scheduled!",
-        description: `Your meeting with ${sellerName} has been scheduled for ${data.date} at ${data.time}`,
-      });
-
-      onMeetingScheduled?.();
+      // Use calendar-integrated meeting creation
+      const meeting = await scheduleMeetingWithCalendar(meetingData);
+      
+      // Only call onMeetingScheduled if meeting was successfully created
+      if (meeting) {
+        onMeetingScheduled?.();
+      }
+      
+      // Note: Success/error toasts are handled by the scheduleMeetingWithCalendar hook
     } catch (error) {
       console.error('Error scheduling meeting:', error);
-      toast({
-        title: "Error",
-        description: error instanceof Error ? error.message : "Failed to schedule meeting. Please try again.",
-        variant: "destructive",
-      });
+      // Error toasts are handled by the scheduleMeetingWithCalendar hook
     } finally {
       setIsSubmitting(false);
     }
@@ -148,6 +156,11 @@ const MeetingScheduleForm: React.FC<MeetingScheduleFormProps> = ({
           Schedule a meeting with <span className="font-medium">{sellerName}</span> about{' '}
           <span className="font-medium">{listingTitle}</span>
         </p>
+      </div>
+
+      {/* Calendar Integration */}
+      <div className="mb-6">
+        <CalendarAuthorizationCompact />
       </div>
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">

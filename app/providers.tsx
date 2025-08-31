@@ -8,6 +8,7 @@ import {
 } from "@tanstack/react-query";
 import { parseAxiosError } from "./_utils/parse-axios-error";
 import LoadingProviderWithSuspense from "./_components/common/loading-provider";
+import { CalendarProvider } from "./_contexts/calendar-context";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -62,9 +63,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <LoadingProviderWithSuspense>
-        {children}
-      </LoadingProviderWithSuspense>
+      <CalendarProvider>
+        <LoadingProviderWithSuspense>
+          {children}
+        </LoadingProviderWithSuspense>
+      </CalendarProvider>
     </QueryClientProvider>
   );
 }

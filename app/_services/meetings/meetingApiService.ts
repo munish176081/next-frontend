@@ -1,6 +1,6 @@
 import { Meeting, CreateMeetingDto, UpdateMeetingDto } from '@/_types/meeting';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://10.20.20.188:3001') + '/api/v1';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001') + '/api/v1';
 
 class MeetingApiService {
   private getAuthHeaders(): HeadersInit {
@@ -76,6 +76,17 @@ class MeetingApiService {
   // Confirm a meeting
   async confirmMeeting(meetingId: string): Promise<Meeting> {
     const response = await fetch(`${API_BASE_URL}/meetings/${meetingId}/confirm`, {
+      method: 'PUT',
+      headers: this.getAuthHeaders(),
+      credentials: 'include',
+    });
+
+    return this.handleResponse<Meeting>(response);
+  }
+
+  // Reject a meeting
+  async rejectMeeting(meetingId: string): Promise<Meeting> {
+    const response = await fetch(`${API_BASE_URL}/meetings/${meetingId}/reject`, {
       method: 'PUT',
       headers: this.getAuthHeaders(),
       credentials: 'include',

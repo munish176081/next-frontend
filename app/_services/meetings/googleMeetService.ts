@@ -149,14 +149,38 @@ This meeting was scheduled through Pups4Sale.
       '14:00', '14:30', '15:00', '15:30', '16:00', '16:30'
     ];
 
-    for (const time of businessHours) {
-      const startTime = `${date}T${time}`;
-      if (this.isTimeSlotAvailable(startTime, 30, existingMeetings)) {
-        slots.push(time);
+    // Create a set of occupied slots considering meeting duration
+    const occupiedSlots = new Set<string>();
+    
+    existingMeetings.forEach(meeting => {
+      const startTime = meeting.startTime.split('T')[1]?.slice(0, 5); // Extract time part (HH:MM)
+      if (!startTime) return;
+      
+      const duration = meeting.duration; // in minutes
+      
+      // Add the start time slot
+      occupiedSlots.add(startTime);
+      
+      // Add additional slots based on duration
+      if (duration > 30) {
+        // Calculate how many additional 30-minute slots are needed
+        const additionalSlots = Math.ceil((duration - 30) / 30);
+        
+        for (let i = 1; i <= additionalSlots; i++) {
+          const currentTime = new Date(`2000-01-01T${startTime}:00`);
+          const nextSlot = new Date(currentTime.getTime() + (i * 30 * 60000));
+          const nextSlotTime = nextSlot.toTimeString().slice(0, 5);
+          
+          // Only add if it's within business hours
+          if (businessHours.includes(nextSlotTime)) {
+            occupiedSlots.add(nextSlotTime);
+          }
+        }
       }
-    }
+    });
 
-    return slots;
+    // Filter out occupied slots
+    return businessHours.filter(slot => !occupiedSlots.has(slot));
   }
 }
 

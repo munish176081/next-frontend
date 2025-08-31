@@ -1,4 +1,16 @@
-export type MeetingStatusEnum = "confirmed" | "pending" | "cancelled" | "completed" | "expired";
+export type MeetingStatusEnum = 
+  | "confirmed" 
+  | "pending" 
+  | "cancelled" 
+  | "completed" 
+  | "expired"
+  | "tentative"
+  | "deleted"
+  | "cancelled_by_user"
+  | "cancelled_by_buyer"
+  | "cancelled_by_seller"
+  | "rescheduled"
+  | "no_show";
 
 export interface Meeting {
   id: string;
@@ -17,6 +29,7 @@ export interface Meeting {
   timezone: string;
   status: MeetingStatusEnum;
   googleMeetLink?: string;
+  calendarEventId?: string;
   meetingId?: string;
   notes?: string;
   createdAt: string;

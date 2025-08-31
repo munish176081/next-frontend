@@ -2,11 +2,23 @@ import { useState, useEffect, useCallback } from 'react';
 import { Meeting, CreateMeetingDto, UpdateMeetingDto } from '@/_types/meeting';
 import { meetingApiService } from '@/_services/meetings/meetingApiService';
 import { toast } from '@/_hooks/use-toast';
+import { useCalendar } from '@/_contexts/calendar-context';
+import { parseAxiosError } from '@/_utils/parse-axios-error';
 
-export const useMeetings = () => {
+interface CreateMeetingWithCalendarDto extends CreateMeetingDto {
+  enableCalendarIntegration?: boolean;
+}
+
+export const useMeetingsWithCalendar = () => {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  const { 
+    isAuthorized: isCalendarAuthorized, 
+    getValidToken,
+    authorize: authorizeCalendar 
+  } = useCalendar();
 
   // Fetch all meetings for the current user
   const fetchMeetings = useCallback(async () => {
@@ -28,26 +40,106 @@ export const useMeetings = () => {
     }
   }, []);
 
-  // Schedule a new meeting
-  const scheduleMeeting = useCallback(async (meetingData: CreateMeetingDto): Promise<Meeting | null> => {
+  // Enhanced meeting scheduling with calendar integration
+  const scheduleMeetingWithCalendar = useCallback(async (
+    meetingData: CreateMeetingWithCalendarDto
+  ): Promise<Meeting | null> => {
     try {
       setIsLoading(true);
       setError(null);
-      const newMeeting = await meetingApiService.scheduleMeeting(meetingData);
+
+      let accessToken: string | null = null;
+      
+      // Get calendar access token if integration is enabled and user is authorized
+      if (meetingData.enableCalendarIntegration && isCalendarAuthorized) {
+        accessToken = await getValidToken();
+        if (!accessToken) {
+          toast({
+            title: "Calendar Token Expired",
+            description: "Please re-authorize calendar access to enable automatic invites.",
+            variant: "destructive",
+          });
+        }
+      }
+
+      // Prepare meeting data with access token if available
+      const meetingPayload = {
+        ...meetingData,
+        ...(accessToken && { access_token: accessToken })
+      };
+
+      // Remove the enableCalendarIntegration flag before sending to API
+      const { enableCalendarIntegration, ...apiPayload } = meetingPayload;
+
+      const newMeeting = await meetingApiService.scheduleMeeting(apiPayload);
       
       setMeetings(prev => [newMeeting, ...prev]);
       
+      // Enhanced success message based on calendar integration
+      const successMessage = accessToken 
+        ? "Meeting scheduled with automatic calendar invites and Google Meet link!"
+        : "Meeting scheduled successfully.";
+      
+      const descriptionMessage = accessToken
+        ? "Attendees will receive email invitations with Google Meet link."
+        : meetingData.enableCalendarIntegration && !isCalendarAuthorized
+        ? "Connect your calendar to enable automatic invites."
+        : undefined;
+      
       toast({
         title: "Success!",
-        description: "Meeting scheduled successfully.",
+        description: successMessage,
+        variant: "default",
       });
+
+      if (descriptionMessage) {
+        // Show additional info about calendar features
+        setTimeout(() => {
+          toast({
+            title: "Calendar Integration",
+            description: descriptionMessage,
+            variant: "default",
+          });
+        }, 1000);
+      }
       
       return newMeeting;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to schedule meeting';
+      console.log('🔍 Error caught in scheduleMeetingWithCalendar:', err);
+      
+      // Parse structured error response from backend
+      const errorData = parseAxiosError(err);
+      console.log('📋 Parsed error data:', errorData);
+      
+      let errorMessage = 'Failed to schedule meeting';
+      let errorTitle = 'Error';
+      
+      if (errorData?.message) {
+        // Handle structured error response (like duplicate meeting)
+        if (errorData.existingMeeting) {
+          // This is a duplicate meeting error
+          errorTitle = 'Meeting Already Exists';
+          errorMessage = `${errorData.message}. You have a ${errorData.existingMeeting.status} meeting on ${errorData.existingMeeting.date} at ${errorData.existingMeeting.time}.`;
+          
+          // Show suggestions if available
+          if (errorData.suggestions && errorData.suggestions.length > 0) {
+            const suggestion = errorData.suggestions[0]; // Show first suggestion
+            errorMessage += ` Suggestion: ${suggestion}`;
+          }
+        } else {
+          // Other structured errors (availability, etc.)
+          errorMessage = errorData.message;
+          if (errorData.suggestion) {
+            errorMessage += `. ${errorData.suggestion}`;
+          }
+        }
+      } else if (err instanceof Error) {
+        errorMessage = err.message;
+      }
+      
       setError(errorMessage);
       toast({
-        title: "Error",
+        title: errorTitle,
         description: errorMessage,
         variant: "destructive",
       });
@@ -55,7 +147,15 @@ export const useMeetings = () => {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [isCalendarAuthorized, getValidToken]);
+
+  // Legacy method for backward compatibility
+  const scheduleMeeting = useCallback(async (meetingData: CreateMeetingDto): Promise<Meeting | null> => {
+    return scheduleMeetingWithCalendar({
+      ...meetingData,
+      enableCalendarIntegration: isCalendarAuthorized,
+    });
+  }, [scheduleMeetingWithCalendar, isCalendarAuthorized]);
 
   // Update an existing meeting
   const updateMeeting = useCallback(async (meetingId: string, updateData: UpdateMeetingDto): Promise<Meeting | null> => {
@@ -150,37 +250,6 @@ export const useMeetings = () => {
     }
   }, []);
 
-  // Reject a meeting (seller only)
-  const rejectMeeting = useCallback(async (meetingId: string): Promise<boolean> => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      const rejectedMeeting = await meetingApiService.rejectMeeting(meetingId);
-      
-      setMeetings(prev => prev.map(meeting => 
-        meeting.id === meetingId ? rejectedMeeting : meeting
-      ));
-      
-      toast({
-        title: "Success!",
-        description: "Meeting rejected successfully.",
-      });
-      
-      return true;
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to reject meeting';
-      setError(errorMessage);
-      toast({
-        title: "Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-      return false;
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
   // Get meetings for a specific listing
   const getListingMeetings = useCallback(async (listingId: string): Promise<Meeting[]> => {
     try {
@@ -208,6 +277,33 @@ export const useMeetings = () => {
       ];
     }
   }, []);
+
+  // Prompt user to authorize calendar if not already done
+  const promptCalendarAuthorization = useCallback(async (): Promise<boolean> => {
+    if (isCalendarAuthorized) {
+      return true;
+    }
+
+    const shouldAuthorize = window.confirm(
+      'Would you like to connect your Google Calendar to automatically send meeting invites with Google Meet links?'
+    );
+
+    if (shouldAuthorize) {
+      try {
+        await authorizeCalendar();
+        return true;
+      } catch (error) {
+        toast({
+          title: "Authorization Failed",
+          description: "Failed to authorize calendar access. You can try again later.",
+          variant: "destructive",
+        });
+        return false;
+      }
+    }
+
+    return false;
+  }, [isCalendarAuthorized, authorizeCalendar]);
 
   // Filter meetings by status
   const getMeetingsByStatus = useCallback((status: string) => {
@@ -243,20 +339,25 @@ export const useMeetings = () => {
   }, [fetchMeetings]);
 
   return {
+    // Core meeting functionality
     meetings,
     isLoading,
     error,
     fetchMeetings,
-    scheduleMeeting,
+    scheduleMeeting, // Legacy method
+    scheduleMeetingWithCalendar, // Enhanced method
     updateMeeting,
     cancelMeeting,
     confirmMeeting,
-    rejectMeeting,
     getListingMeetings,
     getAvailableSlots,
     getMeetingsByStatus,
     getUpcomingMeetings,
     getPastMeetings,
     clearError,
+    
+    // Calendar integration
+    isCalendarAuthorized,
+    promptCalendarAuthorization,
   };
 };

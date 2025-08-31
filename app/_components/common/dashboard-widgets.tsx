@@ -23,7 +23,7 @@ export const DashboardCard = ({ title, icon: Icon, children, className = "" }: D
           {title}
         </span>
       </div>
-      <div className="flex-1">
+      <div className="flex-1 min-h-[400px]">
         {children}
       </div>
     </div>
@@ -37,36 +37,68 @@ interface DashboardTableProps {
 }
 
 export const DashboardTable = ({ headers, data, className = "" }: DashboardTableProps) => {
+  console.log(data);
   const statusStyles: Record<string, string> = {
-    Active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Pending: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
-    Expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+    Active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E] rounded-full",
+    Pending: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20] rounded-full",
+    Expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50] rounded-full",
     Suspended: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
-    Normal: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Warning: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
-    Completed: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
-    Failed: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+    Normal: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E] rounded-full",
+    Warning: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20] rounded-full",
+    Completed: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E] rounded-full",
+    Failed: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50] rounded-full",
+    Tentative: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50] rounded-full",
+    Deleted: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50] rounded-full px-2",
+    cancelled_by_user: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50] rounded-full px-2",
+    cancelled_by_seller: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+    Cancelled: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+    Confirmed: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E] rounded-full",
+  };
+
+  const statusText = (text: string) => {
+    if (text === 'cancelled_by_user') {
+      return 'Buyer Cancelled';
+    }
+    if (text === 'cancelled_by_seller') {
+      return 'Seller Cancelled';
+    }
+    return text;
   };
 
   return (
-    <div className={`overflow-y-auto w-full px-4 ${className}`}>
+    <div className={`overflow-visible w-full px-4 relative ${className}`}>
       <table className="w-full text-left">
         <thead className="text-[#A3AED0] text-sm border-b border-[#E9EDF7]">
           <tr>
             {headers.map((header, index) => (
-              <th key={index} className="px-1 whitespace-nowrap py-3 font-medium">
+              <th
+                key={index}
+                className={`px-3 py-3 font-medium ${header === 'ACTION' ? 'w-32 text-center' : 'text-left'
+                  }`}
+              >
                 {header}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
+          {data.length === 0 && (
+            <tr>
+              <td colSpan={headers.length} className="px-3 py-3 text-sm font-medium text-center">
+                No data found
+              </td>
+            </tr>
+          )}
           {data.map((row, index) => (
             <tr key={index} className="border-b border-[#E9EDF7]">
               {Object.values(row).map((value: any, cellIndex) => (
-                <td key={cellIndex} className="px-1 whitespace-nowrap py-3 text-sm font-medium">
+                <td
+                  key={cellIndex}
+                  className={`px-3 py-6 text-sm font-medium align-top ${cellIndex === Object.values(row).length - 1 ? 'text-center' : 'text-left'
+                    }`}
+                >
                   {typeof value === 'string' && statusStyles[value] ? (
-                    <StatusBadge status={value} />
+                    <StatusBadge status={statusText(value)} />
                   ) : (
                     value
                   )}
@@ -96,7 +128,17 @@ export const StatusBadge = ({ status, className = "" }: StatusBadgeProps) => {
     Warning: "text-white bg-[#FFCE20] border border-[#FFCE20]",
     Completed: "text-white bg-[#74D27E] border border-[#74D27E]",
     Failed: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    Tentative: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    Deleted: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    cancelled_by_user: "text-white bg-red-500 border border-[#EE5D50]",
+    cancelled_by_seller: "text-white bg-red-500 border border-[#EE5D50]",
+
+    Cancelled: "text-white bg-[#EE5D50] border border-[#EE5D50]",
+    Confirmed: "text-white bg-[#74D27E] border border-[#74D27E]",
+    Rescheduled: "text-white bg-[#FFCE20] border border-[#FFCE20]",
+    no_show: "text-white bg-[#EE5D50] border border-[#EE5D50]",
   };
+
 
   return (
     <span className={`min-h-6 text-[10px] rounded-full w-14 flex items-center justify-center ${statusStyles[status] || statusStyles['Draft']} ${className}`}>
