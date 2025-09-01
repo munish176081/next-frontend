@@ -231,7 +231,7 @@ const ExploreDetail = () => {
             </label>
             <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0">
               <span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">
-                {transformedListing.listingType}
+                {transformedListing.listingType} listing
               </span>
             </div>
             <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{ nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn", }}
@@ -298,7 +298,17 @@ const ExploreDetail = () => {
 
               if (dnaResults && Array.isArray(dnaResults) && dnaResults.length > 0) {
                 return (
-                  <button className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11">
+                  <button 
+                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11" 
+                    onClick={() => {
+                      // Open each DNA result file in a new tab
+                      dnaResults.forEach((fileUrl, index) => {
+                        setTimeout(() => {
+                          window.open(fileUrl, `_blank_${index}`);
+                        }, index * 100); // Small delay to prevent browser blocking
+                      });
+                    }}
+                  >
                     <img className='max-md:w-4' src="/images/vectors/DNA.png" />
                     View DNA Results of Parents ({dnaResults.length} file{dnaResults.length !== 1 ? 's' : ''})
                   </button>

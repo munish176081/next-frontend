@@ -1,13 +1,9 @@
 "use client";
 
 import { z } from "zod";
-import { SearchLocationInput } from "@/_components/common/search-location-input";
 import { Button, Combobox } from "@/_components/ui";
-import { Checkbox, FieldError } from "@/_components/ui/form-fields";
-import AdvancedRadio from "@/_components/ui/form-fields/advanced-radiobox";
 import RangeSlider from "@/_components/ui/range-slider";
-import { Heading } from "@/_components/ui/typegraphy";
-import { DOG_BREEDS_OPTIONS, LISTING_TYPES } from "@/_config/data";
+import { LISTING_TYPES } from "@/_config/data";
 import { formatListingType } from "@/_utils/listing";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -18,15 +14,17 @@ import {
 } from "next/navigation";
 import { ListingTypeEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
-import { optionalLocationSchema } from "@/_config/validate-schema";
 import { Routes } from "@/_config/routes";
+import { useBreeds } from "@/_services/hooks/breeds/useBreeds";
+import { LocationAutoComplete } from "@/_components/common/location-auto-complete";
 
 export const listingFilterSchema = z
   .object({
     // @ts-expect-error must be const ts error can be ignore
     types: z.array(z.enum(LISTING_TYPES)).optional(),
     breed: z.string().optional(),
-    location: optionalLocationSchema.optional(),
+    age: z.string().optional(),
+    location: z.string().optional(),
     minPrice: z.coerce
       .number()
       .optional()
@@ -51,6 +49,8 @@ export type ListingFilterType = z.infer<typeof listingFilterSchema>;
 export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
   const types = params.get("types");
   const breed = params.get("breed");
+  const age = params.get("age");
+  const location = params.get("location");
   const address = params.get("address");
   const lat = params.get("lat");
   const lng = params.get("lng");
@@ -66,6 +66,8 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
       types: types.split(",") as ListingTypeEnum[],
     }),
     ...(breed && { breed }),
+    ...(age && { age }),
+    ...(location && { location }),
     ...(address && { address }),
     ...(lat && { lat }),
     ...(lng && { lng }),
@@ -82,8 +84,11 @@ type ListingFilterProps = {
 };
 export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilterProps) => {
   const searchParams = useSearchParams();
-  const { lat, lng, address, maxPrice, minPrice, ...defaultValues } =
+  const { lat, lng, address, maxPrice, minPrice, breed, age, location, ...defaultValues } =
     extractFilterDataFromSeach(searchParams);
+
+  // Fetch breeds from API
+  const { breeds, isLoading: breedsLoading } = useBreeds();
 
   const {
     handleSubmit,
@@ -96,12 +101,9 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
   } = useForm<ListingFilterType>({
     defaultValues: {
       types: [],
-      breed: "",
-      location: {
-        ...(lat && { lat: +lat }),
-        ...(lng && { lng: +lng }),
-        ...(address && { address }),
-      },
+      breed: breed || "",
+      age: age || "",
+      location: location || "",
       ...(minPrice && { minPrice: +minPrice }),
       ...(maxPrice && { maxPrice: +maxPrice }),
       ...defaultValues,
@@ -131,12 +133,12 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
       params.set("breed", data.breed);
     }
 
-    const location = data.location;
+    if (data.age) {
+      params.set("age", data.age);
+    }
 
-    if (location) {
-      if (location.address) params.set("address", location.address);
-      if (location.lat) params.set("lat", location.lat.toString());
-      if (location.lng) params.set("lng", location.lng.toString());
+    if (data.location) {
+      params.set("location", data.location);
     }
 
     if (data.minPrice) {
@@ -180,23 +182,79 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Breed</span>
             <div className="flex flex-col">
-              <Combobox showLabel={false} label="Select breed" value={field.value!} setValue={(value) => field.onChange(value)} options={DOG_BREEDS_OPTIONS.map((option) => ({value: option.value,label: option.label,}))} btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" popoverClassName="w-[--radix-popover-trigger-width]" error={errors?.breed?.message}/>
+              {breedsLoading ? (
+                <div className="w-full h-12 bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-[#736E6E]">
+                  Loading breeds...
+                </div>
+              ) : (
+                <Combobox 
+                  showLabel={false} 
+                  label="Select breed" 
+                  value={field.value || ""} 
+                  setValue={(value) => field.onChange(value)} 
+                  options={breeds.map((breed) => ({
+                    value: breed.name,
+                    label: breed.name,
+                  }))} 
+                  btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" 
+                  popoverClassName="w-[--radix-popover-trigger-width]" 
+                  error={errors?.breed?.message}
+                />
+              )}
             </div>
           </div>
         )}/>
-        <Controller name="breed" control={control} render={({ field }) => (
+        
+        <Controller name="age" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Age</span>
             <div className="flex flex-col">
-              <Combobox showLabel={false} label="Select age" value={field.value!} setValue={(value) => field.onChange(value)} options={DOG_BREEDS_OPTIONS.map((option) => ({value: option.value,label: option.label,}))} btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" popoverClassName="w-[--radix-popover-trigger-width]" error={errors?.breed?.message}/>
+              <Combobox 
+                showLabel={false} 
+                label="Select age" 
+                value={field.value || ""} 
+                setValue={(value) => field.onChange(value)} 
+                options={[
+                  { value: "puppy", label: "Puppy (8-12 weeks)" },
+                  { value: "young", label: "Young (3-6 months)" },
+                  { value: "adult", label: "Adult (1-3 years)" },
+                  { value: "senior", label: "Senior (7+ years)" },
+                  { value: "any", label: "Any Age" }
+                ]} 
+                btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" 
+                popoverClassName="w-[--radix-popover-trigger-width]" 
+                error={errors?.age?.message}
+              />
             </div>
           </div>
         )}/>
-        <Controller name="breed" control={control} render={({ field }) => (
+        
+        <Controller name="location" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Location</span>
             <div className="flex flex-col">
-              <Combobox showLabel={false} label="Select location" value={field.value!} setValue={(value) => field.onChange(value)} options={DOG_BREEDS_OPTIONS.map((option) => ({value: option.value,label: option.label,}))} btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" popoverClassName="w-[--radix-popover-trigger-width]" error={errors?.breed?.message}/>
+              <LocationAutoComplete
+                onSearchPlace={(place) => {
+                  if (!place) return;
+                  field.onChange(place.formatted_address || "");
+                }}
+                loader={
+                  <div className="w-full h-12 bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-[#736E6E]">
+                    Loading...
+                  </div>
+                }
+              >
+                <input
+                  type="text"
+                  placeholder="Select location"
+                  value={field.value || ""}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  className="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light outline-none"
+                />
+              </LocationAutoComplete>
+              {errors?.location?.message && (
+                <span className="text-red-500 text-xs mt-1">{errors.location.message}</span>
+              )}
             </div>
           </div>
         )}/>
@@ -216,39 +274,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
         <Button className="rounded-full h-12 w-full text-base" type="submit">Apply</Button>
       </div>
 
-      {/* <Controller
-        name="location"
-        control={control}
-        render={({ field }) => (
-          <SearchLocationInput
-            locationInputAddress={field.value?.address}
-            onChangeSearchInput={(value) => {
-              field.onChange({
-                address: value,
-              });
-            }}
-            onChangePlace={(place) => {
-              if (!place) return;
 
-              field.onChange({
-                address: place.formatted_address!,
-                ...(place.geometry?.location?.toJSON() ?? {}),
-              });
-            }}
-            error={
-              errors.location?.message ||
-              errors?.location?.address?.message ||
-              errors?.location?.lat?.message ||
-              errors?.location?.lng?.message
-            }
-          />
-        )}
-      /> */}
-
-
-      {/* {errors.minPrice && (
-        <FieldError size="xl" error={errors.minPrice?.message} />
-      )} */}
 
       
     </form>
