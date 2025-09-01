@@ -51,7 +51,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
              {/* top-6 -left-7 */}
             <span className="bg-yellow-400 text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min">
-              {listingType || badge}
+              {listingType || badge} listing
             </span>
           </div>
         )}
@@ -59,7 +59,7 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
       <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4">
         <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
         {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
-        {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>}
+        {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
         {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         <div className="flex items-center justify-between mt-2">
           {price && <Text className="text-2xl">${price}</Text>}

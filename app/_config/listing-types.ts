@@ -159,152 +159,15 @@ const MEDIA_FIELDS = {
   }
 };
 
+
+// 1 puppy listing
+// 2 future litter listings
+// 3 stud or bitch listings
+// 4 semen listings
+// 5 wanted puppy listings
+// 6 other services listings
+
 export const LISTING_TYPES: ListingType[] = [
-  {
-    id: 'SEMEN_LISTING',
-    title: 'Semen Listings',
-    description: 'For listing available semen for breeding purposes.',
-    price: '$19/mo',
-    image: '/images/breeds/semen.png',
-    category: 'breeding',
-    requiredFields: [
-      COMMON_FIELDS.title,
-      COMMON_FIELDS.breed,
-      {
-        name: 'dateOfBirth',
-        label: 'Date of Birth',
-        type: 'date',
-        required: true,
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'semenType',
-        label: 'Semen Type',
-        type: 'select',
-        required: true,
-        options: ['Select Type', 'Fresh', 'Chilled', 'Frozen'],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'dogName',
-        label: 'Dog Name',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter dog name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'collectionDate',
-        label: 'Collection Date',
-        type: 'date',
-        required: true,
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'registrationNumber',
-        label: 'ANKC / State Breeder Registration Number',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter registration number',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'semenImages',
-        label: 'Upload Semen Images/Documents of Analysis',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*,.pdf',
-          maxSize: 5,
-          minCount: 1
-        },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'healthCertificates',
-        label: 'Upload Health Certificates',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*,.pdf',
-          maxSize: 5,
-          minCount: 1
-        },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available',
-        type: 'checkbox',
-        required: true,
-        options: ['Air Transport', 'Road Transport'],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'dnaResults',
-        label: 'Upload DNA Results',
-        type: 'file',
-        required: false,
-        fileConfig: {
-          multiple: true,
-          accept: '.pdf,.doc,.docx',
-          maxSize: 10
-        },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'badges',
-        label: 'Select Badges',
-        type: 'checkbox',
-        required: false,
-        options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic',
-        layout: 'single'
-      }
-    ],
-    optionalFields: [
-      COMMON_FIELDS.description,
-      COMMON_FIELDS.price,
-      COMMON_FIELDS.location,
-      {
-        name: 'shippingDate',
-        label: 'Shipping Availability Date',
-        type: 'date',
-        required: false,
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'healthCertificateText',
-        label: 'Health Certificate (text)',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter health certificate details',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'semenVideoUrls',
-        label: 'Semen Video URLs',
-        type: 'url',
-        required: false,
-        placeholder: 'Enter video URL',
-        fieldCategory: 'dynamic'
-      },
-      // {
-      //   name: 'provenLitterImages',
-      //   label: 'Proven Litter Images (Photos and Images of Mother and Father)',
-      //   type: 'file',
-      //   required: false,
-      //   fileConfig: {
-      //     multiple: true,
-      //     accept: 'image/*',
-      //     maxSize: 5
-      //   },
-      //   fieldCategory: 'dynamic'
-      // }
-    ]
-  },
   {
     id: 'PUPPY_LISTING',
     title: 'Puppy Listings',
@@ -453,6 +316,129 @@ export const LISTING_TYPES: ListingType[] = [
     ]
   },
   {
+    id: 'FUTURE_LISTING',
+    title: 'Future Listings',
+    description: 'For advertising planned or upcoming litters.',
+    price: 'Free',
+    image: '/images/breeds/future.png',
+    category: 'puppy',
+    requiredFields: [
+      COMMON_FIELDS.title,
+      COMMON_FIELDS.breed,
+      {
+        name: 'expectedDateOfBirth',
+        label: 'Expected Date of Birth',
+        type: 'date',
+        required: true,
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'estimatedAvailabilityDate',
+        label: 'Estimated Availability Date',
+        type: 'date',
+        required: true,
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'registrationNumber',
+        label: 'ANKC / State Breeder Registration Number',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter registration number',
+        fieldCategory: 'dynamic'
+      },
+      // {
+      //   name: 'parentImages',
+      //   label: 'Upload Parent Images',
+      //   type: 'file',
+      //   required: true,
+      //   fileConfig: {
+      //     multiple: true,
+      //     accept: 'image/*',
+      //     maxSize: 5,
+      //     minCount: 2
+      //   },
+      //   fieldCategory: 'dynamic'
+      // }
+    ],
+    optionalFields: [
+      COMMON_FIELDS.description,
+      COMMON_FIELDS.location,
+      {
+        name: 'sireName',
+        label: 'Sire Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter sire (father) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'damName',
+        label: 'Dam Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter dam (mother) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'healthCertificates',
+        label: 'Health Certificates',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*,.pdf',
+          maxSize: 5
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'expectedTraits',
+        label: 'Description of Expected Traits or Colours',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Enter expected traits and colors',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'priorLitterResults',
+        label: 'Prior Litter Results',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Enter prior litter results',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'depositInfo',
+        label: 'Reservation Deposit Info & Amount',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Enter deposit information and amount',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic'
+      }
+    ]
+  },
+  {
     id: 'STUD_LISTING',
     title: 'Stud or Bitch Listings',
     description: 'For advertising dogs available for natural mating (Stud = Male, Bitch = Female).',
@@ -580,25 +566,41 @@ export const LISTING_TYPES: ListingType[] = [
     ]
   },
   {
-    id: 'FUTURE_LISTING',
-    title: 'Future Listings',
-    description: 'For advertising planned or upcoming litters.',
-    price: 'Free',
-    image: '/images/breeds/future.png',
-    category: 'puppy',
+    id: 'SEMEN_LISTING',
+    title: 'Semen Listings',
+    description: 'For listing available semen for breeding purposes.',
+    price: '$19/mo',
+    image: '/images/breeds/semen.png',
+    category: 'breeding',
     requiredFields: [
       COMMON_FIELDS.title,
       COMMON_FIELDS.breed,
       {
-        name: 'expectedDateOfBirth',
-        label: 'Expected Date of Birth',
+        name: 'dateOfBirth',
+        label: 'Date of Birth',
         type: 'date',
         required: true,
         fieldCategory: 'dynamic'
       },
       {
-        name: 'estimatedAvailabilityDate',
-        label: 'Estimated Availability Date',
+        name: 'semenType',
+        label: 'Semen Type',
+        type: 'select',
+        required: true,
+        options: ['Select Type', 'Fresh', 'Chilled', 'Frozen'],
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dogName',
+        label: 'Dog Name',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter dog name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'collectionDate',
+        label: 'Collection Date',
         type: 'date',
         required: true,
         fieldCategory: 'dynamic'
@@ -611,73 +613,38 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter registration number',
         fieldCategory: 'dynamic'
       },
-      // {
-      //   name: 'parentImages',
-      //   label: 'Upload Parent Images',
-      //   type: 'file',
-      //   required: true,
-      //   fileConfig: {
-      //     multiple: true,
-      //     accept: 'image/*',
-      //     maxSize: 5,
-      //     minCount: 2
-      //   },
-      //   fieldCategory: 'dynamic'
-      // }
-    ],
-    optionalFields: [
-      COMMON_FIELDS.description,
-      COMMON_FIELDS.location,
       {
-        name: 'sireName',
-        label: 'Sire Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter sire (father) name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'damName',
-        label: 'Dam Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter dam (mother) name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'healthCertificates',
-        label: 'Health Certificates',
+        name: 'semenImages',
+        label: 'Upload Semen Images/Documents of Analysis',
         type: 'file',
-        required: false,
+        required: true,
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5
+          maxSize: 5,
+          minCount: 1
         },
         fieldCategory: 'dynamic'
       },
       {
-        name: 'expectedTraits',
-        label: 'Description of Expected Traits or Colours',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter expected traits and colors',
+        name: 'healthCertificates',
+        label: 'Upload Health Certificates',
+        type: 'file',
+        required: true,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*,.pdf',
+          maxSize: 5,
+          minCount: 1
+        },
         fieldCategory: 'dynamic'
       },
       {
-        name: 'priorLitterResults',
-        label: 'Prior Litter Results',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter prior litter results',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'depositInfo',
-        label: 'Reservation Deposit Info & Amount',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter deposit information and amount',
+        name: 'deliveryOptions',
+        label: 'Pickup / Delivery Available',
+        type: 'checkbox',
+        required: true,
+        options: ['Air Transport', 'Road Transport'],
         fieldCategory: 'dynamic'
       },
       {
@@ -698,8 +665,49 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'checkbox',
         required: false,
         options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic'
+        fieldCategory: 'dynamic',
+        layout: 'single'
       }
+    ],
+    optionalFields: [
+      COMMON_FIELDS.description,
+      COMMON_FIELDS.price,
+      COMMON_FIELDS.location,
+      {
+        name: 'shippingDate',
+        label: 'Shipping Availability Date',
+        type: 'date',
+        required: false,
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'healthCertificateText',
+        label: 'Health Certificate (text)',
+        type: 'textarea',
+        required: false,
+        placeholder: 'Enter health certificate details',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'semenVideoUrls',
+        label: 'Semen Video URLs',
+        type: 'url',
+        required: false,
+        placeholder: 'Enter video URL',
+        fieldCategory: 'dynamic'
+      },
+      // {
+      //   name: 'provenLitterImages',
+      //   label: 'Proven Litter Images (Photos and Images of Mother and Father)',
+      //   type: 'file',
+      //   required: false,
+      //   fileConfig: {
+      //     multiple: true,
+      //     accept: 'image/*',
+      //     maxSize: 5
+      //   },
+      //   fieldCategory: 'dynamic'
+      // }
     ]
   },
   {

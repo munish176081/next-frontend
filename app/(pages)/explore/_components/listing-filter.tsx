@@ -175,14 +175,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
             <label className="relative overflow-hidden"><input type="radio" name="genderFilter" className="absolute w-full h-full opacity-0 peer cursor-pointer" /><span className="h-10 px-5 gap-1 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:bg-black peer-checked:text-white"><svg width="10" height="15" viewBox="0 0 10 15" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5.17578 9.67554V14.189" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M3.36719 12.3838H6.97792" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/><path d="M1.26172 5.46288C1.26172 3.30246 3.01293 1.55125 5.17335 1.55125C7.33377 1.55125 9.08498 3.30246 9.08498 5.46288C9.08498 7.6233 7.33377 9.37451 5.17335 9.37451C3.01293 9.37451 1.26172 7.6233 1.26172 5.46288Z" stroke="currentColor" strokeWidth="1.35403"strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/></svg>Female</span></label>
           </div>
         </div>
-        <Controller name="breed" control={control} render={({ field }) => (
-          <div className="flex flex-col gap-2">
-            <span className="text-xl font-medium">Breeder</span>
-            <div className="flex flex-col">
-              <Combobox showLabel={false} label="Select breeder" value={field.value!} setValue={(value) => field.onChange(value)} options={DOG_BREEDS_OPTIONS.map((option) => ({value: option.value,label: option.label,}))} btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" popoverClassName="w-[--radix-popover-trigger-width]" error={errors?.breed?.message}/>
-            </div>
-          </div>
-        )}/>
+       
         <Controller name="breed" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Breed</span>
