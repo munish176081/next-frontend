@@ -8,7 +8,7 @@ const Hero: React.FC = () => {
     <>
     <section className="container rounded-max max-md:rounded-40 border border-black/20 bg-white flex flex-col items-center pt-8 mt-16 max-md:mt-4 max-md:px-4 max-md:py-6">
       <div className="flex flex-col items-end">
-        <h1 className="text-64 font-medium leading-none max-md:text-[32px] text-center">Discover Your UpdNew <span className="relative">Best Friend<img alt="Decoration" className="absolute right-0 max-w-[105%] w-[105%]" src="images/comman/title-decoration.svg"></img></span></h1>
+        <h1 className="text-64 font-medium leading-none max-md:text-[32px] text-center">Discover Your New <span className="relative">Best Friend<img alt="Decoration" className="absolute right-0 max-w-[105%] w-[105%]" src="images/comman/title-decoration.svg"></img></span></h1>
       </div>
       <span className="text-xl max-md:text-base text-center font-[300] mt-6">Quality puppies from <strong className="font-semibold">trusted</strong> breeders - where every <br className="max-md:hidden" /> puppy finds a <strong className="font-semibold">loving home.</strong></span>
       <PuppyButton iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon" className="tracking-wide mt-6 max-md:w-full">Browse Puppies</PuppyButton> 
