@@ -7,6 +7,15 @@ export enum ListingTypeEnum {
   OTHER_SERVICES = 'OTHER_SERVICES',
 }
 
+export enum ListingTypeShortCodeEnum {
+  SEMEN_LISTING = 'semen_listing',
+  PUPPY_LISTING = 'puppy_listing',
+  STUD_LISTING = 'stud_listing',
+  FUTURE_LISTING = 'future_listing',
+  WANTED_LISTING = 'wanted_listing',
+  OTHER_SERVICES = 'other_services_listing',
+}
+
 export enum ListingStatusEnum {
   DRAFT = 'draft',
   PENDING_REVIEW = 'pending_review',

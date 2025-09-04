@@ -993,9 +993,9 @@ export const SERVICES = [
 
   export const LISTING_TYPES: ListingTypeEnum[] = [
     ListingTypeEnum.PUPPY_LISTING,
-    ListingTypeEnum.SEMEN_LISTING,
-    ListingTypeEnum.STUD_LISTING,
     ListingTypeEnum.FUTURE_LISTING,
+    ListingTypeEnum.STUD_LISTING,
+    ListingTypeEnum.SEMEN_LISTING,
     ListingTypeEnum.WANTED_LISTING,
     ListingTypeEnum.OTHER_SERVICES,
   ];

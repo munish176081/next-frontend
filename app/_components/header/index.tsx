@@ -15,6 +15,7 @@ import { Button } from "../ui/button";
 import ProfileMenu from "./profile-menu";
 import { HeaderWrapper } from "./wrapper";
 import { LoadingLink } from "@/_components/common/loading-link";
+import { ListingTypeShortCodeEnum } from "@/_types/listing";
 
 export interface HeaderProps {
   className?: string;
@@ -41,32 +42,33 @@ const menuItems = [
     dropdownItems: [
       {
         id: 1,
-        label: "Puppy Listings",
+        label:  ListingTypeShortCodeEnum.PUPPY_LISTING.split('_').join(' '),
         path: Routes.public.createListing.puppyListing,
       },
+      
       {
         id: 2,
-        label: "Semen Listings",
+        label:  ListingTypeShortCodeEnum.FUTURE_LISTING.split('_').join(' '),
         path: Routes.public.createListing.semenListing,
       },
       {
         id: 3,
-        label: "Stud or bitch Listings",
+        label: ListingTypeShortCodeEnum.STUD_LISTING.split('_').join(' '),
         path: Routes.public.createListing.studListing,
       },
       {
         id: 4,
-        label: "Future Listings",
+        label: ListingTypeShortCodeEnum.SEMEN_LISTING.split('_').join(' '),
         path: Routes.public.createListing.futureListing,
       },
       {
         id: 5,
-        label: "Wanted Pupply Listings",
+        label: ListingTypeShortCodeEnum.WANTED_LISTING.split('_').join(' '),
         path: Routes.public.createListing.wantedPuppyListing,
       },
       {
         id: 6,
-        label: "Other Services Listings",
+        label: ListingTypeShortCodeEnum.OTHER_SERVICES.split('_').join(' '),
         path: Routes.public.createListing.otherServicesListing,
       },
     ],
