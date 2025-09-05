@@ -47,20 +47,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
 
   // Check if this is the user's own listing
   const isOwnListing = currentUserId && userId && currentUserId === userId;
-  console.log(userId, currentUserId, "USE")
+  console.log(isOwnListing, userId, currentUserId, "IS OWN LISTING")
   // Show heart for all listings except when it's confirmed to be own listing
   const shouldShowHeart = !isOwnListing;
   const isWishlistedItem = isWishlisted(listing.id);
 
-  // Debug logging
-  console.log('ListingCard Debug:', {
-    listingId: listing.id,
-    currentUserId,
-    listingUserId: userId,
-    isOwnListing,
-    shouldShowHeart,
-    willShowHeart: shouldShowHeart
-  });
 
   const handleWishlistToggle = async (e: React.MouseEvent) => {
     e.preventDefault();

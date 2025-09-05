@@ -8,10 +8,12 @@ import {
   ListingFilter,
 } from "./_components/listing-filter";
 import { useSearchParams } from "next/navigation";
+import { useUser } from "@/_services/hooks/user/use-user";
 
 export const dynamic = 'force-dynamic';
 
 function ExploreListings() {
+  const { data: currentUser } = useUser();
   const listings1 = [
     {
       title: "Golden Retriever",
@@ -122,7 +124,11 @@ function ExploreListings() {
         </div>
         {listings1.map((listing) => (
           <div className="w-[calc(100%/4-20px)] max-md:w-full">
-            <ListingCard key={listing.id} listing={{ ...listing, favourite: true }} />
+            <ListingCard 
+              key={listing.id} 
+              listing={{ ...listing, favourite: true }} 
+              currentUserId={currentUser?.id}
+            />
           </div>
         ))}
         <span className="flex items-center gap-2 text-[#736E6E] w-full justify-center mt-6">Loading <img src="/images/vectors/pawsIndigo.svg" /></span>

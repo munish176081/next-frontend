@@ -630,7 +630,11 @@ const ExploreDetail = () => {
           {similarListingsData ? (
             similarListings.length > 0 ? (
               similarListings.map((listing) => (
-                <ListingCard key={listing.id} listing={{ ...listing, favourite: true }} />
+                <ListingCard 
+                  key={listing.id} 
+                  listing={{ ...listing, favourite: true }} 
+                  currentUserId={currentUser?.id}
+                />
               ))
             ) : (
               <div className="w-full text-center py-8 text-gray-500">

@@ -8,6 +8,7 @@ import {
 } from "@/_components/ui/slider";
 import { ListingCard } from "@/_components/common/listing-card";
 import ActionIcon from "@/_components/ui/action-icon";
+import { useUser } from "@/_services/hooks/user/use-user";
 
 export interface SimpleListing {
   id: string;
@@ -26,6 +27,8 @@ export const PuppiesSlider = ({
 }: {
   listings: SimpleListing[];
 }) => {
+  const { data: currentUser } = useUser();
+  
   return (
     <>
 
@@ -66,7 +69,10 @@ export const PuppiesSlider = ({
       >
         {listings.map((listing, index: number) => (
           <SwiperSlide key={index}>
-            <ListingCard listing={listing} />
+            <ListingCard 
+              listing={listing} 
+              currentUserId={currentUser?.id}
+            />
 
           </SwiperSlide>
 
