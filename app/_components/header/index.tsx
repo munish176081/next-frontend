@@ -49,7 +49,7 @@ const menuItems = [
       {
         id: 2,
         label:  ListingTypeShortCodeEnum.FUTURE_LISTING.split('_').join(' '),
-        path: Routes.public.createListing.semenListing,
+        path: Routes.public.createListing.futureListing,
       },
       {
         id: 3,
@@ -59,7 +59,7 @@ const menuItems = [
       {
         id: 4,
         label: ListingTypeShortCodeEnum.SEMEN_LISTING.split('_').join(' '),
-        path: Routes.public.createListing.futureListing,
+        path: Routes.public.createListing.semenListing,
       },
       {
         id: 5,
@@ -129,7 +129,7 @@ export function Header(props: HeaderProps) {
                           <li key={dropdownItem.id} className="border-b border-black/20">
                             <LoadingLink
                               href={dropdownItem.path as string}
-                              className="block px-2 py-2 text-gray-dark hover:bg-indigo-lighter transition"
+                              className="block px-2 py-2 text-gray-dark hover:bg-indigo-lighter capitalize transition"
                             >
                               {dropdownItem.label}
                             </LoadingLink>
@@ -241,7 +241,7 @@ export function Header(props: HeaderProps) {
                                   key={subItem.id}
                                   href={subItem.path}
                                   onClick={() => setIsMobileMenuOpen(false)}
-                                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+                                  className="block px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg capitalize"
                                 >
                                   {subItem.label}
                                 </LoadingLink>

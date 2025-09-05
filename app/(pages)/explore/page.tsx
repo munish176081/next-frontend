@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { ListingCard } from "@/_components/common/listing-card";
 import { Text } from "@/_components/ui/typegraphy";
 import { useSearchListings } from "@/_services/hooks/listings";
@@ -10,6 +10,9 @@ import {
 import { useSearchParams, useRouter } from "next/navigation";
 import { formatListingType } from "@/_utils/listing";
 import { ListingTypeEnum } from "@/_types/listing";
+import { useWishlist } from "@/_contexts/wishlist-context";
+import { WishlistItem } from "@/_types/wishlist";
+import { useUser } from "@/_services/hooks/user/use-user";
 
 const ExploreListings = () => {
   const params = useSearchParams();
@@ -18,6 +21,10 @@ const ExploreListings = () => {
   const [searchQuery, setSearchQuery] = useState(filterData.search || "");
   const [currentPage, setCurrentPage] = useState(filterData.page || 1);
   const [showFilterBtn, setShowFilterBtn] = useState(false);
+  const [wishlistItems, setWishlistItems] = useState<WishlistItem[]>([]);
+  
+  const { state, toggleFilter, loadWishlist, loadWishlistStatus } = useWishlist();
+  const { data: currentUser } = useUser();
   
   // Transform filter data to match the API expectations
   const searchParams = {
@@ -33,6 +40,21 @@ const ExploreListings = () => {
 
   const { data: listingsResponse, isPending } = useSearchListings(searchParams);
   
+  // Load wishlist status for all listings when not in wishlist filter mode
+  useEffect(() => {
+    if (!state.filterActive && listingsResponse?.data) {
+      const listingIds = listingsResponse.data.map(listing => listing.id);
+      loadWishlistStatus(listingIds);
+    }
+  }, [listingsResponse?.data, state.filterActive, loadWishlistStatus]);
+
+  // Load wishlist items when filter is active
+  useEffect(() => {
+    if (state.filterActive) {
+      loadWishlist(1).then(setWishlistItems);
+    }
+  }, [state.filterActive, loadWishlist]);
+
   // Transform API data to match ListingCard expectations
   const transformedListings = listingsResponse?.data?.map((listing) => ({
     id: listing.id,
@@ -46,7 +68,27 @@ const ExploreListings = () => {
     image: listing.featuredImage || "/images/comman/feature-puppy-1.png",
     favourite: false, // Will be handled by wishlist functionality
     age: listing.age, // Include calculated age from backend
+    userId: listing.user?.id, // Add userId for own listing check
   })) || [];
+
+  // Transform wishlist items to match ListingCard expectations
+  const transformedWishlistItems = wishlistItems.map((item) => ({
+    id: item.listing.id,
+    title: item.listing.title,
+    description: "A wonderful puppy looking for a loving home.",
+    price: item.listing.price,
+    location: item.listing.location,
+    rating: 4.8,
+    reviews: 15,
+    listingType: "Puppy", // Default since we don't have type in wishlist response
+    image: item.listing.imageUrl || "/images/comman/feature-puppy-1.png",
+    favourite: true,
+    age: "", // Not available in wishlist response
+    userId: "", // Not available in wishlist response
+  }));
+
+  // Get the listings to display based on filter state
+  const displayListings = state.filterActive ? transformedWishlistItems : transformedListings;
 
   const totalPages = listingsResponse?.totalPages || 1;
   const totalItems = listingsResponse?.total || 0;
@@ -94,11 +136,23 @@ const ExploreListings = () => {
               <img className="w-5" src="/images/vectors/search.svg" />
             </span>
           </div>
-          <div className="flex h-16 rounded-full border border-black/20 text-xl p-2 bg-white gap-3 items-center pr-6 cursor-pointer max-md:hidden">
-            <span className="h-12 w-12 bg-black rounded-full items-center justify-center flex">
+          <div 
+            className={`flex h-16 rounded-full border text-xl p-2 gap-3 items-center pr-6 cursor-pointer max-md:hidden transition-all duration-300 ${
+              state.filterActive 
+                ? 'border-CPrimary bg-CPrimary/10 text-CPrimary' 
+                : 'border-black/20 bg-white hover:bg-gray-50'
+            }`}
+            onClick={toggleFilter}
+          >
+            <span className={`h-12 w-12 rounded-full items-center justify-center flex transition-colors duration-300 ${
+              state.filterActive ? 'bg-CPrimary' : 'bg-black'
+            }`}>
               <img className="w-5" src="/images/vectors/favorite.svg" />
             </span>
             Wishlist
+            {state.isLoading && (
+              <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin ml-2" />
+            )}
           </div>
           <select className="flex h-16 max-md:w-[calc(100%/2-8px)] max-md:text-base max-md rounded-full min-w-32 px-4 border border-black/20 appearance-none bg-selectArrow bg-no-repeat bg-[90%] outline-none text-xl">
             <option>Sort by</option>
@@ -108,23 +162,31 @@ const ExploreListings = () => {
           </div>
         </div>
         
-        {isPending ? (
+        {isPending || state.isLoading ? (
           <span className="flex items-center gap-2 text-[#736E6E] w-full justify-center mt-6">
             Loading <img src="/images/vectors/pawsIndigo.svg" />
           </span>
-        ) : transformedListings.length > 0 ? (
-          transformedListings.map((listing) => (
+        ) : displayListings.length > 0 ? (
+          displayListings.map((listing) => (
             <div key={listing.id} className="w-[calc(100%/3-16px)] max-md:w-full">
-              <ListingCard listing={{ ...listing, favourite: true }} />
+              <ListingCard 
+                listing={listing} 
+                currentUserId={currentUser?.id}
+              />
             </div>
           ))
         ) : (
           <div className="w-full text-center py-8">
-            <Text className="text-[#736E6E] text-lg">No listings found. Try adjusting your search criteria.</Text>
+            <Text className="text-[#736E6E] text-lg">
+              {state.filterActive 
+                ? "No items in your wishlist. Add some listings to see them here!" 
+                : "No listings found. Try adjusting your search criteria."
+              }
+            </Text>
           </div>
         )}
         
-        {totalPages > 1 && (
+        {!state.filterActive && totalPages > 1 && (
           <div className="flex rounded-full border border-black/20 text-xl p-2 bg-white items-center m-auto mt-6">
             <span 
               className="w-10 max-md:w-8 max-md:h-8 max-md:text-sm h-10 rounded-full flex items-center justify-center cursor-pointer"
@@ -156,6 +218,19 @@ const ExploreListings = () => {
             >
               <img src="/images/vectors/arrowLeftBlack.svg" />
             </span>
+          </div>
+        )}
+        
+        {state.filterActive && state.pagination.hasMore && (
+          <div className="flex justify-center mt-6">
+            <button
+              onClick={() => loadWishlist(state.pagination.page + 1).then(newItems => 
+                setWishlistItems(prev => [...prev, ...newItems])
+              )}
+              className="px-6 py-3 bg-CPrimary text-white rounded-full hover:bg-CPrimary/90 transition-colors"
+            >
+              Load More Wishlist Items
+            </button>
           </div>
         )}
       </div>

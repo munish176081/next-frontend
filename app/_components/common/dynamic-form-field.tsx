@@ -819,6 +819,109 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           </div>
         );
 
+      case 'repeater':
+        const repeaterValue = Array.isArray(value) ? value : [];
+        const config = field.repeaterConfig;
+        
+        const addItem = () => {
+          const newValue = [...repeaterValue, ''];
+          onChange(field.name, newValue);
+        };
+        
+        const removeItem = (index: number) => {
+          const newValue = repeaterValue.filter((_, i) => i !== index);
+          onChange(field.name, newValue);
+        };
+        
+        const updateItem = (index: number, newItemValue: string) => {
+          const newValue = [...repeaterValue];
+          newValue[index] = newItemValue;
+          onChange(field.name, newValue);
+        };
+        
+        const canAddMore = !config?.maxItems || repeaterValue.length < config.maxItems;
+        const canRemove = !config?.minItems || repeaterValue.length > config.minItems;
+        
+        return (
+          <div className="space-y-3">
+            {repeaterValue.map((item, index) => (
+              <div key={index} className="flex items-center gap-3">
+                <div className="flex-1">
+                  {config?.subFieldType === 'text' && (
+                    <input
+                      type="text"
+                      placeholder={config.subFieldPlaceholder || 'Enter value'}
+                      value={item}
+                      onChange={(e) => updateItem(index, e.target.value)}
+                      className={`${baseClasses} ${errorClasses}`}
+                    />
+                  )}
+                  {config?.subFieldType === 'number' && (
+                    <input
+                      type="number"
+                      placeholder={config.subFieldPlaceholder || 'Enter number'}
+                      value={item}
+                      onChange={(e) => updateItem(index, e.target.value)}
+                      className={`${baseClasses} ${errorClasses}`}
+                    />
+                  )}
+                  {config?.subFieldType === 'date' && (
+                    <input
+                      type="date"
+                      value={item}
+                      onChange={(e) => updateItem(index, e.target.value)}
+                      className={`${baseClasses} ${errorClasses}`}
+                    />
+                  )}
+                  {config?.subFieldType === 'select' && (
+                    <select
+                      value={item}
+                      onChange={(e) => updateItem(index, e.target.value)}
+                      className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+                    >
+                      <option value="">{config.subFieldPlaceholder || 'Select option'}</option>
+                      {config.subFieldOptions?.map((option, optionIndex) => {
+                        const optionValue = typeof option === 'string' ? option : option.value;
+                        const optionLabel = typeof option === 'string' ? option : option.label;
+                        return (
+                          <option key={optionIndex} value={optionValue}>
+                            {optionLabel}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  )}
+                </div>
+                {canRemove && (
+                  <button
+                    type="button"
+                    onClick={() => removeItem(index)}
+                    className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
+                    title={config?.removeButtonText || 'Remove'}
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            ))}
+            
+            {canAddMore && (
+              <button
+                type="button"
+                onClick={addItem}
+                className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                </svg>
+                {config?.addButtonText || 'Add Item'}
+              </button>
+            )}
+          </div>
+        );
+
       default:
         return null;
     }

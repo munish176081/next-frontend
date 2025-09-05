@@ -72,9 +72,12 @@ const ListingDetail = ({ params: { id: listingId } }: PageProps) => {
   }
   
   if (fields.microchipNumber) {
+    const microchipNumbers = Array.isArray(fields.microchipNumber) 
+      ? fields.microchipNumber 
+      : [fields.microchipNumber];
     specifications.push({
-      name: "Microchip Number",
-      value: fields.microchipNumber,
+      name: "Microchip Number" + (microchipNumbers.length > 1 ? "s" : ""),
+      value: microchipNumbers.join(", "),
     });
   }
 

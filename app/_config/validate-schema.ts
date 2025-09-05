@@ -159,7 +159,7 @@ export const listingFormSchema = z.object({
   age: z.string().min(1, { message: "Age is required." }),
   dogName: z.string().min(1, { message: "Dog name is required." }),
   studFee: z.string().min(1, { message: "Stud fee is required." }),
-  microchipNumber: z.string().min(1, { message: "Microchip number is required." }),
+  microchipNumber: z.array(z.string().min(1, { message: "Microchip number is required." })).min(1, { message: "At least one microchip number is required." }),
   semenType: z.string().min(1, { message: "Semen type is required." }),
   collectionDate: z.string().min(1, { message: "Collection date is required." }),
   ankcNumber: z.string().min(1, { message: "ANKC/Breeder registration number is required." }),

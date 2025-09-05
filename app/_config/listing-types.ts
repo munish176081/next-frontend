@@ -3,7 +3,7 @@ import { getBadgeFormOptions } from './badge-config';
 export interface ListingField {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location';
+  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location' | 'repeater';
   required: boolean;
   placeholder?: string;
   options?: ({ value: string; label: string } | string)[];
@@ -19,6 +19,15 @@ export interface ListingField {
     maxCount?: number;
     minCount?: number;
     multiple?: boolean;
+  };
+  repeaterConfig?: {
+    subFieldType: 'text' | 'number' | 'date' | 'select';
+    subFieldPlaceholder?: string;
+    subFieldOptions?: ({ value: string; label: string } | string)[];
+    minItems?: number;
+    maxItems?: number;
+    addButtonText?: string;
+    removeButtonText?: string;
   };
   layout?: 'single' | 'double'; // single = full width, double = half width
   fieldCategory?: 'common' | 'contact' | 'media' | 'dynamic'; // New field to categorize where data goes
@@ -205,10 +214,17 @@ export const LISTING_TYPES: ListingType[] = [
       {
         name: 'microchipNumber',
         label: 'Microchip Number(s)',
-        type: 'text',
+        type: 'repeater',
         required: true,
-        placeholder: 'Enter microchip number(s)',
-        fieldCategory: 'dynamic'
+        fieldCategory: 'dynamic',
+        repeaterConfig: {
+          subFieldType: 'text',
+          subFieldPlaceholder: 'Enter microchip number',
+          minItems: 1,
+          maxItems: 10,
+          addButtonText: 'Add Microchip Number',
+          removeButtonText: 'Remove'
+        }
       },
       {
         name: 'vaccinationStatus',
@@ -374,10 +390,10 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'damName',
-        label: 'Dam Name',
+        label: 'Dame Name',
         type: 'text',
         required: false,
-        placeholder: 'Enter dam (mother) name',
+        placeholder: 'Enter dame (mother) name',
         fieldCategory: 'dynamic'
       },
       {

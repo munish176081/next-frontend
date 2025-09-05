@@ -9,6 +9,7 @@ import {
 import { parseAxiosError } from "./_utils/parse-axios-error";
 import LoadingProviderWithSuspense from "./_components/common/loading-provider";
 import { CalendarProvider } from "./_contexts/calendar-context";
+import { WishlistProvider } from "./_contexts/wishlist-context";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -64,9 +65,11 @@ export default function Providers({ children }: { children: React.ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       <CalendarProvider>
-        <LoadingProviderWithSuspense>
-          {children}
-        </LoadingProviderWithSuspense>
+        <WishlistProvider>
+          <LoadingProviderWithSuspense>
+            {children}
+          </LoadingProviderWithSuspense>
+        </WishlistProvider>
       </CalendarProvider>
     </QueryClientProvider>
   );

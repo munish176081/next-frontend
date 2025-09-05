@@ -4,6 +4,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { PuppyButton } from "../ui/puppy-button";
 import { Heading, Text } from "../ui/typegraphy";
+import { useWishlist } from "@/_contexts/wishlist-context";
+import { useState } from "react";
 
 interface ListingCardProps {
   listing: {
@@ -19,10 +21,12 @@ interface ListingCardProps {
     listingType?: string;
     favourite?: boolean;
     age?: string;
+    userId?: string; // Add userId to check if it's user's own listing
   };
+  currentUserId?: string; // Add current user ID
 }
 
-export const ListingCard = ({ listing }: ListingCardProps) => {
+export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   const {
     title,
     location,
@@ -35,15 +39,79 @@ export const ListingCard = ({ listing }: ListingCardProps) => {
     image,
     favourite,
     age,
+    userId,
   } = listing;
+
+  const { isWishlisted, toggleWishlist, state } = useWishlist();
+  const [isToggling, setIsToggling] = useState(false);
+
+  // Check if this is the user's own listing
+  const isOwnListing = currentUserId && userId && currentUserId === userId;
+  console.log(userId, currentUserId, "USE")
+  // Show heart for all listings except when it's confirmed to be own listing
+  const shouldShowHeart = !isOwnListing;
+  const isWishlistedItem = isWishlisted(listing.id);
+
+  // Debug logging
+  console.log('ListingCard Debug:', {
+    listingId: listing.id,
+    currentUserId,
+    listingUserId: userId,
+    isOwnListing,
+    shouldShowHeart,
+    willShowHeart: shouldShowHeart
+  });
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent action if it's own listing or already toggling
+    if (isOwnListing || isToggling) {
+      console.log('Wishlist toggle prevented:', { isOwnListing, isToggling });
+      return;
+    }
+
+    // If user is not logged in, show login message
+    if (!currentUserId) {
+      console.log('User not logged in, showing login message');
+      // The wishlist context will handle showing the login message
+    }
+
+    setIsToggling(true);
+    try {
+      await toggleWishlist(listing.id);
+    } finally {
+      setIsToggling(false);
+    }
+  };
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6">
-      {(favourite) && (
-        <label className="w-7 h-7 bg-CPrimary rounded-full absolute right-8 top-8 overflow-hidden flex items-center justify-center z-10 cursor-pointer">
-          <input type="checkbox" className="absolute w-full h-full rounded-full opacity-0 peer" />
-          <img className="w-4 peer-checked:hidden" src="/images/vectors/favorite.svg" />
-          <img className="w-4 hidden peer-checked:flex" src="/images/vectors/favorite_Fill.svg" />
-        </label>
+      {/* Wishlist Heart Icon - Show for all listings except own listings */}
+      {shouldShowHeart && (
+        <button
+          onClick={handleWishlistToggle}
+          disabled={isToggling}
+          className={`w-7 h-7 rounded-full absolute right-8 top-8 overflow-hidden flex items-center justify-center z-10 transition-all duration-300 bg-CPrimary cursor-pointer hover:scale-110 active:scale-95 ${isToggling ? 'animate-pulse' : ''}`}
+          title={isWishlistedItem ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          {isToggling ? (
+            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+          ) : (
+            <>
+              <img 
+                className={`w-4 transition-opacity duration-300 ${isWishlistedItem ? 'opacity-0' : 'opacity-100'}`} 
+                src="/images/vectors/favorite.svg" 
+                alt="Add to wishlist"
+              />
+              <img 
+                className={`w-4 absolute transition-opacity duration-300 ${isWishlistedItem ? 'opacity-100' : 'opacity-0'}`} 
+                src="/images/vectors/favorite_Fill.svg" 
+                alt="Remove from wishlist"
+              />
+            </>
+          )}
+        </button>
       )}
       <Link href={`/explore/${listing.id}`} className="relative w-full h-56 bg-gray-100 overflow-hidden rounded-xl">
         <Image src={image || "/images/placeholder.png"} alt={title || "Listing Image"} fill className="object-cover rounded-md"/>
