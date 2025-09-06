@@ -22,7 +22,7 @@ function Startlisting() {
         <GoBackButton />
       </div>
       <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px] max-md:mt-4">Start a new listing</span>
-      <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4 max-md:grid-cols-1">
+      <div className="grid grid-cols-2 gap-6 relative  mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4 max-md:grid-cols-1">
         {LISTING_TYPES.map((listing, index) => (
           <div 
             key={listing.id} 

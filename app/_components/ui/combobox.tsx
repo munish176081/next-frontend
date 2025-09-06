@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Check, ChevronDown, ChevronsUpDown} from "lucide-react";
+import { Check, ChevronDown, ChevronsUpDown, Search} from "lucide-react";
 
 import { cn } from "@/_lib/utils";
 import { Button } from "@/_components/ui/button";
@@ -11,6 +11,7 @@ import {
   CommandItem,
   CommandList,
 } from "@/_components/ui/command";
+import { Command as CommandPrimitive } from "cmdk";
 import {
   Popover,
   PopoverContent,
@@ -52,17 +53,26 @@ export function Combobox({
       {showLabel && <span className="font-bold block text-sm mb-2">{label}</span> }
 
       <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild className="hover:bg-none">
-          <Button variant="outline" role="combobox" aria-expanded={open} className={cn("h-10 lg:h-11 2xl:h-12 justify-start hover:bg-none", error && "border-red-500", btnClassName)}>
-            <span className={`${value ? 'bg-white h-full text-[#736E6E] -ml-2 font-medium flex items-center justify-center px-4 rounded-full' : ''}`}>{hasIcon && Icon && <Icon />} {value ? options.find((option) => option.value === value)?.label : label}</span>
-            <svg width="11" height="8" viewBox="0 0 11 8" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M0 0.0942383H10.7737L5.38687 7.27674L0 0.0942383Z" fill="black"/></svg>
-          </Button>
+        <PopoverTrigger asChild>
+          <div className={cn("w-full border border-gray-300 rounded-full h-full text-sm text-gray-600 font-medium flex items-center justify-between hover:bg-gray-50 cursor-pointer", error && "border-red-500", btnClassName)}>
+            <span className="flex items-center h-full">
+              {hasIcon && Icon && <Icon className="mr-2 h-4 w-4" />}
+              {value ? options.find((option) => option.value === value)?.label : label}
+            </span>
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </div>
         </PopoverTrigger>
-        <PopoverContent className={cn("!bg-white p-0", popoverClassName)}>
+        <PopoverContent className={cn("!bg-white p-0 w-[--radix-popover-trigger-width] rounded-lg shadow-lg border", popoverClassName)}>
           <Command>
-            <CommandInput placeholder="Search..." />
-            <CommandList>
-              <CommandEmpty>No options found.</CommandEmpty>
+            <div className="flex items-center px-3 py-2 border-b border-gray-200">
+              <Search className="mr-2 h-4 w-4 text-gray-400" />
+              <CommandPrimitive.Input
+                placeholder="Search..."
+                className="flex h-8 w-full bg-transparent text-sm outline-none placeholder:text-gray-400"
+              />
+            </div>
+            <CommandList className="max-h-[200px] overflow-y-auto">
+              <CommandEmpty className="py-4 text-center text-sm text-gray-500">No options found.</CommandEmpty>
               <CommandGroup>
                 {options.map((option) => (
                   <CommandItem
@@ -72,6 +82,7 @@ export function Combobox({
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }}
+                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
                   >
                     <Check
                       className={cn(
@@ -79,7 +90,12 @@ export function Combobox({
                         value === option.value ? "opacity-100" : "opacity-0"
                       )}
                     />
-                    {option.label}
+                    <span className={cn(
+                      "font-medium",
+                      value === option.value ? "text-gray-900" : "text-gray-700"
+                    )}>
+                      {option.label}
+                    </span>
                   </CommandItem>
                 ))}
               </CommandGroup>

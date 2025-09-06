@@ -780,7 +780,7 @@ function Startlistingform() {
                       </div>
                       <div>
                         <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
-                        <p className="text-sm text-gray-500">Required information about the dam</p>
+                        <p className="text-sm text-gray-500">Required information about the dame</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

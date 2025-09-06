@@ -392,7 +392,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
               required={field.required}
               error={error}
               showLabel={false}
-              className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+              className={`${baseClasses} ${errorClasses} mx-0 appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
             />
           );
         }
