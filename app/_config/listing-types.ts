@@ -211,21 +211,7 @@ export const LISTING_TYPES: ListingType[] = [
         validation: { min: 0 },
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'microchipNumber',
-        label: 'Microchip Number(s)',
-        type: 'repeater',
-        required: true,
-        fieldCategory: 'dynamic',
-        repeaterConfig: {
-          subFieldType: 'text',
-          subFieldPlaceholder: 'Enter microchip number',
-          minItems: 1,
-          maxItems: 10,
-          addButtonText: 'Add Microchip Number',
-          removeButtonText: 'Remove'
-        }
-      },
+      
       {
         name: 'vaccinationStatus',
         label: 'Vaccination Status',
@@ -234,6 +220,7 @@ export const LISTING_TYPES: ListingType[] = [
         options: ['Select Status', 'Fully Vaccinated', 'Partially Vaccinated', 'Not Vaccinated'],
         fieldCategory: 'dynamic'
       },
+     
       {
         name: 'registrationNumber',
         label: 'ANKC / State Breeder Registration Number',
@@ -262,6 +249,22 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         options: ['Air Transport', 'Road Transport'],
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'microchipNumber',
+        label: 'Microchip Number(s)',
+        type: 'repeater',
+        required: true,
+        fieldCategory: 'dynamic',
+        layout: 'single',
+        repeaterConfig: {
+          subFieldType: 'text',
+          subFieldPlaceholder: 'Enter microchip number',
+          minItems: 1,
+          maxItems: 10,
+          addButtonText: 'Add Microchip Number',
+          removeButtonText: 'Remove'
+        }
       },
       {
         name: 'dnaResults',

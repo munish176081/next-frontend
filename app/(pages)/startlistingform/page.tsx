@@ -670,8 +670,7 @@ function Startlistingform() {
       field.name === 'serviceTitle' ||
       field.name === 'registrationNumber' ||
       field.name === 'badges' ||
-      field.name === 'serviceCategory' ||
-      field.name === 'microchipNumber'
+      field.name === 'serviceCategory' 
     );
 
     const twoColumnFields = fields.filter(field =>

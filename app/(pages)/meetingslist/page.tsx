@@ -93,7 +93,7 @@ function MeetingsList() {
                     <th className="px-8 py-3 font-medium">Breed</th>
                     <th className="px-8 py-3 font-medium">Price</th>
                     <th className="px-8 py-3 font-medium">Type</th>
-                    <th className="px-8 py-3 font-medium text-center">STATUS</th>
+                    <th className="px-8 py-3 font-medium text-center">Status</th>
                     <th className="px-8 py-3 font-medium text-center">Availability</th>
                   </tr>
                 </thead>

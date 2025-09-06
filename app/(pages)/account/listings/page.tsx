@@ -251,7 +251,7 @@ function UserListingsPage() {
                   <th className="px-8 py-3 font-medium">Breed</th>
                   <th className="px-8 py-3 font-medium">Price</th>
                   <th className="px-8 py-3 font-medium">Type</th>
-                  <th className="px-8 py-3 font-medium text-center">STATUS</th>
+                  <th className="px-8 py-3 font-medium text-center">Status</th>
                   <th className="px-8 py-3 font-medium text-center">
                     Availability
                   </th>
@@ -264,17 +264,17 @@ function UserListingsPage() {
                     <td className="px-8 py-3 text-sm font-medium">
                       <span className="w-20 h-20 flex rounded-xl overflow-hidden">
                         {listing.featuredImage ||
-                        listing.metadata?.images?.[0] ? (
-                            <Image
+                          listing.metadata?.images?.[0] ? (
+                          <Image
                             width={80}
                             height={80}
-                             className="w-full h-full object-cover"
-                              src={
-                                listing.featuredImage ||
-                                listing.metadata.images[0]
-                              }
-                              alt={listing.title || "Listing"}
-                            />
+                            className="w-full h-full object-cover"
+                            src={
+                              listing.featuredImage ||
+                              listing.metadata.images[0]
+                            }
+                            alt={listing.title || "Listing"}
+                          />
                         ) : (
                           <div className="w-full h-full bg-gray-200 flex items-center justify-center">
                             <FileText className="w-8 h-8 text-gray-400" />
@@ -283,7 +283,9 @@ function UserListingsPage() {
                       </span>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
-                      {listing.title || "Untitled Listing"}
+                      <Link
+                        href={`/startlistingform?edit=${listing.id}&type=${getShortCodeFromId(listing.type)}`}
+                      > {listing.title || "Untitled Listing"} </Link>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
                       {listing.breed || "N/A"}

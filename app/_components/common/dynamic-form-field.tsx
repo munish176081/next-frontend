@@ -765,7 +765,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                 }}
                 size="md"
                 showCategories={false}
-                maxSelection={10}
+                maxSelection={6}
               />
             </Suspense>
           );
