@@ -119,19 +119,24 @@ const ExploreListings = () => {
     <>
     <section className="container flex gap-6 items-start py-16 max-md:py-4 max-md:gap-4 max-2xl:px-4">
       <ListingFilter showFilterBtn={showFilterBtn} setShowFilterBtn={setShowFilterBtn} />
-      <div className="flex flex-wrap gap-6 max-md:gap-4">
+      <div className="flex-1 min-w-0">
         <div className="flex w-full gap-6 max-md:flex-wrap max-md:gap-4">
           <div className="flex h-16 rounded-full border border-black/20 text-xl p-2 bg-white items-center w-full">
             <input 
-              className="w-full h-full text-base placeholder:text-[#A8A8A8] text-black border-none outline-none bg-transparent px-4 py-0" 
+              className={`w-full h-full text-base placeholder:text-[#A8A8A8] text-black border-none outline-none bg-transparent px-4 py-0 ${
+                isPending ? 'cursor-not-allowed opacity-60' : ''
+              }`}
               placeholder="Search Puppies" 
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyPress={handleKeyPress}
+              disabled={isPending}
             />
             <span 
-              className="h-12 w-12 min-w-12 bg-black rounded-full items-center justify-center flex cursor-pointer"
-              onClick={handleSearch}
+              className={`h-12 w-12 min-w-12 rounded-full items-center justify-center flex cursor-pointer transition-colors ${
+                isPending ? 'bg-gray-400 cursor-not-allowed' : 'bg-black hover:bg-gray-800'
+              }`}
+              onClick={isPending ? undefined : handleSearch}
             >
               <img className="w-5" src="/images/vectors/search.svg" />
             </span>
@@ -150,9 +155,9 @@ const ExploreListings = () => {
               <img className="w-5" src="/images/vectors/favorite.svg" />
             </span>
             Wishlist
-            {state.isLoading && (
+            {/* {state.isLoading && (
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin ml-2" />
-            )}
+            )} */}
           </div>
           <select className="flex h-16 max-md:w-[calc(100%/2-8px)] max-md:text-base max-md rounded-full min-w-32 px-4 border border-black/20 appearance-none bg-selectArrow bg-no-repeat bg-[90%] outline-none text-xl">
             <option>Sort by</option>
@@ -162,32 +167,36 @@ const ExploreListings = () => {
           </div>
         </div>
         
-        {isPending || state.isLoading ? (
-          <span className="flex items-center gap-2 text-[#736E6E] w-full justify-center mt-6">
-            Loading <img src="/images/vectors/pawsIndigo.svg" />
-          </span>
-        ) : displayListings.length > 0 ? (
-          displayListings.map((listing) => (
-            <div key={listing.id} className="w-[calc(100%/3-16px)] max-md:w-full">
-              <ListingCard 
-                listing={listing} 
-                currentUserId={currentUser?.id}
-              />
+        <div className="w-full mt-6">
+          {isPending || state.isLoading ? (
+            <span className="flex items-center gap-2 text-[#736E6E] w-full justify-center">
+              Loading <img src="/images/vectors/pawsIndigo.svg" />
+            </span>
+          ) : displayListings.length > 0 ? (
+            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-6 max-md:gap-4">
+              {displayListings.map((listing) => (
+                <div key={listing.id} className="w-full">
+                  <ListingCard 
+                    listing={listing} 
+                    currentUserId={currentUser?.id}
+                  />
+                </div>
+              ))}
             </div>
-          ))
-        ) : (
-          <div className="w-full text-center py-8">
-            <Text className="text-[#736E6E] text-lg">
-              {state.filterActive 
-                ? "No items in your wishlist. Add some listings to see them here!" 
-                : "No listings found. Try adjusting your search criteria."
-              }
-            </Text>
-          </div>
-        )}
+          ) : (
+            <div className="w-full text-center py-8">
+              <Text className="text-[#736E6E] text-lg">
+                {state.filterActive 
+                  ? "No items in your wishlist. Add some listings to see them here!" 
+                  : "No listings found. Try adjusting your search criteria."
+                }
+              </Text>
+            </div>
+          )}
+        </div>
         
         {!state.filterActive && totalPages > 1 && (
-          <div className="flex rounded-full border border-black/20 text-xl p-2 bg-white items-center m-auto mt-6">
+          <div className="flex rounded-full border border-black/20 text-xl p-2 bg-white items-center justify-center mt-6">
             <span 
               className="w-10 max-md:w-8 max-md:h-8 max-md:text-sm h-10 rounded-full flex items-center justify-center cursor-pointer"
               onClick={() => currentPage > 1 && handlePageChange(currentPage - 1)}
