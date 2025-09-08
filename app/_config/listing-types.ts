@@ -31,6 +31,10 @@ export interface ListingField {
   };
   layout?: 'single' | 'double'; // single = full width, double = half width
   fieldCategory?: 'common' | 'contact' | 'media' | 'dynamic'; // New field to categorize where data goes
+  conditional?: {
+    field: string;
+    value: string;
+  };
 }
 
 export interface ListingType {
@@ -203,13 +207,41 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       {
-        name: 'pricePerPuppy',
-        label: 'Price per Puppy',
+        name: 'pricingOption',
+        label: 'Pricing Option',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'priceOnRequest', label: 'Price on Request' },
+          { value: 'displayPriceRange', label: 'Display price range' }
+        ],
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'minPrice',
+        label: 'Minimum Price',
         type: 'number',
         required: true,
-        placeholder: 'Enter price',
+        placeholder: 'Enter minimum price',
         validation: { min: 0 },
-        fieldCategory: 'dynamic'
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
+      },
+      {
+        name: 'maxPrice',
+        label: 'Maximum Price',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter maximum price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
       },
       
       {
@@ -366,6 +398,43 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter registration number',
         fieldCategory: 'dynamic'
       },
+      {
+        name: 'pricingOption',
+        label: 'Pricing Option',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'priceOnRequest', label: 'Price on Request' },
+          { value: 'displayPriceRange', label: 'Display price range' }
+        ],
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'minPrice',
+        label: 'Minimum Price',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter minimum price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
+      },
+      {
+        name: 'maxPrice',
+        label: 'Maximum Price',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter maximum price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
+      },
       // {
       //   name: 'parentImages',
       //   label: 'Upload Parent Images',
@@ -514,7 +583,7 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'fee',
-        label: 'Fee for Bitch or Stud listing',
+        label: 'Price for Bitch or Stud Service',
         type: 'number',
         required: true,
         placeholder: 'Enter fee amount',
@@ -690,8 +759,8 @@ export const LISTING_TYPES: ListingType[] = [
     ],
     optionalFields: [
       COMMON_FIELDS.description,
-      COMMON_FIELDS.price,
       COMMON_FIELDS.location,
+      COMMON_FIELDS.price,
       {
         name: 'shippingDate',
         label: 'Shipping Availability Date',

@@ -658,11 +658,24 @@ function Startlistingform() {
     );
   }
 
+  // Helper function to check if a field should be displayed based on conditional logic
+  const shouldDisplayField = (field: ListingField): boolean => {
+    if (!field.conditional) return true;
+    
+    const { field: conditionalField, value: conditionalValue } = field.conditional;
+    const fieldValue = formData[conditionalField];
+    
+    return fieldValue === conditionalValue;
+  };
+
   const renderFieldGroup = (fields: ListingField[], title: string) => {
     if (fields.length === 0) return null;
 
+    // Filter fields based on conditional logic
+    const visibleFields = fields.filter(shouldDisplayField);
+
     // Separate fields that should be in single row vs two columns
-    const singleRowFields = fields.filter(field =>
+    const singleRowFields = visibleFields.filter(field =>
       field.type === 'textarea' ||
       field.type === 'file' ||
       field.name === 'title' ||
@@ -670,11 +683,21 @@ function Startlistingform() {
       field.name === 'serviceTitle' ||
       field.name === 'registrationNumber' ||
       field.name === 'badges' ||
-      field.name === 'serviceCategory' 
+      field.name === 'serviceCategory'
     );
 
-    const twoColumnFields = fields.filter(field =>
-      !singleRowFields.includes(field)
+    // Special handling for price range fields - they should be in two columns
+    const priceRangeFields = visibleFields.filter(field => 
+      field.name === 'minPrice' || field.name === 'maxPrice'
+    );
+
+    // Pricing option should be in two columns
+    const pricingOptionFields = visibleFields.filter(field => 
+      field.name === 'pricingOption'
+    );
+
+    const twoColumnFields = visibleFields.filter(field =>
+      !singleRowFields.includes(field) && !priceRangeFields.includes(field) && !pricingOptionFields.includes(field)
     );
 
     return (
@@ -696,10 +719,31 @@ function Startlistingform() {
           ))}
         </div>
 
+
         {/* Two column fields */}
-        {twoColumnFields.length > 0 && (
+        {(twoColumnFields.length > 0 || priceRangeFields.length > 0 || pricingOptionFields.length > 0) && (
           <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
             {twoColumnFields.map((field) => (
+              <DynamicFormField
+                key={field.name}
+                field={field}
+                value={formData[field.name]}
+                onChange={handleFieldChange}
+                error={errors[field.name]}
+                layout="double"
+              />
+            ))}
+            {pricingOptionFields.map((field) => (
+              <DynamicFormField
+                key={field.name}
+                field={field}
+                value={formData[field.name]}
+                onChange={handleFieldChange}
+                error={errors[field.name]}
+                layout="double"
+              />
+            ))}
+            {priceRangeFields.map((field) => (
               <DynamicFormField
                 key={field.name}
                 field={field}
