@@ -262,6 +262,9 @@ function UserListingsPage() {
                 {listings.map((listing, index) => (
                   <tr key={listing.id}>
                     <td className="px-8 py-3 text-sm font-medium">
+                    <Link
+                        href={`/explore/${listing.id}`}
+                      > 
                       <span className="w-20 h-20 flex rounded-xl overflow-hidden">
                         {listing.featuredImage ||
                           listing.metadata?.images?.[0] ? (
@@ -281,10 +284,11 @@ function UserListingsPage() {
                           </div>
                         )}
                       </span>
+                      </Link>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
                       <Link
-                        href={`/startlistingform?edit=${listing.id}&type=${getShortCodeFromId(listing.type)}`}
+                        href={`/explore/${listing.id}`}
                       > {listing.title || "Untitled Listing"} </Link>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">

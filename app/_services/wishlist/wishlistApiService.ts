@@ -1,6 +1,6 @@
 import { WishlistItem, WishlistResponse, WishlistStatus, AddToWishlistRequest } from '@/_types/wishlist';
 
-const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://10.20.20.188:3001') + '/api/v1';
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_URL || 'http://10.20.20.191:3001') + '/api/v1';
 
 class WishlistApiService {
   private getAuthHeaders(): HeadersInit {

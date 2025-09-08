@@ -6,7 +6,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { ReactNode, useState } from "react";
 import { VerificationGuard } from "./verification-guard";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
 import { LoadingLink } from "./loading-link";
 import { Routes } from "@/_config/routes";
 
@@ -71,7 +71,8 @@ export const DashboardLayout = ({
             {userRole === 'user' && (
               <div className="ml-auto flex gap-4 items-center max-md:justify-center">
                 <Link href={Routes.private.startlisting}>
-                  <button className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-[70px] rounded-full border-none max-md:w-32 max-md:h-12 bg-no-repeat bg-[90%] bg-white font-medium w-44">
+                  <button className="inline-flex items-center gap-2 text-lg max-md:text-xs font-medium outline-none px-8 h-[70px] rounded-full border-none max-md:w-36 max-md:h-12 bg-CPrimary text-white w-48 hover:bg-CPrimary/90 transition-colors duration-200 shadow-lg hover:shadow-xl whitespace-nowrap">
+                    <Plus className="w-5 h-5 max-md:w-4 max-md:h-4" />
                     Add Listing
                   </button>
                 </Link>
