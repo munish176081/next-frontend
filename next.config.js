@@ -22,6 +22,7 @@ const nextConfig = {
   },
 
   images: {
+    unoptimized: true,
     remotePatterns: [
       // temorarily as images are hosted on backend
       {
