@@ -24,7 +24,7 @@ export const Routes = {
       studListing: "startlistingform?type=stud",
       futureListing: "startlistingform?type=future",
       wantedPuppyListing: "startlistingform?type=wanted",
-      otherServicesListing: "startlistingform?type=other",
+      otherServicesListing: "startlistingform?type=services",
     },
     userID: (userID: string) => `/user/${userID}`,
   },
