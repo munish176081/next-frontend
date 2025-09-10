@@ -691,13 +691,18 @@ function Startlistingform() {
       field.name === 'minPrice' || field.name === 'maxPrice'
     );
 
-    // Pricing option should be in two columns
-    const pricingOptionFields = visibleFields.filter(field => 
-      field.name === 'pricingOption'
+    // Fields that should be full width in two-column section
+    const fullWidthFields = visibleFields.filter(field => 
+      field.name === 'microchipNumber'
+    );
+
+    // Pricing fields that should be grouped together
+    const pricingFields = visibleFields.filter(field => 
+      field.name === 'pricingOption' || field.name === 'minPrice' || field.name === 'maxPrice'
     );
 
     const twoColumnFields = visibleFields.filter(field =>
-      !singleRowFields.includes(field) && !priceRangeFields.includes(field) && !pricingOptionFields.includes(field)
+      !singleRowFields.includes(field) && !priceRangeFields.includes(field) && !fullWidthFields.includes(field) && !pricingFields.includes(field)
     );
 
     return (
@@ -721,7 +726,7 @@ function Startlistingform() {
 
 
         {/* Two column fields */}
-        {(twoColumnFields.length > 0 || priceRangeFields.length > 0 || pricingOptionFields.length > 0) && (
+        {(twoColumnFields.length > 0 || fullWidthFields.length > 0 || pricingFields.length > 0) && (
           <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
             {twoColumnFields.map((field) => (
               <DynamicFormField
@@ -733,25 +738,48 @@ function Startlistingform() {
                 layout="double"
               />
             ))}
-            {pricingOptionFields.map((field) => (
-              <DynamicFormField
-                key={field.name}
-                field={field}
-                value={formData[field.name]}
-                onChange={handleFieldChange}
-                error={errors[field.name]}
-                layout="double"
-              />
+            
+            {/* Pricing Option - Full Width */}
+            {pricingFields.filter(field => field.name === 'pricingOption').map((field) => (
+              <div key={field.name} className="col-span-2">
+                <DynamicFormField
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={handleFieldChange}
+                  error={errors[field.name]}
+                  layout="single"
+                />
+              </div>
             ))}
-            {priceRangeFields.map((field) => (
-              <DynamicFormField
-                key={field.name}
-                field={field}
-                value={formData[field.name]}
-                onChange={handleFieldChange}
-                error={errors[field.name]}
-                layout="double"
-              />
+            
+            {/* Min/Max Price - Side by Side with Highlight */}
+            {pricingFields.filter(field => field.name === 'minPrice' || field.name === 'maxPrice').length > 0 && (
+              <div className="col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-6">
+                <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
+                  {pricingFields.filter(field => field.name === 'minPrice' || field.name === 'maxPrice').map((field) => (
+                    <DynamicFormField
+                      key={field.name}
+                      field={field}
+                      value={formData[field.name]}
+                      onChange={handleFieldChange}
+                      error={errors[field.name]}
+                      layout="double"
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {fullWidthFields.map((field) => (
+              <div key={field.name} className="col-span-2">
+                <DynamicFormField
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={handleFieldChange}
+                  error={errors[field.name]}
+                  layout="single"
+                />
+              </div>
             ))}
           </div>
         )}

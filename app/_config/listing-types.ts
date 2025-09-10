@@ -207,6 +207,22 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       {
+        name: 'vaccinationStatus',
+        label: 'Vaccination Status',
+        type: 'select',
+        required: true,
+        options: ['Select Status', 'Fully Vaccinated', 'Partially Vaccinated', 'Not Vaccinated'],
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'deliveryOptions',
+        label: 'Pickup / Delivery Available',
+        type: 'checkbox',
+        required: true,
+        options: ['Air Transport', 'Road Transport'],
+        fieldCategory: 'dynamic'
+      },
+      {
         name: 'pricingOption',
         label: 'Pricing Option',
         type: 'radio',
@@ -243,15 +259,6 @@ export const LISTING_TYPES: ListingType[] = [
           value: 'displayPriceRange'
         }
       },
-      
-      {
-        name: 'vaccinationStatus',
-        label: 'Vaccination Status',
-        type: 'select',
-        required: true,
-        options: ['Select Status', 'Fully Vaccinated', 'Partially Vaccinated', 'Not Vaccinated'],
-        fieldCategory: 'dynamic'
-      },
      
       {
         name: 'registrationNumber',
@@ -272,14 +279,6 @@ export const LISTING_TYPES: ListingType[] = [
           maxSize: 5,
           minCount: 3
         },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available',
-        type: 'checkbox',
-        required: true,
-        options: ['Air Transport', 'Road Transport'],
         fieldCategory: 'dynamic'
       },
       {
