@@ -367,7 +367,7 @@ const ExploreDetail = () => {
                 <button 
                   onClick={() => setShowMeetingForm(true)}
                   disabled={!!(currentUser && listing?.user?.id && currentUser.id === listing.user.id)} 
-                  className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2 hover:bg-gray-800 transition-colors"
+                  className="h-20 max-md:h-10 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold flex items-center justify-center gap-2 mt-2 hover:bg-gray-800 transition-colors bg-black text-white hover:bg-gray-800 cursor-pointer disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   <img className='max-md:w-3' src="/images/vectors/scheduleMeeting.png" />Schedule meeting
                 </button>
