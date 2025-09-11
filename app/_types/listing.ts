@@ -225,6 +225,7 @@ export interface ListingSummaryDto {
   location: string;
   featuredImage: string;
   metadata: Record<string, any>;
+  fields: Record<string, any>; // Add fields for pricing options
   viewCount: number;
   favoriteCount: number;
   isFeatured: boolean;

@@ -40,6 +40,7 @@ export interface ChatMessage {
     price: number;
     image: string;
     location: string;
+    fields?: Record<string, any>;
   };
 }
 

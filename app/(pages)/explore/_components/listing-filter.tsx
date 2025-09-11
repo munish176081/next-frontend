@@ -32,6 +32,7 @@ export const listingFilterSchema = z
         message: "Min price must be greater than 0",
       }),
     maxPrice: z.coerce.number().max(100_000_000).optional(),
+    priceType: z.enum(['price_on_request', 'price_range', 'price_available']).optional(),
   })
   .refine(
     (data) => {
@@ -56,6 +57,7 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
   const lng = params.get("lng");
   const minPrice = params.get("minPrice");
   const maxPrice = params.get("maxPrice");
+  const priceType = params.get("priceType");
   const search = params.get("search");
   const page = params.get("page");
 
@@ -73,6 +75,7 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
     ...(lng && { lng }),
     ...(minPrice && { minPrice }),
     ...(maxPrice && { maxPrice }),
+    ...(priceType && { priceType }),
     ...(search && { search }),
     ...(page && { page: Number(page) }),
   };
@@ -84,7 +87,7 @@ type ListingFilterProps = {
 };
 export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilterProps) => {
   const searchParams = useSearchParams();
-  const { lat, lng, address, maxPrice, minPrice, breed, age, location, ...defaultValues } =
+  const { lat, lng, address, maxPrice, minPrice, breed, age, location, priceType, ...defaultValues } =
     extractFilterDataFromSeach(searchParams);
 
   // Fetch breeds from API
@@ -106,6 +109,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
       location: location || "",
       ...(minPrice && { minPrice: +minPrice }),
       ...(maxPrice && { maxPrice: +maxPrice }),
+      ...(priceType && { priceType: priceType as 'price_on_request' | 'price_range' | 'price_available' }),
       ...defaultValues,
     },
     mode: "onChange",
@@ -147,6 +151,10 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
 
     if (data.maxPrice) {
       params.set("maxPrice", data.maxPrice.toString());
+    }
+
+    if (data.priceType) {
+      params.set("priceType", data.priceType);
     }
 
     router.push(`${Routes.public.explore}?${params.toString()}`);
@@ -258,6 +266,29 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
             </div>
           </div>
         )}/>
+        
+        <Controller name="priceType" control={control} render={({ field }) => (
+          <div className="flex flex-col gap-2">
+            <span className="text-xl font-medium">Price Type</span>
+            <div className="flex flex-col">
+              <Combobox 
+                showLabel={false} 
+                label="Select price type" 
+                value={field.value || ""} 
+                setValue={(value) => field.onChange(value)} 
+                options={[
+                  { value: "price_on_request", label: "Price on Request" },
+                  { value: "price_range", label: "Price Range" },
+                  { value: "price_available", label: "Fixed Price Available" }
+                ]} 
+                btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" 
+                popoverClassName="w-[--radix-popover-trigger-width]" 
+                error={errors?.priceType?.message}
+              />
+            </div>
+          </div>
+        )}/>
+        
         <div className="flex flex-col gap-4">
           <span className="text-xl font-medium">Price Range</span>
           <div className="flex flex-col gap-6 mx-3">

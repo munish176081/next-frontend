@@ -21,6 +21,7 @@ import { useGetListingById } from "@/_services/hooks/listings/use-get-listing-by
 import { chatApiService } from "@/_services/chat/chatApiService";
 import { toast } from '@/_hooks/use-toast';
 import MeetingScheduleForm from "@/_components/meetings/meeting-schedule-form";
+import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
 
 const ExploreDetail = () => {
   const params = useParams();
@@ -77,6 +78,9 @@ const ExploreDetail = () => {
       }
       return 0;
     })(),
+    // Add pricing information
+    pricingInfo: getPricingInfo(listing.fields || {}, listing.price),
+    pricingProps: getPricingDisplayProps(getPricingInfo(listing.fields || {}, listing.price)),
     description: listing.description || "No description available",
     listingType: formatListingType(listing.type),
     images: (() => {
@@ -280,15 +284,36 @@ const ExploreDetail = () => {
             </span>
           </div>
           <span className="flex items-baseline gap-2">
-            <text className="text-[32px] max-md:text-xl font-medium">
-              ${typeof transformedListing.price === 'number' ? transformedListing.price.toFixed(2) : '0.00'}
-            </text>
-            <s className="text-[#717171] text-[22px] max-md:text-sm font-medium">
-              ${typeof transformedListing.price === 'number' ? (transformedListing.price * 2.24).toFixed(2) : '0.00'}
-            </s>
-            <small className="text-[22px] font-medium max-md:text-sm">
-              (Incl. Stud fee - ${transformedListing.fields?.studFee || '3'})
-            </small>
+            {transformedListing.pricingProps.isPriceOnRequest ? (
+              <text className="text-[32px] max-md:text-xl font-medium text-CPrimary">
+                Price on Request
+              </text>
+            ) : transformedListing.pricingProps.hasPriceRange ? (
+              <div className="flex flex-col">
+                <text className="text-[32px] max-md:text-xl font-medium">
+                  ${transformedListing.pricingProps.minPrice?.toLocaleString()} - ${transformedListing.pricingProps.maxPrice?.toLocaleString()}
+                </text>
+                {/* <text className="text-[18px] max-md:text-sm text-gray-600">
+                  Price Range
+                </text> */}
+              </div>
+            ) : transformedListing.pricingProps.hasFixedPrice ? (
+              <text className="text-[32px] max-md:text-xl font-medium">
+                ${transformedListing.pricingProps.price?.toLocaleString()}
+              </text>
+            ) : (
+              <>
+                <text className="text-[32px] max-md:text-xl font-medium">
+                  ${typeof transformedListing.price === 'number' ? transformedListing.price.toFixed(2) : '0.00'}
+                </text>
+                <s className="text-[#717171] text-[22px] max-md:text-sm font-medium">
+                  ${typeof transformedListing.price === 'number' ? (transformedListing.price * 2.24).toFixed(2) : '0.00'}
+                </s>
+                <small className="text-[22px] font-medium max-md:text-sm">
+                  (Incl. Stud fee - ${transformedListing.fields?.studFee || '3'})
+                </small>
+              </>
+            )}
           </span>
           <div className="border border-black/20 p-8 rounded-40 gap-4 flex flex-col mt-4 max-md:p-4 max-md:rounded-[20px] max-md:gap-2 max-md:mt-2">
             {/* Dynamic DNA Results Button */}

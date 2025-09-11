@@ -9,6 +9,7 @@ import { Avatar } from '../ui';
 import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { UploadResult } from '@/_services/upload/upload-utils';
 import { ArrowDown, ArrowDownIcon } from 'lucide-react';
+import { getListingPricingDisplay } from '../../_utils/pricing';
 
 interface ChatInterfaceProps {
   userId: string;
@@ -2790,7 +2791,24 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                         A gentle and playful {message.listingReference.title.split(' ')[0]} pup,
                                         fully vaccinated and ready to join your family.
                                       </span>
-                                      <span className="text-[22px] max-md:mt-2">${message.listingReference.price?.toLocaleString()}</span>
+                                                                         
+                                    {(() => {
+                                      const pricingResult = getListingPricingDisplay(message.listingReference);
+                                      return (
+                                        <div className="flex flex-col gap-1">
+                                          <span className={`text-[22px] font-semibold max-md:mt-2 ${
+                                            pricingResult.hasError ? 'text-gray-500' : 'text-gray-900'
+                                          }`}>
+                                            {pricingResult.displayText}
+                                          </span>
+                                          {pricingResult.hasError && (
+                                            <span className="text-xs text-red-500 font-medium">
+                                              {pricingResult.errorMessage || 'Pricing unavailable'}
+                                            </span>
+                                          )}
+                                        </div>
+                                      );
+                                    })()}
                                     </div>
                                     {message.listingReference.image && (
                                       <span className="w-[127px] min-w-[127px] rounded-xl h-[110px] max-md:w-full max-md:h-auto max-md:min-w-full overflow-hidden relative">

@@ -10,6 +10,7 @@ export interface WishlistItem {
     breed: string;
     location: string;
     imageUrl?: string;
+    fields?: Record<string, any>; // Add fields for pricing options
   };
 }
 

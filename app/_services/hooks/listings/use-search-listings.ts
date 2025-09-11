@@ -10,6 +10,7 @@ interface SearchParams {
   breed?: string;
   minPrice?: number;
   maxPrice?: number;
+  priceType?: 'price_on_request' | 'price_range' | 'price_available';
   page?: number;
   limit?: number;
 }

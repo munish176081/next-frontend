@@ -11,6 +11,7 @@ interface GetListingsParams {
   location?: string;
   minPrice?: number;
   maxPrice?: number;
+  priceType?: 'price_on_request' | 'price_range' | 'price_available';
   isFeatured?: boolean;
   isPremium?: boolean;
   tags?: string[];

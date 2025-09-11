@@ -36,6 +36,9 @@ const ExploreListings = () => {
     ...(filterData.minPrice && { minPrice: Number(filterData.minPrice) }),
     ...(filterData.maxPrice && { maxPrice: Number(filterData.maxPrice) }),
     ...(filterData.breed && { breed: filterData.breed }),
+    ...(filterData.priceType && { 
+      priceType: filterData.priceType as 'price_on_request' | 'price_range' | 'price_available' 
+    }),
   };
 
   const { data: listingsResponse, isPending } = useSearchListings(searchParams);
@@ -69,6 +72,7 @@ const ExploreListings = () => {
     favourite: false, // Will be handled by wishlist functionality
     age: listing.age, // Include calculated age from backend
     userId: listing.user?.id, // Add userId for own listing check
+    fields: listing.fields || {}, // Add fields for pricing options
   })) || [];
 
   // Transform wishlist items to match ListingCard expectations
@@ -85,6 +89,7 @@ const ExploreListings = () => {
     favourite: true,
     age: "", // Not available in wishlist response
     userId: "", // Not available in wishlist response
+    fields: item.listing.fields || {}, // Add fields for pricing options
   }));
 
   // Get the listings to display based on filter state

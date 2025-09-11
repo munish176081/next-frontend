@@ -6,6 +6,7 @@ import { PuppyButton } from "../ui/puppy-button";
 import { Heading, Text } from "../ui/typegraphy";
 import { useWishlist } from "@/_contexts/wishlist-context";
 import { useState } from "react";
+import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
 
 interface ListingCardProps {
   listing: {
@@ -22,6 +23,7 @@ interface ListingCardProps {
     favourite?: boolean;
     age?: string;
     userId?: string; // Add userId to check if it's user's own listing
+    fields?: Record<string, any>; // Add fields for pricing options
   };
   currentUserId?: string; // Add current user ID
 }
@@ -40,7 +42,12 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     favourite,
     age,
     userId,
+    fields,
   } = listing;
+
+  // Get pricing information
+  const pricingInfo = getPricingInfo(fields || {}, price);
+  const pricingProps = getPricingDisplayProps(pricingInfo);
 
   const { isWishlisted, toggleWishlist, state } = useWishlist();
   const [isToggling, setIsToggling] = useState(false);
@@ -120,9 +127,48 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
         {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
         {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
         {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
-        <div className="flex items-center justify-between mt-2">
-          {price && <Text className="text-2xl">${price}</Text>}
-          <div className="flex items-center gap-1 text-base">{rating && <span>{rating}</span>}<Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />{reviews !== undefined && <span>({reviews})</span>}</div>
+        <div className="flex items-center justify-between mt-3">
+          <div className="flex flex-col gap-1">
+            {pricingProps.isPriceOnRequest ? (
+              <div className="flex items-center gap-2">
+                <div className="px-3 py-1 bg-gradient-to-r from-CPrimary/10 to-CPrimary/5 rounded-full border border-CPrimary/20">
+                  <Text className="text-lg font-semibold text-CPrimary">Price on Request</Text>
+                </div>
+              </div>
+            ) : pricingProps.hasPriceRange ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <Text className="text-2xl font-bold text-gray-900">
+                    ${pricingProps.minPrice?.toLocaleString()}
+                  </Text>
+                  <Text className="text-lg text-gray-500 font-medium">-</Text>
+                  <Text className="text-3xl font-bold text-gray-900">
+                    ${pricingProps.maxPrice?.toLocaleString()}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">Price Range</Text>
+              </div>
+            ) : pricingProps.hasFixedPrice ? (
+              <div className="flex flex-col gap-1">
+                <Text className="text-3xl font-bold text-gray-900">
+                  ${pricingProps.price?.toLocaleString()}
+                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Fixed Price</Text>
+              </div>
+            ) : (
+              <div className="flex flex-col gap-1">
+                <Text className="text-3xl font-bold text-gray-900">
+                  ${price?.toLocaleString() || '0'}
+                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Price</Text>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-2 rounded-full">
+            {rating && <span className="font-semibold text-gray-700">{rating}</span>}
+            <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+            {reviews !== undefined && <span className="text-gray-600">({reviews})</span>}
+          </div>
         </div>
         <PuppyButton className="w-full h-[50px] mt-2" iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon">View Listing</PuppyButton>
       </Link>
