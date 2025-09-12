@@ -51,8 +51,8 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
     [ListingTypeEnum.PUPPY_LISTING]: { required: true },
     [ListingTypeEnum.STUD_LISTING]: { required: true },
     [ListingTypeEnum.FUTURE_LISTING]: { required: true },
-    [ListingTypeEnum.WANTED_LISTING]: { required: true },
-    [ListingTypeEnum.OTHER_SERVICES]: { required: true },
+    [ListingTypeEnum.WANTED_LISTING]: { required: false },
+    [ListingTypeEnum.OTHER_SERVICES]: { required: false },
   },
   fields: {
     mother: [

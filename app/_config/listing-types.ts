@@ -228,8 +228,9 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'radio',
         required: true,
         options: [
-          { value: 'priceOnRequest', label: 'Price on Request' },
-          { value: 'displayPriceRange', label: 'Display price range' }
+          { value: 'displayPriceRange', label: 'Display price range' },
+          { value: 'priceOnRequest', label: 'Price on Request' }
+
         ],
         fieldCategory: 'dynamic'
       },
@@ -403,8 +404,8 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'radio',
         required: true,
         options: [
-          { value: 'priceOnRequest', label: 'Price on Request' },
-          { value: 'displayPriceRange', label: 'Display price range' }
+          { value: 'displayPriceRange', label: 'Display price range' },
+          { value: 'priceOnRequest', label: 'Price on Request' }
         ],
         fieldCategory: 'dynamic'
       },
@@ -805,44 +806,46 @@ export const LISTING_TYPES: ListingType[] = [
     image: '/images/breeds/wanted.png',
     category: 'wanted',
     requiredFields: [
+     
       {
         name: 'breedWanted',
         label: 'Breed Wanted',
         type: 'select',
         required: true,
         // options removed - now using dynamic breed data from backend API
-        fieldCategory: 'dynamic'
+        fieldCategory: 'common'
       },
+      
       {
         name: 'preferredGender',
         label: 'Preferred Gender',
         type: 'select',
         required: true,
         options: ['Select Gender', 'Male', 'Female', 'No Preference'],
-        fieldCategory: 'dynamic'
+        fieldCategory: 'common'
       },
-      COMMON_FIELDS.location,
       {
         name: 'budget',
         label: 'Budget',
         type: 'select',
         required: true,
         options: ['Select Budget', '$500 - $1,000', '$1,000 - $2,000', '$2,000 - $5,000', '$5,000+'],
-        fieldCategory: 'dynamic'
+        fieldCategory: 'common'
+      },
+      COMMON_FIELDS.location,
+      {
+        name: 'agePreference',
+        label: 'Age Preference',
+        type: 'select',
+        required: true,
+        options: ['Select Age', 'Puppy (8-12 weeks)', 'Young (3-12 months)', 'Adult (1-7years)', 'Senior (7+ years)', 'No Preference'],
+        fieldCategory: 'common'
       },
       CONTACT_FIELDS.contactName,
       CONTACT_FIELDS.contactEmail,
       CONTACT_FIELDS.contactPhone
     ],
     optionalFields: [
-      {
-        name: 'agePreference',
-        label: 'Age Preference',
-        type: 'select',
-        required: false,
-        options: ['Select Age', 'Puppy (8-12 weeks)', 'Young (3-6 months)', 'Adult (1-3 years)', 'Senior (7+ years)', 'No Preference'],
-        fieldCategory: 'dynamic'
-      },
       {
         name: 'specificColor',
         label: 'Specific Colour / Temperament',
@@ -877,24 +880,22 @@ export const LISTING_TYPES: ListingType[] = [
     image: '/images/breeds/full-litter.png',
     category: 'service',
     requiredFields: [
-      {
-        name: 'serviceTitle',
-        label: 'Service Title',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter service title',
-        fieldCategory: 'dynamic'
-      },
+      COMMON_FIELDS.title,
       {
         name: 'serviceCategory',
         label: 'Service Category',
         type: 'select',
         required: true,
-        options: ['Select Category', 'Grooming', 'Training', 'Transport', 'Veterinary', 'Pet Sitting', 'Dog Walking', 'Breeding Services', 'Other'],
-        fieldCategory: 'dynamic'
+        options: ['Select Category', 'Dog Walking',
+          'Pet Sitting',
+          'Grooming',
+          'Training',
+          'Veterinary',
+          'Transport'],
+        fieldCategory: 'common'
       },
-      COMMON_FIELDS.description,
       COMMON_FIELDS.location,
+      COMMON_FIELDS.description,
       CONTACT_FIELDS.contactName,
       CONTACT_FIELDS.contactEmail,
       CONTACT_FIELDS.contactPhone,

@@ -123,13 +123,13 @@ export function Header(props: HeaderProps) {
                       {item.label}
                       <ChevronDown className="w-4 h-4 ml-1" />
                     </button>
-                    <ul className="absolute top-full border-4 border-CPrimary mt-2 w-64 rounded-3xl bg-white opacity-0 invisible group-hover/parent:visible group-hover/parent:opacity-100 shadow-section z-10 transition-all max-h-56 flex flex-col overflow-hidden">
-                      <div className="h-full w-full flex flex-col overflow-y-auto !p-4">
-                        {item.dropdownItems.map((dropdownItem) => (
-                          <li key={dropdownItem.id} className="border-b border-black/20">
+                    <ul className="absolute top-full mt-2 w-72 rounded-2xl bg-white opacity-0 invisible group-hover/parent:visible group-hover/parent:opacity-100 shadow-xl border-4 border-CPrimary z-10 transition-all duration-200 ease-out">
+                      <div className="p-2">
+                        {item.dropdownItems.map((dropdownItem, index) => (
+                          <li key={dropdownItem.id} className={index !== item.dropdownItems.length - 1 ? "border-b border-gray-100" : ""}>
                             <LoadingLink
                               href={dropdownItem.path as string}
-                              className="block px-2 py-2 text-gray-dark hover:bg-indigo-lighter capitalize transition"
+                              className="block px-4 py-3 text-gray-700 hover:bg-gray-50 hover:text-gray-900 capitalize transition-colors duration-150 rounded-lg mx-1"
                             >
                               {dropdownItem.label}
                             </LoadingLink>

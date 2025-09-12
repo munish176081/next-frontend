@@ -148,6 +148,9 @@ function Startlistingform() {
         [...listingData.requiredFields, ...listingData.optionalFields].forEach(field => {
           if (field.type === 'checkbox') {
             initialData[field.name] = [];
+          } else if (field.name === 'pricingOption') {
+            // Set default value for pricing option to display price range
+            initialData[field.name] = 'displayPriceRange';
           } else {
             initialData[field.name] = '';
           }
@@ -378,6 +381,7 @@ function Startlistingform() {
     }
 
     setErrors(newErrors);
+    console.log('Errors:', newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
@@ -825,6 +829,7 @@ function Startlistingform() {
           {/* Optional Dynamic Fields */}
           {dynamicOptionalFields.length > 0 && renderFieldGroup(dynamicOptionalFields, 'Additional Information')}
 
+          {selectedListingType.id !== ListingTypeEnum.OTHER_SERVICES || selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
           <div className="w-full mt-8">
             <h2 className="text-2xl font-semibold text-gray-800 border-b border-gray-100 pb-4">
               Parent Information
@@ -984,6 +989,7 @@ function Startlistingform() {
               </div>
             )}
           </div>
+          )}
 
           {/* Contact Details Section */}
           {contactFields.length > 0 && (

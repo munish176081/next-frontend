@@ -469,6 +469,7 @@ const ExploreDetail = () => {
           <img className="w-full h-full object-cover" src={transformedListing.featuredImage} />
         </div>
       </section>
+      {transformedListing.listingType === ListingTypeEnum.OTHER_SERVICES || transformedListing.listingType === ListingTypeEnum.WANTED_LISTING && (
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
         <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
@@ -508,6 +509,7 @@ const ExploreDetail = () => {
           </div>
         </div>
       </section>
+      )}
       <section className="relative">
         <img className="mix-blend-multiply absolute bottom-0 max-md:max-w-52 max-md:top-0 max-md:my-auto max-md:-ml-4" src="/images/vectors/gradientLeft.png" />
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
