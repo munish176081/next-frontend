@@ -22,6 +22,7 @@ import { chatApiService } from "@/_services/chat/chatApiService";
 import { toast } from '@/_hooks/use-toast';
 import MeetingScheduleForm from "@/_components/meetings/meeting-schedule-form";
 import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
+import { useWishlist } from "@/_contexts/wishlist-context";
 
 const ExploreDetail = () => {
   const params = useParams();
@@ -33,6 +34,10 @@ const ExploreDetail = () => {
   
   // Meeting scheduling state
   const [showMeetingForm, setShowMeetingForm] = useState(false);
+  
+  // Wishlist functionality
+  const { isWishlisted, toggleWishlist } = useWishlist();
+  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
@@ -108,6 +113,35 @@ const ExploreDetail = () => {
   console.log('Transformed fields:', transformedListing?.fields);
   console.log('Badges from fields:', transformedListing?.fields?.badges);
   console.log('DNA Results from fields:', transformedListing?.fields?.dnaResults);
+
+  // Wishlist logic
+  const isOwnListing = currentUser && listing?.user?.id && currentUser.id === listing.user.id;
+  const shouldShowWishlist = !isOwnListing;
+  const isWishlistedItem = isWishlisted(listingId);
+
+  const handleWishlistToggle = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Prevent action if it's own listing or already toggling
+    if (isOwnListing || isTogglingWishlist) {
+      console.log('Wishlist toggle prevented:', { isOwnListing, isTogglingWishlist });
+      return;
+    }
+
+    // If user is not logged in, show login message
+    if (!currentUser) {
+      console.log('User not logged in, showing login message');
+      // The wishlist context will handle showing the login message
+    }
+
+    setIsTogglingWishlist(true);
+    try {
+      await toggleWishlist(listingId);
+    } finally {
+      setIsTogglingWishlist(false);
+    }
+  };
 
   // Generate dog details from API data
   const dogDetails = transformedListing ? [
@@ -228,11 +262,32 @@ const ExploreDetail = () => {
       <section className="container relative overflow-hidden p-8 rounded-40 bg-white grid grid-cols-2 gap-8 items-start max-md:grid-cols-1 max-md:p-4 max-md:rounded-[20px]">
         <div className="flex flex-col">
           <div className="flex flex-col relative border border-black/20 rounded-40 overflow-hidden max-md:rounded-[20px]">
-            <label className="w-20 h-20 max-md:w-12 max-md:h-12 bg-CPrimary rounded-full absolute right-4 top-4 overflow-hidden flex items-center justify-center z-10 cursor-pointer">
-              <input type="checkbox" className="absolute w-full h-full rounded-full opacity-0 peer cursor-pointer" />
-              <img className="w-11 max-md:w-6 peer-checked:hidden" src="/images/vectors/favorite.svg" />
-              <img className="w-11 max-md:w-6 hidden peer-checked:flex" src="/images/vectors/favorite_Fill.svg" />
-            </label>
+            {/* Wishlist Heart Icon - Show for all listings except own listings */}
+            {shouldShowWishlist && (
+              <button
+                onClick={handleWishlistToggle}
+                disabled={isTogglingWishlist}
+                className={`w-20 h-20 max-md:w-12 max-md:h-12 bg-CPrimary rounded-full absolute right-4 top-4 overflow-hidden flex items-center justify-center z-10 transition-all duration-300 cursor-pointer hover:scale-110 active:scale-95 ${isTogglingWishlist ? 'animate-pulse' : ''}`}
+                title={isWishlistedItem ? "Remove from wishlist" : "Add to wishlist"}
+              >
+                {isTogglingWishlist ? (
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin max-md:w-4 max-md:h-4" />
+                ) : (
+                  <>
+                    <img 
+                      className={`w-11 max-md:w-6 transition-opacity duration-300 ${isWishlistedItem ? 'opacity-0' : 'opacity-100'}`} 
+                      src="/images/vectors/favorite.svg" 
+                      alt="Add to wishlist"
+                    />
+                    <img 
+                      className={`w-11 max-md:w-6 absolute transition-opacity duration-300 ${isWishlistedItem ? 'opacity-100' : 'opacity-0'}`} 
+                      src="/images/vectors/favorite_Fill.svg" 
+                      alt="Remove from wishlist"
+                    />
+                  </>
+                )}
+              </button>
+            )}
             <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0">
               <span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">
                 {transformedListing.listingType} listing

@@ -829,7 +829,7 @@ function Startlistingform() {
           {/* Optional Dynamic Fields */}
           {dynamicOptionalFields.length > 0 && renderFieldGroup(dynamicOptionalFields, 'Additional Information')}
 
-          {selectedListingType.id !== ListingTypeEnum.OTHER_SERVICES || selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
+          {selectedListingType.id !== 'services' || selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
           <div className="w-full mt-8">
             <h2 className="text-2xl font-semibold text-gray-800 border-b border-gray-100 pb-4">
               Parent Information
