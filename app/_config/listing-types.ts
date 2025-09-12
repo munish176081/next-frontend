@@ -880,7 +880,14 @@ export const LISTING_TYPES: ListingType[] = [
     image: '/images/breeds/full-litter.png',
     category: 'service',
     requiredFields: [
-      COMMON_FIELDS.title,
+      {
+        name: 'title',
+        label: 'Service Title',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter service title',
+        fieldCategory: 'common'
+      },
       {
         name: 'serviceCategory',
         label: 'Service Category',
