@@ -18,7 +18,7 @@ export const LocationAutoComplete = ({
   loader,
 }: SearchLocationInputProps) => {
   const { isLoaded } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDf0nuXtOo8kR-4iUlZcvGPvH85fflIJPg",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDXoxQHS0GYsmo67rMzWUdxDywUoMgT6aE",
     libraries,
   });
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);

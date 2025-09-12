@@ -324,7 +324,7 @@ export const LISTING_TYPES: ListingType[] = [
       COMMON_FIELDS.location,
       {
         name: 'puppyVideoUrls',
-        label: 'Puppy Video URLs',
+        label: 'Puppy Video URL',
         type: 'url',
         required: false,
         placeholder: 'Enter video URL',
