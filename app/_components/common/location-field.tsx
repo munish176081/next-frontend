@@ -32,7 +32,7 @@ export default function LocationField({
   }, [value]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
+    googleMapsApiKey: "AIzaSyDXoxQHS0GYsmo67rMzWUdxDywUoMgT6aEs",
     libraries,
   });
   console.log({ isLoaded, loadError, googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY });
