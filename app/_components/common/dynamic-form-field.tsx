@@ -8,6 +8,7 @@ import LocationField from './location-field';
 import { FileValidator } from '@/_utils/file-validation';
 import { toast } from '@/_hooks/use-toast';
 import { BreedSelect } from '@/_components/form-fields/breed-select';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 // Lazy load BadgeSelector to avoid SSR issues
 const BadgeSelector = lazy(() => import('@/_components/ui/badge/badge-selector'));
@@ -392,29 +393,32 @@ export default function DynamicFormField({ field, value, onChange, error, layout
               required={field.required}
               error={error}
               showLabel={false}
-              className={`${baseClasses} ${errorClasses} mx-0 appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+              className="mx-0"
+              btnClassName={`${baseClasses} ${errorClasses} cursor-pointer hover:border-gray-400 transition-colors focus-within:ring-2 focus-within:ring-CPrimary focus-within:ring-opacity-50 focus-within:border-CPrimary`}
             />
           );
         }
         
         return (
-          <select
+          <Select
             value={value || ''}
-            onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+            onValueChange={(selectedValue) => onChange(field.name, selectedValue)}
           >
-            {field.options?.map((option, index) => {
-              const optionValue = typeof option === 'string' ? option : option.value;
-              const optionLabel = typeof option === 'string' ? option : option.label;
-              const firstOption = field.options?.[0];
-              const firstOptionValue = typeof firstOption === 'string' ? firstOption : firstOption?.value;
-              return (
-                <option key={index} value={optionValue === firstOptionValue ? '' : optionValue}>
-                  {optionLabel}
-              </option>
-              );
-            })}
-          </select>
+            <SelectTrigger className={`${baseClasses} ${errorClasses}`}>
+              <SelectValue placeholder={field.placeholder || 'Select an option'} />
+            </SelectTrigger>
+            <SelectContent>
+              {field.options?.map((option, index) => {
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                return (
+                  <SelectItem key={index} value={optionValue}>
+                    {optionLabel}
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         );
 
       case 'textarea':

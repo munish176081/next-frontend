@@ -806,7 +806,6 @@ export const LISTING_TYPES: ListingType[] = [
     image: '/images/breeds/wanted.png',
     category: 'wanted',
     requiredFields: [
-     
       {
         name: 'breedWanted',
         label: 'Breed Wanted',
@@ -822,7 +821,7 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'select',
         required: true,
         options: ['Select Gender', 'Male', 'Female', 'No Preference'],
-        fieldCategory: 'common'
+        fieldCategory: 'dynamic'
       },
       {
         name: 'budget',
@@ -830,7 +829,7 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'select',
         required: true,
         options: ['Select Budget', '$500 - $1,000', '$1,000 - $2,000', '$2,000 - $5,000', '$5,000+'],
-        fieldCategory: 'common'
+        fieldCategory: 'dynamic'
       },
       COMMON_FIELDS.location,
       {
@@ -839,7 +838,7 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'select',
         required: true,
         options: ['Select Age', 'Puppy (8-12 weeks)', 'Young (3-12 months)', 'Adult (1-7years)', 'Senior (7+ years)', 'No Preference'],
-        fieldCategory: 'common'
+        fieldCategory: 'dynamic'
       },
       CONTACT_FIELDS.contactName,
       CONTACT_FIELDS.contactEmail,

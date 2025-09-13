@@ -54,15 +54,26 @@ export function Combobox({
 
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <div className={cn("w-full border border-gray-300 rounded-full h-full text-sm text-gray-600 font-medium flex items-center justify-between hover:bg-gray-50 cursor-pointer", error && "border-red-500", btnClassName)}>
-            <span className="flex items-center h-full">
+          <div className={cn(
+            "text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12",
+            "flex items-center justify-between bg-white cursor-pointer",
+            "hover:border-gray-400 transition-colors",
+            "focus-within:outline-none focus-within:ring-2 focus-within:ring-CPrimary focus-within:ring-opacity-50 focus-within:border-CPrimary",
+            error && "border-red-500 focus-within:ring-red-500 focus-within:border-red-500", 
+            btnClassName
+          )}>
+            <span className="flex items-center h-full text-left">
               {hasIcon && Icon && <Icon className="mr-2 h-4 w-4" />}
-              {value ? options.find((option) => option.value === value)?.label : label}
+              <span className={cn(
+                value ? "text-gray-900" : "text-[#4B4A4A8C]"
+              )}>
+                {value ? options.find((option) => option.value === value)?.label : label}
+              </span>
             </span>
-            <ChevronDown className="h-4 w-4 text-gray-400" />
+            <ChevronDown className="h-5 w-5 text-[#4B4A4A8C] flex-shrink-0" />
           </div>
         </PopoverTrigger>
-        <PopoverContent className={cn("!bg-white p-0 w-[--radix-popover-trigger-width] rounded-lg shadow-lg border", popoverClassName)}>
+        <PopoverContent className={cn("!bg-white p-0 w-[--radix-popover-trigger-width] rounded-2xl shadow-lg border border-gray-200", popoverClassName)}>
           <Command>
             <div className="flex items-center px-3 py-2 border-b border-gray-200">
               <Search className="mr-2 h-4 w-4 text-gray-400" />
@@ -82,11 +93,11 @@ export function Combobox({
                       setValue(currentValue === value ? "" : currentValue);
                       setOpen(false);
                     }}
-                    className="flex items-center px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                    className="flex items-center px-6 py-3 text-sm hover:bg-gray-50 cursor-pointer rounded-lg mx-2 transition-colors"
                   >
                     <Check
                       className={cn(
-                        "mr-2 h-4 w-4",
+                        "mr-2 h-4 w-4 text-CPrimary",
                         value === option.value ? "opacity-100" : "opacity-0"
                       )}
                     />

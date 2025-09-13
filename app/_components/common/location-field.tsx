@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Autocomplete, useLoadScript } from "@react-google-maps/api";
 import { MapPin } from "lucide-react";
 
@@ -26,10 +26,16 @@ export default function LocationField({
   const [inputValue, setInputValue] = useState(value || '');
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
+  // Sync internal state with prop value changes (for edit forms)
+  useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
+
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDf0nuXtOo8kR-4iUlZcvGPvH85fflIJPg",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "",
     libraries,
   });
+  console.log({ isLoaded, loadError, googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY });
 
   const handlePlaceChanged = () => {
     if (autocompleteRef.current) {
@@ -79,7 +85,7 @@ export default function LocationField({
             placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} pl-12`}
+            className={`${baseClasses} ${errorClasses} pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary`}
           />
         </div>
         {error && (
@@ -102,7 +108,7 @@ export default function LocationField({
             type="text"
             placeholder="Loading Australian locations..."
             disabled
-            className={`${baseClasses} ${errorClasses} pl-12 opacity-50`}
+            className={`${baseClasses} ${errorClasses} pl-12 opacity-50 cursor-not-allowed`}
           />
         </div>
         {error && (
@@ -139,7 +145,7 @@ export default function LocationField({
             placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} pl-12`}
+            className={`${baseClasses} ${errorClasses} pl-12 cursor-text hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary`}
           />
         </div>
       </Autocomplete>

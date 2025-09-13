@@ -119,6 +119,7 @@ function Startlistingform() {
     };
   }, [isSubmitted, pendingDeletions]);
 
+  
   console.log('Edit mode debug:', {
     editId,
     type,
@@ -175,7 +176,14 @@ function Startlistingform() {
           // Populate common fields from dedicated DB columns
           if (existingListing.title) initialData.title = existingListing.title;
           if (existingListing.description) initialData.description = existingListing.description;
-          if (existingListing.breed) initialData.breed = existingListing.breed;
+          if (existingListing.breed) {
+            // For wanted listings, use breedWanted field name
+            if (selectedListingType?.id === 'WANTED_LISTING') {
+              initialData.breedWanted = existingListing.breed;
+            } else {
+              initialData.breed = existingListing.breed;
+            }
+          }
           if (existingListing.breedId) setBreedId(existingListing.breedId);
           if (existingListing.price) initialData.price = existingListing.price;
           if (existingListing.location) initialData.location = existingListing.location;
@@ -241,12 +249,66 @@ function Startlistingform() {
               }
             });
           }
+
+          // Special handling for wanted listings - populate fields from different sources
+          if (selectedListingType?.id === 'WANTED_LISTING') {
+            console.log('🔍 Wanted listing edit debug:');
+            console.log('📊 Existing listing:', existingListing);
+            console.log('📋 Fields object:', existingListing.fields);
+            console.log('✅ breedWanted already set above:', initialData.breedWanted);
+            
+            // Populate other wanted listing fields from the fields object
+            if (existingListing.fields) {
+              // Map the fields to the correct form field names
+              if (existingListing.fields.preferredGender) {
+                initialData.preferredGender = existingListing.fields.preferredGender;
+                console.log('✅ Set preferredGender:', existingListing.fields.preferredGender);
+              }
+              if (existingListing.fields.budget) {
+                initialData.budget = existingListing.fields.budget;
+                console.log('✅ Set budget:', existingListing.fields.budget);
+              }
+              if (existingListing.fields.agePreference) {
+                initialData.agePreference = existingListing.fields.agePreference;
+                console.log('✅ Set agePreference:', existingListing.fields.agePreference);
+              }
+              if (existingListing.fields.specificColor) {
+                initialData.specificColor = existingListing.fields.specificColor;
+                console.log('✅ Set specificColor:', existingListing.fields.specificColor);
+              }
+              if (existingListing.fields.readyToPurchase) {
+                initialData.readyToPurchase = existingListing.fields.readyToPurchase;
+                console.log('✅ Set readyToPurchase:', existingListing.fields.readyToPurchase);
+              }
+              if (existingListing.fields.messageToBreeders) {
+                initialData.messageToBreeders = existingListing.fields.messageToBreeders;
+                console.log('✅ Set messageToBreeders:', existingListing.fields.messageToBreeders);
+              }
+            }
+          }
+
+          // Special handling for service listings - populate serviceCategory from fields
+          if (selectedListingType?.id === 'OTHER_SERVICES' && existingListing.fields?.serviceCategory) {
+            initialData.serviceCategory = existingListing.fields.serviceCategory;
+            console.log('✅ Set serviceCategory:', existingListing.fields.serviceCategory);
+          }
         }
 
         setFormData(initialData);
       }
     }
   }, [searchParams, existingListing]);
+
+  // Handle breed updates for wanted listings when breedId changes
+  useEffect(() => {
+    if (selectedListingType?.id === 'WANTED_LISTING' && existingListing && breedId) {
+      console.log('🔄 Updating breedWanted with breedId:', breedId);
+      setFormData(prev => ({
+        ...prev,
+        breedWanted: existingListing.breed || existingListing.breedName
+      }));
+    }
+  }, [breedId, existingListing, selectedListingType]);
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
     console.log(`Field change - ${name}:`, value, 'Breed ID:', breedId);
@@ -416,6 +478,14 @@ function Startlistingform() {
         }
       });
 
+
+      // Special handling for wanted listings - use breedWanted as title
+      if (selectedListingType.id === 'WANTED_LISTING') {
+        commonData.title = formData.breedWanted || 'Wanted Puppy';
+      }
+
+
+
       // Extract contact info (goes to metadata.contactInfo)
       const contactInfo: Record<string, any> = {};
       contactFields.forEach(field => {
@@ -439,6 +509,30 @@ function Startlistingform() {
           dynamicData[field.name] = formData[field.name];
         }
       });
+
+      // Special handling for service listings - move serviceCategory to dynamic data
+      if (selectedListingType.id === 'OTHER_SERVICES' && commonData.serviceCategory) {
+        // Move serviceCategory from commonData to dynamicData since backend doesn't have this column
+        dynamicData.serviceCategory = commonData.serviceCategory;
+        delete commonData.serviceCategory;
+      }
+
+      // Debug logging for wanted listings
+      if (selectedListingType.id === 'WANTED_LISTING') {
+        console.log('🔍 Wanted listing form data debug:');
+        console.log('📊 Form data:', formData);
+        console.log('📋 Common fields:', commonFields.map(f => f.name));
+        console.log('📋 Dynamic fields:', dynamicFields.map(f => f.name));
+        console.log('📝 Common data before special handling:', commonData);
+        console.log('📝 Dynamic data:', dynamicData);
+        
+        // Check specific wanted listing fields
+        console.log('🎯 Wanted listing specific fields:');
+        console.log('preferredGender:', formData.preferredGender);
+        console.log('budget:', formData.budget);
+        console.log('agePreference:', formData.agePreference);
+        console.log('breedWanted:', formData.breedWanted);
+      }
 
       // Debug logging for dynamic fields
       console.log('Dynamic fields being submitted:', dynamicFields);
@@ -511,7 +605,7 @@ function Startlistingform() {
           title: commonData.title,
           description: commonData.description,
           price: price ? parseFloat(price) : undefined,
-          breed: commonData.breed,
+          breed: selectedListingType.id === 'WANTED_LISTING' ? commonData.breedWanted : commonData.breed,
           breedId: breedId, // Include breed ID
           location: commonData.location,
           fields: dynamicData,
@@ -525,6 +619,7 @@ function Startlistingform() {
           tags: extractTags(commonData, dynamicData),
         };
 
+        console.log('🚀 Sending update data to backend:', updateData);
         await updateListingMutation.mutateAsync({
           id: editId,
           data: updateData
@@ -537,7 +632,7 @@ function Startlistingform() {
           type: selectedListingType.id as ListingTypeEnum,
           category: getCategoryFromType(selectedListingType.id as ListingTypeEnum),
           price: price ? parseFloat(price) : undefined,
-          breed: commonData.breed,
+          breed: selectedListingType.id === 'WANTED_LISTING' ? commonData.breedWanted : commonData.breed,
           breedId: breedId, // Include breed ID
           location: commonData.location,
           fields: dynamicData,
@@ -553,6 +648,7 @@ function Startlistingform() {
           isPremium: false,
         };
 
+        console.log('🚀 Sending listing data to backend:', listingData);
         await createListingMutation.mutateAsync(listingData);
       }
 
@@ -671,6 +767,7 @@ function Startlistingform() {
     
     return fieldValue === conditionalValue;
   };
+  
 
   const renderFieldGroup = (fields: ListingField[], title: string) => {
     if (fields.length === 0) return null;
@@ -829,10 +926,11 @@ function Startlistingform() {
           {/* Optional Dynamic Fields */}
           {dynamicOptionalFields.length > 0 && renderFieldGroup(dynamicOptionalFields, 'Additional Information')}
 
-          {selectedListingType.id !== 'services' || selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
+          {selectedListingType.id !== ListingTypeEnum.OTHER_SERVICES &&
+           selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
           <div className="w-full mt-8">
             <h2 className="text-2xl font-semibold text-gray-800 border-b border-gray-100 pb-4">
-              Parent Information
+              Parent Information 
             </h2>
 
             {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (

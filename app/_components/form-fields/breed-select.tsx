@@ -55,7 +55,7 @@ export const BreedSelect: React.FC<BreedSelectProps> = ({
             {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
-        <div className={`w-full h-full bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-[#736E6E] ${btnClassName}`}>
+        <div className={`text-base max-md:text-xs max-md:px-4 font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12 bg-[#F1F1F1] flex items-center justify-center text-sm text-[#736E6E] ${btnClassName}`}>
           Loading breeds...
         </div>
         {error && <div className="text-red-500 text-sm mt-1">{error}</div>}
@@ -71,7 +71,7 @@ export const BreedSelect: React.FC<BreedSelectProps> = ({
             {label} {required && <span className="text-red-500">*</span>}
           </label>
         )}
-        <div className={`w-full h-full bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-red-500 ${btnClassName}`}>
+        <div className={`text-base max-md:text-xs max-md:px-4 font-normal outline-none px-6 w-full h-[70px] rounded-full border border-red-500 max-md:h-12 bg-[#F1F1F1] flex items-center justify-center text-sm text-red-500 ${btnClassName}`}>
           Failed to load breeds
         </div>
         {error && <div className="text-red-500 text-sm mt-1">{error}</div>}

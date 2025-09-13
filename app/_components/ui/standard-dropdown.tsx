@@ -2,46 +2,47 @@
 
 import * as React from "react";
 import * as SelectPrimitive from "@radix-ui/react-select";
-import { Check, ChevronDown, ChevronUp } from "lucide-react";
-
+import { Check, ChevronDown } from "lucide-react";
 import { cn } from "@/_lib/utils";
 
-const Select = SelectPrimitive.Root;
+const StandardDropdown = SelectPrimitive.Root;
 
-const SelectGroup = SelectPrimitive.Group;
+const StandardDropdownGroup = SelectPrimitive.Group;
 
-const SelectValue = SelectPrimitive.Value;
+const StandardDropdownValue = SelectPrimitive.Value;
 
-const SelectTrigger = React.forwardRef<
+interface StandardDropdownTriggerProps extends React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger> {
+  error?: string;
+}
+
+const StandardDropdownTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
-  React.ComponentPropsWithoutRef<typeof SelectPrimitive.Trigger>
->(({ className, children, ...props }, ref) => (
+  StandardDropdownTriggerProps
+>(({ className, children, error, ...props }, ref) => (
   <SelectPrimitive.Trigger
     ref={ref}
     className={cn(
-      // Updated to match application theme
+      // Base styling matching the application theme
       "text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12",
       "flex items-center justify-between bg-white",
       "focus:outline-none focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary",
       "hover:border-gray-400 transition-colors",
       "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-gray-50",
       "[&>span]:line-clamp-1 [&>span]:text-left",
+      error && "border-red-500 focus:ring-red-500 focus:border-red-500",
       className
     )}
     {...props}
   >
     {children}
-
-    {!props.disabled && (
-      <SelectPrimitive.Icon asChild>
-        <ChevronDown className="h-5 w-5 text-[#4B4A4A8C] flex-shrink-0" />
-      </SelectPrimitive.Icon>
-    )}
+    <SelectPrimitive.Icon asChild>
+      <ChevronDown className="h-5 w-5 text-[#4B4A4A8C] flex-shrink-0" />
+    </SelectPrimitive.Icon>
   </SelectPrimitive.Trigger>
 ));
-SelectTrigger.displayName = SelectPrimitive.Trigger.displayName;
+StandardDropdownTrigger.displayName = SelectPrimitive.Trigger.displayName;
 
-const SelectScrollUpButton = React.forwardRef<
+const StandardDropdownScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollUpButton>
 >(({ className, ...props }, ref) => (
@@ -53,12 +54,12 @@ const SelectScrollUpButton = React.forwardRef<
     )}
     {...props}
   >
-    <ChevronUp className="h-4 w-4" />
+    <ChevronDown className="h-4 w-4 rotate-180" />
   </SelectPrimitive.ScrollUpButton>
 ));
-SelectScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
+StandardDropdownScrollUpButton.displayName = SelectPrimitive.ScrollUpButton.displayName;
 
-const SelectScrollDownButton = React.forwardRef<
+const StandardDropdownScrollDownButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.ScrollDownButton>
 >(({ className, ...props }, ref) => (
@@ -73,10 +74,9 @@ const SelectScrollDownButton = React.forwardRef<
     <ChevronDown className="h-4 w-4" />
   </SelectPrimitive.ScrollDownButton>
 ));
-SelectScrollDownButton.displayName =
-  SelectPrimitive.ScrollDownButton.displayName;
+StandardDropdownScrollDownButton.displayName = SelectPrimitive.ScrollDownButton.displayName;
 
-const SelectContent = React.forwardRef<
+const StandardDropdownContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Content>
 >(({ className, children, position = "popper", ...props }, ref) => (
@@ -94,7 +94,7 @@ const SelectContent = React.forwardRef<
       position={position}
       {...props}
     >
-      <SelectScrollUpButton />
+      <StandardDropdownScrollUpButton />
       <SelectPrimitive.Viewport
         className={cn(
           "p-2",
@@ -104,25 +104,25 @@ const SelectContent = React.forwardRef<
       >
         {children}
       </SelectPrimitive.Viewport>
-      <SelectScrollDownButton />
+      <StandardDropdownScrollDownButton />
     </SelectPrimitive.Content>
   </SelectPrimitive.Portal>
 ));
-SelectContent.displayName = SelectPrimitive.Content.displayName;
+StandardDropdownContent.displayName = SelectPrimitive.Content.displayName;
 
-const SelectLabel = React.forwardRef<
+const StandardDropdownLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Label>
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Label
     ref={ref}
-    className={cn("py-1.5 pl-8 pr-2 text-sm font-semibold", className)}
+    className={cn("py-2 pl-6 pr-2 text-sm font-semibold text-gray-700", className)}
     {...props}
   />
 ));
-SelectLabel.displayName = SelectPrimitive.Label.displayName;
+StandardDropdownLabel.displayName = SelectPrimitive.Label.displayName;
 
-const SelectItem = React.forwardRef<
+const StandardDropdownItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item>
 >(({ className, children, ...props }, ref) => (
@@ -142,33 +142,65 @@ const SelectItem = React.forwardRef<
         <Check className="h-4 w-4 text-CPrimary" />
       </SelectPrimitive.ItemIndicator>
     </span>
-
-    <SelectPrimitive.ItemText className="font-medium">{children}</SelectPrimitive.ItemText>
+    <SelectPrimitive.ItemText className="font-medium">
+      {children}
+    </SelectPrimitive.ItemText>
   </SelectPrimitive.Item>
 ));
-SelectItem.displayName = SelectPrimitive.Item.displayName;
+StandardDropdownItem.displayName = SelectPrimitive.Item.displayName;
 
-const SelectSeparator = React.forwardRef<
+const StandardDropdownSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Separator>
 >(({ className, ...props }, ref) => (
   <SelectPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-neutral-100", className)}
+    className={cn("-mx-1 my-1 h-px bg-gray-200", className)}
     {...props}
   />
 ));
-SelectSeparator.displayName = SelectPrimitive.Separator.displayName;
+StandardDropdownSeparator.displayName = SelectPrimitive.Separator.displayName;
+
+// Enhanced wrapper component with label and error support
+interface StandardDropdownWrapperProps {
+  label?: string;
+  required?: boolean;
+  error?: string;
+  children: React.ReactNode;
+  className?: string;
+}
+
+const StandardDropdownWrapper: React.FC<StandardDropdownWrapperProps> = ({
+  label,
+  required,
+  error,
+  children,
+  className
+}) => (
+  <div className={cn("flex flex-col w-full", className)}>
+    {label && (
+      <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+        {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
+      </label>
+    )}
+    {children}
+    {error && (
+      <span className="text-red-500 text-sm mt-1">{error}</span>
+    )}
+  </div>
+);
 
 export {
-  Select,
-  SelectGroup,
-  SelectValue,
-  SelectTrigger,
-  SelectContent,
-  SelectLabel,
-  SelectItem,
-  SelectSeparator,
-  SelectScrollUpButton,
-  SelectScrollDownButton,
+  StandardDropdown,
+  StandardDropdownGroup,
+  StandardDropdownValue,
+  StandardDropdownTrigger,
+  StandardDropdownContent,
+  StandardDropdownLabel,
+  StandardDropdownItem,
+  StandardDropdownSeparator,
+  StandardDropdownScrollUpButton,
+  StandardDropdownScrollDownButton,
+  StandardDropdownWrapper,
 };
