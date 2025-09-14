@@ -4,9 +4,12 @@ import { PaginatedListingsResponseDto, ListingTypeEnum, ListingCategoryEnum } fr
 
 interface SearchParams {
   query?: string;
+  search?: string; // Support both query and search for backward compatibility
   type?: ListingTypeEnum;
+  types?: ListingTypeEnum[]; // Support multiple types
   category?: ListingCategoryEnum;
   location?: string;
+  address?: string; // Support both location and address
   breed?: string;
   minPrice?: number;
   maxPrice?: number;
@@ -18,11 +21,56 @@ interface SearchParams {
 async function searchListings(params: SearchParams): Promise<PaginatedListingsResponseDto> {
   const searchParams = new URLSearchParams();
   
-  Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null) {
-      searchParams.append(key, value.toString());
-    }
-  });
+  // Map frontend parameters to API parameters
+  if (params.query) {
+    searchParams.append('query', params.query);
+  } else if (params.search) {
+    searchParams.append('query', params.search);
+  }
+  
+  if (params.type) {
+    searchParams.append('type', params.type);
+  }
+  
+  if (params.types && params.types.length > 0) {
+    params.types.forEach(type => {
+      searchParams.append('types', type);
+    });
+  }
+  
+  if (params.category) {
+    searchParams.append('category', params.category);
+  }
+  
+  if (params.location) {
+    searchParams.append('location', params.location);
+  } else if (params.address) {
+    searchParams.append('location', params.address);
+  }
+  
+  if (params.breed) {
+    searchParams.append('breed', params.breed);
+  }
+  
+  if (params.minPrice !== undefined) {
+    searchParams.append('minPrice', params.minPrice.toString());
+  }
+  
+  if (params.maxPrice !== undefined) {
+    searchParams.append('maxPrice', params.maxPrice.toString());
+  }
+  
+  if (params.priceType) {
+    searchParams.append('priceType', params.priceType);
+  }
+  
+  if (params.page !== undefined) {
+    searchParams.append('page', params.page.toString());
+  }
+  
+  if (params.limit !== undefined) {
+    searchParams.append('limit', params.limit.toString());
+  }
 
   // Use the regular listings endpoint which supports all filter parameters
   const { data } = await axios.get(`/listings?${searchParams.toString()}`);

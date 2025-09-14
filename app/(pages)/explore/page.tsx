@@ -28,9 +28,9 @@ const ExploreListings = () => {
   
   // Transform filter data to match the API expectations
   const searchParams = {
-    search: searchQuery || "", // Default search term
-    type: filterData.types?.[0] as ListingTypeEnum,
-    location: filterData.address,
+    query: searchQuery || "", // API expects 'query' not 'search'
+    types: filterData.types as ListingTypeEnum[], // Send all selected types
+    location: filterData.address || filterData.location, // Use address if available, fallback to location
     page: currentPage,
     limit: 12, // Show 12 items per page (3 columns * 4 rows)
     ...(filterData.minPrice && { minPrice: Number(filterData.minPrice) }),

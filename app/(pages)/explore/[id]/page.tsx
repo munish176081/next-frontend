@@ -502,7 +502,7 @@ const ExploreDetail = () => {
             Your new pup comes with essentials like food, a blanket, and a few goodies—provided by the seller to help you get started right.
           </div>
 
-          <div className="flex flex-wrap gap-4 max-md:gap-2">
+          <div className="grid grid-cols-3 gap-6 max-md:grid-cols-2 max-md:gap-4">
             {/* Dynamic Badges - Only show if they exist */}
             {(() => {
               const badges = transformedListing?.fields?.badges;
@@ -510,9 +510,9 @@ const ExploreDetail = () => {
 
               if (badges && Array.isArray(badges) && badges.length > 0) {
                 return badges.map((badge, index) => (
-                  <div key={index} className="text-center flex text-xs max-md:text-[8px] font-bold flex-col justify-center items-center gap-2 min-w-[80px] max-md:min-w-[60px]">
-                    <img src="/images/vectors/detailDescription2.png" className="max-w-max max-md:max-w-16" />
-                    {badge}
+                  <div key={index} className="text-center flex flex-col justify-center items-center gap-2 p-2">
+                    <img src="/images/vectors/detailDescription2.png" className="w-16 h-16 max-md:w-12 max-md:h-12" />
+                    <span className="text-xs max-md:text-[10px] font-bold text-center leading-tight">{badge}</span>
                   </div>
                 ));
               }
