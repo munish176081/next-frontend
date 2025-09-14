@@ -84,7 +84,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     }
   };
   return (
-    <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6">
+    <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6 h-full">
       {/* Wishlist Heart Icon - Show for all listings except own listings */}
       {shouldShowHeart && (
         <button
@@ -122,11 +122,13 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           </div>
         )}
       </Link>
-      <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4">
-        <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
-        {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
-        {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
-        {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
+      <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4 flex-1">
+        <div className="flex-1">
+          <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
+          {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+          {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
+          {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
+        </div>
         <div className="flex items-center justify-between mt-3">
           <div className="flex flex-col gap-1">
             {pricingProps.isPriceOnRequest ? (
@@ -138,11 +140,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             ) : pricingProps.hasPriceRange ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                  <Text className="text-2xl font-bold text-gray-900">
+                  <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.minPrice?.toLocaleString()}
                   </Text>
                   <Text className="text-lg text-gray-500 font-medium">-</Text>
-                  <Text className="text-3xl font-bold text-gray-900">
+                  <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.maxPrice?.toLocaleString()}
                   </Text>
                 </div>
@@ -150,14 +152,14 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               </div>
             ) : pricingProps.hasFixedPrice ? (
               <div className="flex flex-col gap-1">
-                <Text className="text-3xl font-bold text-gray-900">
+                <Text className="text-2xl font-normal text-gray-900">
                   ${pricingProps.price?.toLocaleString()}
                 </Text>
                 <Text className="text-sm text-gray-500 font-medium">Fixed Price</Text>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <Text className="text-3xl font-bold text-gray-900">
+                <Text className="text-2xl font-normal text-gray-900">
                   ${price?.toLocaleString() || '0'}
                 </Text>
                 <Text className="text-sm text-gray-500 font-medium">Price</Text>

@@ -502,7 +502,7 @@ const ExploreDetail = () => {
             Your new pup comes with essentials like food, a blanket, and a few goodies—provided by the seller to help you get started right.
           </div>
 
-          <div className="flex gap-8">
+          <div className="flex flex-wrap gap-4 max-md:gap-2">
             {/* Dynamic Badges - Only show if they exist */}
             {(() => {
               const badges = transformedListing?.fields?.badges;
@@ -510,7 +510,7 @@ const ExploreDetail = () => {
 
               if (badges && Array.isArray(badges) && badges.length > 0) {
                 return badges.map((badge, index) => (
-                  <div key={index} className="text-center flex text-xs max-md:text-[8px] font-bold flex-col justify-center items-center gap-2">
+                  <div key={index} className="text-center flex text-xs max-md:text-[8px] font-bold flex-col justify-center items-center gap-2 min-w-[80px] max-md:min-w-[60px]">
                     <img src="/images/vectors/detailDescription2.png" className="max-w-max max-md:max-w-16" />
                     {badge}
                   </div>
@@ -524,7 +524,8 @@ const ExploreDetail = () => {
           <img className="w-full h-full object-cover" src={transformedListing.featuredImage} />
         </div>
       </section>
-      {transformedListing.listingType === ListingTypeEnum.OTHER_SERVICES || transformedListing.listingType === ListingTypeEnum.WANTED_LISTING && (
+      
+      {transformedListing.listingType !== ListingTypeEnum.OTHER_SERVICES &&transformedListing.listingType !== ListingTypeEnum.WANTED_LISTING && (
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
         <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />

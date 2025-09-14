@@ -178,7 +178,7 @@ const ExploreListings = () => {
               Loading <img src="/images/vectors/pawsIndigo.svg" />
             </span>
           ) : displayListings.length > 0 ? (
-            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-6 max-md:gap-4">
+            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-6 max-md:gap-4 items-stretch">
               {displayListings.map((listing) => (
                 <div key={listing.id} className="w-full">
                   <ListingCard 
