@@ -8,6 +8,7 @@ import { useUpdateAvailability } from "@/_services/hooks/listings/use-update-ava
 import { ListingStatusEnum, ListingAvailabilityEnum } from "@/_types/listing";
 import { DashboardLayout } from "@/_components/common/dashboard-layout";
 import { getShortCodeFromId } from "@/_config/listing-types";
+import { getListingPricingDisplay } from "@/_utils/pricing";
 import {
   FileText,
   Plus,
@@ -295,7 +296,14 @@ function UserListingsPage() {
                       {listing.breed || "N/A"}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
-                      {listing.price ? `$${listing.price}` : "N/A"}
+                      {(() => {
+                        const pricingResult = getListingPricingDisplay({
+                          price: listing.price,
+                          fields: listing.fields || {}
+                        });
+                        console.log(pricingResult, listing.fields, listing.price, "SUSHIL"  ) ;
+                        return pricingResult.hasError ? "N/A" : pricingResult.displayText;
+                      })()}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
                       {toTitleCaseFromId(listing.type)}

@@ -356,6 +356,10 @@ const ExploreDetail = () => {
               <text className="text-[32px] max-md:text-xl font-medium">
                 ${transformedListing.pricingProps.price?.toLocaleString()}
               </text>
+            ) : transformedListing.pricingProps.hasBasicPrice ? (
+              <text className="text-[32px] max-md:text-xl font-medium">
+                ${transformedListing.pricingProps.price?.toLocaleString()}
+              </text>
             ) : (
               <>
                 <text className="text-[32px] max-md:text-xl font-medium">

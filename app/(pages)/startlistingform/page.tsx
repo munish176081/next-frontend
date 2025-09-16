@@ -150,8 +150,8 @@ function Startlistingform() {
           if (field.type === 'checkbox') {
             initialData[field.name] = [];
           } else if (field.name === 'pricingOption') {
-            // Set default value for pricing option to display price range
-            initialData[field.name] = 'displayPriceRange';
+            // Set default value for pricing option to fixed price
+            initialData[field.name] = 'fixedPrice';
           } else {
             initialData[field.name] = '';
           }
@@ -795,11 +795,12 @@ function Startlistingform() {
     // Fields that should be full width in two-column section
     const fullWidthFields = visibleFields.filter(field => 
       field.name === 'microchipNumber'
+
     );
 
     // Pricing fields that should be grouped together
     const pricingFields = visibleFields.filter(field => 
-      field.name === 'pricingOption' || field.name === 'minPrice' || field.name === 'maxPrice'
+      field.name === 'pricingOption' || field.name === 'minPrice' || field.name === 'maxPrice' || field.name === 'fixedPrice'
     );
 
     const twoColumnFields = visibleFields.filter(field =>
@@ -842,6 +843,19 @@ function Startlistingform() {
             
             {/* Pricing Option - Full Width */}
             {pricingFields.filter(field => field.name === 'pricingOption').map((field) => (
+              <div key={field.name} className="col-span-2">
+                <DynamicFormField
+                  field={field}
+                  value={formData[field.name]}
+                  onChange={handleFieldChange}
+                  error={errors[field.name]}
+                  layout="single"
+                />
+              </div>
+            ))}
+            
+            {/* Fixed Price - Full Width */}
+            {pricingFields.filter(field => field.name === 'fixedPrice').map((field) => (
               <div key={field.name} className="col-span-2">
                 <DynamicFormField
                   field={field}
@@ -935,80 +949,82 @@ function Startlistingform() {
 
             {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
               <div className="space-y-6">
-                {/* Mother Information Section */}
-                <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                  <div
-                    className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                    onClick={() => setShowMotherSection(!showMotherSection)}
-                    aria-expanded={showMotherSection}
-                    role="button"
-                    tabIndex={0}
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="p-2.5 bg-pink-50 rounded-lg">
-                        <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                          <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
-                          <circle cx="12" cy="8" r="3" />
-                          <circle cx="12" cy="18" r="1.5" />
+                {/* Mother Information Section - Only show for non-semen listings */}
+                {selectedListingType.id !== ListingTypeEnum.SEMEN_LISTING && (
+                  <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+                    <div
+                      className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setShowMotherSection(!showMotherSection)}
+                      aria-expanded={showMotherSection}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2.5 bg-pink-50 rounded-lg">
+                          <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                            <circle cx="12" cy="8" r="3" />
+                            <circle cx="12" cy="18" r="1.5" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
+                          <p className="text-sm text-gray-500">Required information about the dame</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                            Required
+                          </span>
+                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('mother')
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}>
+                            {!isParentSectionComplete('mother') ? 'Incomplete' : 'Complete'}
+                          </span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${showMotherSection ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                         </svg>
                       </div>
-                      <div>
-                        <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
-                        <p className="text-sm text-gray-500">Required information about the dame</p>
-                      </div>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex items-center gap-2">
-                        <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
-                          Required
-                        </span>
-                        <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('mother')
-                            ? 'bg-amber-50 text-amber-700 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          }`}>
-                          {!isParentSectionComplete('mother') ? 'Incomplete' : 'Complete'}
-                        </span>
-                      </div>
-                      <svg
-                        className={`w-5 h-5 text-gray-400 transition-transform ${showMotherSection ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        aria-hidden="true"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </div>
-                  </div>
 
-                  {showMotherSection && (
-                    <div className="border-t border-gray-100 p-6">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {getParentFields('mother').map((field) => (
-                          <DynamicFormField
-                            key={field.name}
-                            field={{
-                              ...field,
-                              required: field.validation.required || false,
-                              label: field.uploadConfig?.customLabel || field.label,
-                              fileConfig: field.type === 'file' ? {
-                                minCount: field.validation.minCount,
-                                maxCount: field.validation.maxCount,
-                                accept: field.uploadConfig?.accept
-                              } : undefined
-                            }}
-                            value={formData[field.name]}
-                            onChange={handleFieldChange}
-                            error={errors[field.name]}
-                            layout="double"
-                            category={field.uploadConfig?.category}
-                            onPendingDeletionsChange={handlePendingDeletions}
-                          />
-                        ))}
+                    {showMotherSection && (
+                      <div className="border-t border-gray-100 p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {getParentFields('mother').map((field) => (
+                            <DynamicFormField
+                              key={field.name}
+                              field={{
+                                ...field,
+                                required: field.validation.required || false,
+                                label: field.uploadConfig?.customLabel || field.label,
+                                fileConfig: field.type === 'file' ? {
+                                  minCount: field.validation.minCount,
+                                  maxCount: field.validation.maxCount,
+                                  accept: field.uploadConfig?.accept
+                                } : undefined
+                              }}
+                              value={formData[field.name]}
+                              onChange={handleFieldChange}
+                              error={errors[field.name]}
+                              layout="double"
+                              category={field.uploadConfig?.category}
+                              onPendingDeletionsChange={handlePendingDeletions}
+                            />
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Father Information Section */}
                 <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
@@ -1028,8 +1044,15 @@ function Startlistingform() {
                         </svg>
                       </div>
                       <div>
-                        <h3 className="text-lg font-medium text-gray-900">Father's Details</h3>
-                        <p className="text-sm text-gray-500">Required information about the sire</p>
+                        <h3 className="text-lg font-medium text-gray-900">
+                          {selectedListingType.id === ListingTypeEnum.SEMEN_LISTING ? 'Stud Details' : 'Father\'s Details'}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                          {selectedListingType.id === ListingTypeEnum.SEMEN_LISTING 
+                            ? 'Required information about the stud' 
+                            : 'Required information about the sire'
+                          }
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">

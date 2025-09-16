@@ -228,11 +228,26 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'radio',
         required: true,
         options: [
+          { value: 'fixedPrice', label: 'Fixed Price' },
           { value: 'displayPriceRange', label: 'Display price range' },
           { value: 'priceOnRequest', label: 'Price on Request' }
-
+         
         ],
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'fixedPrice',
+        label: 'Fixed Price',
+        type: 'number',
+        required: true,
+
+        placeholder: 'Enter fixed price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'fixedPrice'
+        }
       },
       {
         name: 'minPrice',
@@ -309,15 +324,6 @@ export const LISTING_TYPES: ListingType[] = [
           maxSize: 10
         },
         fieldCategory: 'dynamic'
-      },
-      {
-        name: 'badges',
-        label: 'Select Badges',
-        type: 'checkbox',
-        required: false,
-        options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic',
-        layout: 'single'
       }
     ],
     optionalFields: [
@@ -352,18 +358,31 @@ export const LISTING_TYPES: ListingType[] = [
         validation: { min: 1 },
         fieldCategory: 'dynamic'
       },
-      // {
-      //   name: 'parentImages',
-      //   label: 'Parent Information (Photos and Videos of Mother and Father)',
-      //   type: 'file',
-      //   required: false,
-      //   fileConfig: {
-      //     multiple: true,
-      //     accept: 'image/*,video/*',
-      //     maxSize: 10
-      //   },
-      //   fieldCategory: 'dynamic'
-      // }
+      {
+        name: 'sireName',
+        label: 'Sire Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter sire (father) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'damName',
+        label: 'Dame Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter dame (mother) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
+      }
     ]
   },
   {
@@ -404,10 +423,25 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'radio',
         required: true,
         options: [
+          { value: 'fixedPrice', label: 'Fixed Price' },
           { value: 'displayPriceRange', label: 'Display price range' },
           { value: 'priceOnRequest', label: 'Price on Request' }
+          
         ],
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'fixedPrice',
+        label: 'Fixed Price',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter fixed price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'fixedPrice'
+        }
       },
       {
         name: 'minPrice',
@@ -601,15 +635,6 @@ export const LISTING_TYPES: ListingType[] = [
           maxSize: 10
         },
         fieldCategory: 'dynamic'
-      },
-      {
-        name: 'badges',
-        label: 'Select Badges',
-        type: 'checkbox',
-        required: false,
-        options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic',
-        layout: 'single'
       }
     ],
     optionalFields: [
@@ -650,6 +675,31 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         placeholder: 'Enter video URL',
         fieldCategory: 'dynamic'
+      },
+      {
+        name: 'sireName',
+        label: 'Sire Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter sire (father) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'damName',
+        label: 'Dame Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter dame (mother) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
       }
     ]
   },
@@ -746,15 +796,6 @@ export const LISTING_TYPES: ListingType[] = [
           maxSize: 10
         },
         fieldCategory: 'dynamic'
-      },
-      {
-        name: 'badges',
-        label: 'Select Badges',
-        type: 'checkbox',
-        required: false,
-        options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic',
-        layout: 'single'
       }
     ],
     optionalFields: [
@@ -784,18 +825,23 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter video URL',
         fieldCategory: 'dynamic'
       },
-      // {
-      //   name: 'provenLitterImages',
-      //   label: 'Proven Litter Images (Photos and Images of Mother and Father)',
-      //   type: 'file',
-      //   required: false,
-      //   fileConfig: {
-      //     multiple: true,
-      //     accept: 'image/*',
-      //     maxSize: 5
-      //   },
-      //   fieldCategory: 'dynamic'
-      // }
+      {
+        name: 'sireName',
+        label: 'Sire Name',
+        type: 'text',
+        required: false,
+        placeholder: 'Enter sire (father) name',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'badges',
+        label: 'Select Badges',
+        type: 'checkbox',
+        required: false,
+        options: getBadgeFormOptions(),
+        fieldCategory: 'dynamic',
+        layout: 'single'
+      }
     ]
   },
   {
@@ -840,6 +886,14 @@ export const LISTING_TYPES: ListingType[] = [
         options: ['Select Age', 'Puppy (8-12 weeks)', 'Young (3-12 months)', 'Adult (1-7years)', 'Senior (7+ years)', 'No Preference'],
         fieldCategory: 'dynamic'
       },
+      {
+        name: 'readyToPurchase',
+        label: 'When Ready to Purchase',
+        type: 'select',
+        required: true,
+        options: ['Select Timeline', 'Immediately', 'Within 1 month', 'Within 3 months', 'Within 6 months', 'No rush'],
+        fieldCategory: 'dynamic'
+      },
       CONTACT_FIELDS.contactName,
       CONTACT_FIELDS.contactEmail,
       CONTACT_FIELDS.contactPhone
@@ -859,14 +913,6 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'textarea',
         required: false,
         placeholder: 'Enter message to breeders',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'readyToPurchase',
-        label: 'When Ready to Purchase',
-        type: 'select',
-        required: false,
-        options: ['Select Timeline', 'Immediately', 'Within 1 month', 'Within 3 months', 'Within 6 months', 'No rush'],
         fieldCategory: 'dynamic'
       }
     ]

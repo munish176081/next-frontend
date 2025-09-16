@@ -41,4 +41,7 @@ export {
   type UpdateBreedData,
   type BreedQueryParams,
   type BreedsResponse
-} from "./use-admin-breeds"; 
+} from "./use-admin-breeds";
+
+// Breeds Import
+export { useImportBreeds, type ImportResult } from "./use-import-breeds"; 

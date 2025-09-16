@@ -187,7 +187,26 @@ export default function UserManagement() {
                           </tr>
                         </thead>
                         <tbody>
-                          {data?.users.map((user: AdminUserType) => (
+                          {isLoading ? (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center text-gray-500">
+                                Loading users...
+                              </td>
+                            </tr>
+                          ) : error ? (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center text-red-500">
+                                Error loading users: {error.message}
+                              </td>
+                            </tr>
+                          ) : !data?.users || data.users.length === 0 ? (
+                            <tr>
+                              <td colSpan={5} className="py-8 text-center text-gray-500">
+                                No users found
+                              </td>
+                            </tr>
+                          ) : (
+                            data.users.map((user: AdminUserType) => (
                             <tr key={user.id} className="border-b hover:bg-gray-50">
                               <td className="py-3 px-4">
                                 <div>
@@ -246,7 +265,8 @@ export default function UserManagement() {
                                 </div>
                               </td>
                             </tr>
-                          ))}
+                            ))
+                          )}
                         </tbody>
                       </table>
                     </div>

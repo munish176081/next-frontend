@@ -98,6 +98,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/breeds",
         icon: PawPrint,
         description: "Manage dog breeds"
+      },
+      {
+        name: "Blog Management",
+        href: "/admin/blogs",
+        icon: FileText,
+        description: "Manage blog posts and categories"
       }
     ]
   },

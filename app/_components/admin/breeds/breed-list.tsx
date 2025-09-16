@@ -25,6 +25,7 @@ import {
   type BreedQueryParams,
 } from "@/_services/hooks/admin";
 import { Search, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { CSVImport } from "./csv-import";
 
 interface BreedListProps {
   onEdit: (breed: Breed) => void;
@@ -101,13 +102,16 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
     <div className="flex flex-col border border-black/20 rounded-[20px] pb-4">
       <div className="flex gap-4 items-center p-6 justify-between">
         <span className="text-[22px] font-semibold">Breed Management</span>
-        <Button
-          onClick={onCreate}
-          className="flex items-center gap-2 bg-black text-white rounded-full px-6 py-2"
-        >
-          <Plus className="w-4 h-4" />
-          Add Breed
-        </Button>
+        <div className="flex gap-3">
+          <CSVImport onImportComplete={() => window.location.reload()} />
+          <Button
+            onClick={onCreate}
+            className="flex items-center gap-2 bg-black text-white rounded-full px-6 py-2"
+          >
+            <Plus className="w-4 h-4" />
+            Add Breed
+          </Button>
+        </div>
       </div>
 
       {/* Breeds Table */}

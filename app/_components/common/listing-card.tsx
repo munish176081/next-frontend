@@ -157,6 +157,13 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
                 </Text>
                 <Text className="text-sm text-gray-500 font-medium">Fixed Price</Text>
               </div>
+            ) : pricingProps.hasBasicPrice ? (
+              <div className="flex flex-col gap-1">
+                <Text className="text-2xl font-normal text-gray-900">
+                  ${pricingProps.price?.toLocaleString()}
+                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Price</Text>
+              </div>
             ) : (
               <div className="flex flex-col gap-1">
                 <Text className="text-2xl font-normal text-gray-900">

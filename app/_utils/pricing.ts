@@ -3,10 +3,11 @@
  */
 
 export interface PricingData {
-  pricingOption?: 'displayPriceRange' | 'priceOnRequest';
+  pricingOption?: 'displayPriceRange' | 'priceOnRequest' | 'fixedPrice';
   minPrice?: number;
   maxPrice?: number;
   price?: number;
+  fixedPrice?: number;
 }
 
 export interface PricingDisplayResult {
@@ -34,15 +35,29 @@ export const formatCurrency = (amount: number | undefined | null): string => {
  * Validates pricing data and returns display information
  */
 export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResult => {
-  const { pricingOption, minPrice, maxPrice, price } = pricingData;
+  const { pricingOption, minPrice, maxPrice, price, fixedPrice } = pricingData;
 
-  // Check if pricing option is valid
+  // If no pricing option is specified, fall back to using the price field
   if (!pricingOption) {
+    // Convert to number and validate price
+    const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
+    
+    if (price === undefined || price === null || numericPrice === undefined || isNaN(numericPrice) || numericPrice <= 0) {
+      return {
+        displayText: 'Price not available',
+        isValid: false,
+        hasError: true,
+        errorMessage: 'No valid pricing data found'
+      };
+    }
+
+    // Format the price
+    const formattedPrice = formatCurrency(numericPrice);
+    
     return {
-      displayText: 'Price not available',
-      isValid: false,
-      hasError: true,
-      errorMessage: 'Pricing option not specified'
+      displayText: `$${formattedPrice}`,
+      isValid: true,
+      hasError: false
     };
   }
 
@@ -57,8 +72,11 @@ export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResul
 
   // Handle "Display Price Range" option
   if (pricingOption === 'displayPriceRange') {
-    // Validate min and max prices
-    if (minPrice === undefined || minPrice === null || isNaN(minPrice)) {
+    // Convert to numbers and validate min and max prices
+    const numericMinPrice = typeof minPrice === 'string' ? parseFloat(minPrice) : minPrice;
+    const numericMaxPrice = typeof maxPrice === 'string' ? parseFloat(maxPrice) : maxPrice;
+    
+    if (minPrice === undefined || minPrice === null || numericMinPrice === undefined || isNaN(numericMinPrice) || numericMinPrice <= 0) {
       return {
         displayText: 'Price range not available',
         isValid: false,
@@ -67,7 +85,7 @@ export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResul
       };
     }
 
-    if (maxPrice === undefined || maxPrice === null || isNaN(maxPrice)) {
+    if (maxPrice === undefined || maxPrice === null || numericMaxPrice === undefined || isNaN(numericMaxPrice) || numericMaxPrice <= 0) {
       return {
         displayText: 'Price range not available',
         isValid: false,
@@ -78,11 +96,35 @@ export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResul
 
    
     // Format the price range
-    const formattedMinPrice = formatCurrency(minPrice);
-    const formattedMaxPrice = formatCurrency(maxPrice);
+    const formattedMinPrice = formatCurrency(numericMinPrice);
+    const formattedMaxPrice = formatCurrency(numericMaxPrice);
     
     return {
       displayText: `$${formattedMinPrice} - $${formattedMaxPrice}`,
+      isValid: true,
+      hasError: false
+    };
+  }
+
+  // Handle "Fixed Price" option
+  if (pricingOption === 'fixedPrice') {
+    // Convert to number and validate fixed price
+    const numericFixedPrice = typeof fixedPrice === 'string' ? parseFloat(fixedPrice) : fixedPrice;
+    
+    if (fixedPrice === undefined || fixedPrice === null || numericFixedPrice === undefined || isNaN(numericFixedPrice) || numericFixedPrice <= 0) {
+      return {
+        displayText: 'Fixed price not available',
+        isValid: false,
+        hasError: true,
+        errorMessage: 'Fixed price not specified or invalid'
+      };
+    }
+
+    // Format the fixed price
+    const formattedFixedPrice = formatCurrency(numericFixedPrice);
+    
+    return {
+      displayText: `$${formattedFixedPrice}`,
       isValid: true,
       hasError: false
     };
@@ -123,12 +165,16 @@ export const getListingPricingDisplay = (listingReference: {
     };
   }
 
+
   const pricingData: PricingData = {
     pricingOption: listingReference.fields?.pricingOption,
     minPrice: listingReference.fields?.minPrice,
     maxPrice: listingReference.fields?.maxPrice,
-    price: listingReference.price
+    price: listingReference.price,
+    fixedPrice: listingReference.fields?.fixedPrice
   };
+
+  console.log(pricingData, "SUSHILssss", listingReference.fields  ) ; 
 
   return getPricingDisplay(pricingData);
 };
@@ -141,7 +187,8 @@ export const getPricingInfo = (fields: Record<string, any>, price?: number) => {
     pricingOption: fields?.pricingOption,
     minPrice: fields?.minPrice,
     maxPrice: fields?.maxPrice,
-    price: price
+    price: price,
+    fixedPrice: fields?.fixedPrice
   };
 };
 
@@ -149,14 +196,15 @@ export const getPricingInfo = (fields: Record<string, any>, price?: number) => {
  * Gets pricing display props for listing cards
  */
 export const getPricingDisplayProps = (pricingInfo: ReturnType<typeof getPricingInfo>) => {
-  const { pricingOption, minPrice, maxPrice, price } = pricingInfo;
+  const { pricingOption, minPrice, maxPrice, price, fixedPrice } = pricingInfo;
   
   return {
     isPriceOnRequest: pricingOption === 'priceOnRequest',
     hasPriceRange: pricingOption === 'displayPriceRange' && minPrice != null && maxPrice != null,
-    hasFixedPrice: pricingOption !== 'displayPriceRange' && pricingOption !== 'priceOnRequest' && price != null,
+    hasFixedPrice: pricingOption === 'fixedPrice' && fixedPrice != null,
+    hasBasicPrice: !pricingOption && price != null, // Handle case where no pricing option but has price
     minPrice,
     maxPrice,
-    price
+    price: pricingOption === 'fixedPrice' ? fixedPrice : price
   };
 };
