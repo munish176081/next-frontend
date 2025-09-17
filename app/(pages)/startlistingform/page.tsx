@@ -372,6 +372,9 @@ function Startlistingform() {
 
     // Validate required fields
     selectedListingType.requiredFields.forEach((field: ListingField) => {
+      // Skip validation if field should not be displayed based on conditional logic
+      if (!shouldDisplayField(field)) return;
+      
       const value = formData[field.name];
 
       if (field.required) {
@@ -390,7 +393,7 @@ function Startlistingform() {
         }
       }
 
-      // Additional validation for specific field types
+      // Additional validation for specific field types (only if field is visible)
       if (field.type === 'number' && value) {
         const numValue = parseFloat(value);
         if (field.validation?.min !== undefined && numValue < field.validation.min) {
@@ -401,7 +404,7 @@ function Startlistingform() {
         }
       }
 
-      // File validation for non-required fields
+      // File validation for non-required fields (only if field is visible)
       if (field.type === 'file' && !field.required && value && field.fileConfig?.minCount) {
         const urls = Array.isArray(value) ? value : [];
         if (urls.length > 0 && urls.length < field.fileConfig.minCount) {
@@ -785,6 +788,7 @@ function Startlistingform() {
       field.name === 'registrationNumber' ||
       field.name === 'badges' ||
       field.name === 'serviceCategory'
+      // field.name === 'deliveryOptions'
     );
 
     // Special handling for price range fields - they should be in two columns
@@ -794,7 +798,8 @@ function Startlistingform() {
 
     // Fields that should be full width in two-column section
     const fullWidthFields = visibleFields.filter(field => 
-      field.name === 'microchipNumber'
+      field.name === 'microchipNumber' ||
+      field.name === 'deliveryOptions'
 
     );
 

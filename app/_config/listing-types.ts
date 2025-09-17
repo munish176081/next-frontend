@@ -216,10 +216,14 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available',
+        label: 'Pickup / Delivery Available * (Select All That Apply)',
         type: 'checkbox',
         required: true,
-        options: ['Air Transport', 'Road Transport'],
+        options: [
+          { value: 'Pickup', label: 'Pickup' },
+          { value: 'Road Transport', label: 'Road Transport' },
+          { value: 'Air Transport', label: 'Air Transport' }
+        ],
         fieldCategory: 'dynamic'
       },
       {
@@ -415,6 +419,19 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'text',
         required: true,
         placeholder: 'Enter registration number',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'puppyImages',
+        label: 'Upload Images of Past Litters',
+        type: 'file',
+        required: true,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*',
+          maxSize: 5,
+          minCount: 3
+        },
         fieldCategory: 'dynamic'
       },
       {
@@ -670,7 +687,7 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'videoUrls',
-        label: 'Video URLs',
+        label: 'Video URL',
         type: 'url',
         required: false,
         placeholder: 'Enter video URL',
@@ -779,10 +796,14 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available',
+        label: 'Pickup / Delivery Available * (Select All That Apply)',
         type: 'checkbox',
         required: true,
-        options: ['Air Transport', 'Road Transport'],
+        options: [
+          { value: 'Pickup', label: 'Pickup' },
+          { value: 'Road Transport', label: 'Road Transport' },
+          { value: 'Air Transport', label: 'Air Transport' }
+        ],
         fieldCategory: 'dynamic'
       },
       {
@@ -801,7 +822,15 @@ export const LISTING_TYPES: ListingType[] = [
     optionalFields: [
       COMMON_FIELDS.description,
       COMMON_FIELDS.location,
-      COMMON_FIELDS.price,
+     {
+        name: 'price',
+        label: 'Price Per Straw/Dose',
+        type: 'number' as const,
+        required: false,
+        placeholder: 'Price Per Straw/Dose',
+        validation: { min: 0 },
+        fieldCategory: 'common' as const
+      },  
       {
         name: 'shippingDate',
         label: 'Shipping Availability Date',
@@ -819,7 +848,7 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'semenVideoUrls',
-        label: 'Semen Video URLs',
+        label: 'Semen Video URL',
         type: 'url',
         required: false,
         placeholder: 'Enter video URL',

@@ -36,8 +36,9 @@ const ExploreListings = () => {
     ...(filterData.minPrice && { minPrice: Number(filterData.minPrice) }),
     ...(filterData.maxPrice && { maxPrice: Number(filterData.maxPrice) }),
     ...(filterData.breed && { breed: filterData.breed }),
-    ...(filterData.priceType && { 
-      priceType: filterData.priceType as 'price_on_request' | 'price_range' | 'price_available' 
+    // Handle price types - send all selected price types
+    ...(filterData.priceTypes && filterData.priceTypes.length > 0 && { 
+      priceTypes: filterData.priceTypes as ('price_on_request' | 'price_range' | 'price_available')[]
     }),
   };
 

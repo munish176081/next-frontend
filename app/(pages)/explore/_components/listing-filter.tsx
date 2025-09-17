@@ -32,7 +32,7 @@ export const listingFilterSchema = z
         message: "Min price must be greater than 0",
       }),
     maxPrice: z.coerce.number().max(100_000_000).optional(),
-    priceType: z.enum(['price_on_request', 'price_range', 'price_available']).optional(),
+    priceTypes: z.array(z.enum(['price_on_request', 'price_range', 'price_available'])).optional(),
   })
   .refine(
     (data) => {
@@ -57,7 +57,7 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
   const lng = params.get("lng");
   const minPrice = params.get("minPrice");
   const maxPrice = params.get("maxPrice");
-  const priceType = params.get("priceType");
+  const priceTypes = params.get("priceTypes");
   const search = params.get("search");
   const page = params.get("page");
 
@@ -75,7 +75,7 @@ export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
     ...(lng && { lng }),
     ...(minPrice && { minPrice }),
     ...(maxPrice && { maxPrice }),
-    ...(priceType && { priceType }),
+    ...(priceTypes && { priceTypes: priceTypes.split(",") as ('price_on_request' | 'price_range' | 'price_available')[] }),
     ...(search && { search }),
     ...(page && { page: Number(page) }),
   };
@@ -87,7 +87,7 @@ type ListingFilterProps = {
 };
 export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilterProps) => {
   const searchParams = useSearchParams();
-  const { lat, lng, address, maxPrice, minPrice, breed, age, location, priceType, ...defaultValues } =
+  const { lat, lng, address, maxPrice, minPrice, breed, age, location, priceTypes, ...defaultValues } =
     extractFilterDataFromSeach(searchParams);
 
   // Fetch breeds from API
@@ -109,7 +109,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
       location: location || "",
       ...(minPrice && { minPrice: +minPrice }),
       ...(maxPrice && { maxPrice: +maxPrice }),
-      ...(priceType && { priceType: priceType as 'price_on_request' | 'price_range' | 'price_available' }),
+      priceTypes: priceTypes || ['price_on_request', 'price_range', 'price_available'],
       ...defaultValues,
     },
     mode: "onChange",
@@ -153,8 +153,8 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
       params.set("maxPrice", data.maxPrice.toString());
     }
 
-    if (data.priceType) {
-      params.set("priceType", data.priceType);
+    if (data.priceTypes && data.priceTypes.length > 0) {
+      params.set("priceTypes", data.priceTypes.join(","));
     }
 
     router.push(`${Routes.public.explore}?${params.toString()}`);
@@ -267,24 +267,45 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
           </div>
         )}/>
         
-        <Controller name="priceType" control={control} render={({ field }) => (
+        <Controller name="priceTypes" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Price Type</span>
-            <div className="flex flex-col">
-              <Combobox 
-                showLabel={false} 
-                label="Select price type" 
-                value={field.value || ""} 
-                setValue={(value) => field.onChange(value)} 
-                options={[
-                  { value: "price_on_request", label: "Price on Request" },
-                  { value: "price_range", label: "Price Range" },
-                  { value: "price_available", label: "Fixed Price Available" }
-                ]} 
-                btnClassName="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light justify-between flex" 
-                popoverClassName="w-[--radix-popover-trigger-width]" 
-                error={errors?.priceType?.message}
-              />
+            <div className="flex flex-wrap justify-start gap-2">
+              {[
+                { value: "price_on_request", label: "Price on Request" },
+                { value: "price_range", label: "Price Range" },
+                { value: "price_available", label: "Fixed Price Available" }
+              ].map((option) => (
+                <label key={option.value} className="relative overflow-hidden">
+                  <input 
+                    type="checkbox" 
+                    className="absolute w-full h-full opacity-0 peer cursor-pointer" 
+                    id={option.value} 
+                    value={option.value} 
+                    checked={field.value?.includes(option.value as 'price_on_request' | 'price_range' | 'price_available')} 
+                    onChange={(e) => {
+                      const updatedFields = [...(field.value || [])];
+                      const index = updatedFields.indexOf(option.value as 'price_on_request' | 'price_range' | 'price_available');
+                      const isExist = index >= 0;
+                      const { checked } = e.target;
+                      if (isExist && checked) return;
+                      if (!checked && isExist) {
+                        updatedFields.splice(index, 1);
+                        field.onChange(updatedFields);
+                        return;
+                      }
+                      if (checked && !isExist) {
+                        updatedFields.push(option.value as 'price_on_request' | 'price_range' | 'price_available');
+                        field.onChange(updatedFields);
+                      }
+                    }}
+                  />
+                  <span className="h-10 px-3 text-[13px] border-2 border-black/20 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:border-black peer-checked:pr-8 peer-checked:bg-CPrimary/20 text-[#736E6E]">{option.label}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className="hidden peer-checked:inline w-4 h-4 absolute right-3 top-0 bottom-0 my-auto cursor-pointer" viewBox="0 0 384 512">
+                    <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+                  </svg>
+                </label>
+              ))}
             </div>
           </div>
         )}/>

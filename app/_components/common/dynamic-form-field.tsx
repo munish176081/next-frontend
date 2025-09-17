@@ -777,21 +777,29 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
         // Regular checkbox rendering for non-badge fields
         return (
-          <div className="flex justify-start gap-3">
+          <div className="flex gap-4">
             {field.options?.map((option, index) => {
               const optionValue = typeof option === 'string' ? option : option.value;
               const optionLabel = typeof option === 'string' ? option : option.label;
+              const isSelected = Array.isArray(value) && value.includes(optionValue);
               return (
-              <label key={index} className="relative overflow-hidden w-full">
+              <label key={index} className="relative flex items-center cursor-pointer group">
                 <input
                   type="checkbox"
-                    checked={Array.isArray(value) && value.includes(optionValue)}
-                    onChange={() => handleCheckboxChange(optionValue)}
-                  className="absolute w-full h-full opacity-0 peer cursor-pointer"
+                  checked={isSelected}
+                  onChange={() => handleCheckboxChange(optionValue)}
+                  className="sr-only"
                 />
-                <span className="h-[70px] px-5 gap-1 rounded-full flex items-center border border-black justify-center peer-checked:bg-black peer-checked:text-white">
-                    {optionLabel}
-                </span>
+                <div className={`
+                  flex items-center justify-center px-6 py-3 rounded-lg border-2 transition-all duration-200 min-w-[140px]
+                  ${isSelected 
+                    ? 'bg-CPrimary border-CPrimary text-white shadow-md' 
+                    : 'bg-white border-gray-300 text-gray-700 hover:border-CPrimary/50 hover:bg-CPrimary/5'
+                  }
+                  group-hover:shadow-sm
+                `}>
+                  <span className="text-sm font-medium">{optionLabel}</span>
+                </div>
               </label>
               );
             })}

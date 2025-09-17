@@ -14,6 +14,7 @@ interface SearchParams {
   minPrice?: number;
   maxPrice?: number;
   priceType?: 'price_on_request' | 'price_range' | 'price_available';
+  priceTypes?: ('price_on_request' | 'price_range' | 'price_available')[];
   page?: number;
   limit?: number;
 }
@@ -62,6 +63,12 @@ async function searchListings(params: SearchParams): Promise<PaginatedListingsRe
   
   if (params.priceType) {
     searchParams.append('priceType', params.priceType);
+  }
+  
+  if (params.priceTypes && params.priceTypes.length > 0) {
+    params.priceTypes.forEach(priceType => {
+      searchParams.append('priceTypes', priceType);
+    });
   }
   
   if (params.page !== undefined) {
