@@ -501,6 +501,7 @@ export const LISTING_TYPES: ListingType[] = [
       // }
     ],
     optionalFields: [
+      
       COMMON_FIELDS.description,
       COMMON_FIELDS.location,
       {
@@ -584,6 +585,7 @@ export const LISTING_TYPES: ListingType[] = [
     price: '$39/mo',
     image: '/images/breeds/stud.png',
     category: 'breeding',
+    
     requiredFields: [
       COMMON_FIELDS.title,
       {
@@ -612,6 +614,15 @@ export const LISTING_TYPES: ListingType[] = [
       },
       COMMON_FIELDS.location,
       {
+        name: 'fee',
+        label: 'Price for Bitch or Stud Service',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter fee amount',
+        validation: { min: 0 },
+        fieldCategory: 'common'
+      },
+      {
         name: 'registrationNumber',
         label: 'ANKC / State Breeder Registration Number',
         type: 'text',
@@ -632,15 +643,7 @@ export const LISTING_TYPES: ListingType[] = [
         },
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'fee',
-        label: 'Price for Bitch or Stud Service',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter fee amount',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic'
-      },
+      
       {
         name: 'dnaResults',
         label: 'Upload DNA Results',
@@ -656,15 +659,6 @@ export const LISTING_TYPES: ListingType[] = [
     ],
     optionalFields: [
       COMMON_FIELDS.description,
-      {
-        name: 'studFee',
-        label: 'Stud Fee (if stud)',
-        type: 'number',
-        required: false,
-        placeholder: 'Enter stud fee',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic'
-      },
       {
         name: 'healthCertificates',
         label: 'Health Certificates',
@@ -766,6 +760,19 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'text',
         required: true,
         placeholder: 'Enter registration number',
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'puppyImages',
+        label: 'Upload Images of Stud',
+        type: 'file',
+        required: true,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*',
+          maxSize: 5,
+          minCount: 3
+        },
         fieldCategory: 'dynamic'
       },
       {
