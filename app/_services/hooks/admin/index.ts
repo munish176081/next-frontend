@@ -44,4 +44,26 @@ export {
 } from "./use-admin-breeds";
 
 // Breeds Import
-export { useImportBreeds, type ImportResult } from "./use-import-breeds"; 
+export { useImportBreeds, type ImportResult } from "./use-import-breeds";
+
+// Breed Type Images Management
+export {
+  useAdminBreedTypeImages,
+  useAdminActiveBreedTypeImages,
+  useAdminBreedTypeImage,
+  useCreateBreedTypeImage,
+  useUpdateBreedTypeImage,
+  useDeleteBreedTypeImage,
+  useToggleBreedTypeImageStatus,
+  useAvailableCategories,
+  useUniqueCategories,
+  useCreateCategoryImage,
+  type BreedTypeImage,
+  type CreateBreedTypeImageData,
+  type UpdateBreedTypeImageData,
+  type AvailableCategory,
+  type CreateCategoryImageData
+} from "./use-admin-breed-type-images";
+
+// Category Management
+export { useCreateCategory } from "./use-create-category"; 

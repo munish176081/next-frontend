@@ -36,7 +36,7 @@ export class ChunkedUploader {
 
   async uploadFile(
     file: File,
-    fileType: 'image' | 'video' | 'document'
+    fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document'
   ): Promise<UploadResult> {
     const totalChunks = Math.ceil(file.size / this.chunkSize);
     const chunkUrls: string[] = [];
@@ -95,7 +95,7 @@ export class ChunkedUploader {
     file: File,
     chunkIndex: number,
     totalChunks: number,
-    fileType: 'image' | 'video' | 'document'
+    fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document'
   ) {
     const response = await axios.post('/uploads/request-url', {
       fileName: file.name,
@@ -113,7 +113,7 @@ export class ChunkedUploader {
     file: File,
     chunkIndex: number,
     totalChunks: number,
-    fileType: 'image' | 'video' | 'document',
+    fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document',
     uploadId?: string
   ) {
     const response = await axios.post('/uploads/request-url', {
@@ -178,7 +178,7 @@ export class ChunkedUploader {
 // Utility function for simple file upload
 export const uploadFile = async (
   file: File,
-  fileType: 'image' | 'video' | 'document',
+  fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document',
   onProgress?: (progress: UploadProgress) => void
 ): Promise<UploadResult> => {
   const uploader = new ChunkedUploader({ onProgress });

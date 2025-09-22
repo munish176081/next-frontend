@@ -18,6 +18,7 @@ import {
   Crown,
   UserCheck,
   UserX,
+  Image,
   UserCog,
   BarChart3,
   CreditCard,
@@ -98,6 +99,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/breeds",
         icon: PawPrint,
         description: "Manage dog breeds"
+      },
+      {
+        name: "Manage Breed Type",
+        href: "/admin/breed-type-images",
+        icon: Image,
+        description: "Manage breed type categories and images"
       },
       {
         name: "Blog Management",

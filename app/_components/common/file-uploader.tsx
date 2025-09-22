@@ -17,6 +17,7 @@ interface FileUploaderProps {
   maxCount?: number; // Maximum allowed files
   maxSize?: number; // Maximum file size in MB
   error?: string; // Validation error message
+  fileType?: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document'; // Specific file type for folder organization
 }
 
 export const FileUploader = ({
@@ -31,6 +32,7 @@ export const FileUploader = ({
   maxCount,
   maxSize,
   error,
+  fileType,
 }: FileUploaderProps) => {
   const [uploadedUrls, setUploadedUrls] = useState<string[]>(value);
   const [fileNames, setFileNames] = useState<string[]>([]);
@@ -80,9 +82,9 @@ export const FileUploader = ({
     
     // Upload files and get URLs
     Array.from(files).forEach(file => {
-      const fileType = accept?.includes('image/*') ? 'image' : 
-                      accept?.includes('video/*') ? 'video' : 'document';
-      uploadFile({ file, fileType });
+      const detectedFileType = fileType || (accept?.includes('image/*') ? 'image' : 
+                      accept?.includes('video/*') ? 'video' : 'document');
+      uploadFile({ file, fileType: detectedFileType });
     });
   };
 

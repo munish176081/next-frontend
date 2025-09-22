@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
+import { Checkbox } from "@/_components/ui/form-fields/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,8 +25,9 @@ import {
   type Breed,
   type BreedQueryParams,
 } from "@/_services/hooks/admin";
-import { Search, Plus, Edit, Trash2, Eye, EyeOff } from "lucide-react";
+import { Search, Plus, Edit, Trash2, Eye, EyeOff, Trash } from "lucide-react";
 import { CSVImport } from "./csv-import";
+import { toast } from "@/_hooks/use-toast";
 
 interface BreedListProps {
   onEdit: (breed: Breed) => void;
@@ -52,6 +54,9 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
     sortBy: "sortOrder",
     sortOrder: "ASC",
   });
+
+  const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false);
 
   const { data, isLoading, error } = useAdminBreeds(filters);
   const deleteBreed = useDeleteBreed();
@@ -85,6 +90,78 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
     await toggleStatus.mutateAsync({ id: breed.id, isActive: !breed.isActive });
   };
 
+  const handleSelectBreed = (breedId: string, checked: boolean) => {
+    if (checked) {
+      setSelectedBreeds(prev => [...prev, breedId]);
+    } else {
+      setSelectedBreeds(prev => prev.filter(id => id !== breedId));
+    }
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      setSelectedBreeds(data?.breeds?.map(breed => breed.id) || []);
+    } else {
+      setSelectedBreeds([]);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedBreeds.length === 0) {
+      toast({
+        title: 'No breeds selected',
+        description: 'Please select breeds to delete.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const confirmed = confirm(
+      `Are you sure you want to delete ${selectedBreeds.length} breed(s)? This action cannot be undone.`
+    );
+
+    if (!confirmed) return;
+
+    setIsBulkDeleting(true);
+    try {
+      // Delete breeds one by one
+      for (const breedId of selectedBreeds) {
+        try {
+          await deleteBreed.mutateAsync(breedId);
+        } catch (error: any) {
+          // Check if the error is about active listings
+          if (error.response?.data?.message?.includes('listings')) {
+            toast({
+              title: 'Cannot delete breed',
+              description: `This breed has active listings associated with it and cannot be deleted.`,
+              variant: 'destructive',
+            });
+          } else {
+            toast({
+              title: 'Error deleting breed',
+              description: error.response?.data?.message || 'Failed to delete breed',
+              variant: 'destructive',
+            });
+          }
+        }
+      }
+      
+      setSelectedBreeds([]);
+      toast({
+        title: 'Bulk delete completed',
+        description: `Successfully processed ${selectedBreeds.length} breeds.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Bulk delete failed',
+        description: 'An error occurred during bulk deletion.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBulkDeleting(false);
+    }
+  };
+
   if (error) {
     return (
       <Card>
@@ -103,6 +180,16 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
       <div className="flex gap-4 items-center p-6 justify-between">
         <span className="text-[22px] font-semibold">Breed Management</span>
         <div className="flex gap-3">
+          {selectedBreeds.length > 0 && (
+            <Button
+              onClick={handleBulkDelete}
+              disabled={isBulkDeleting}
+              className="flex items-center gap-2 bg-red-600 text-white rounded-full px-6 py-2 hover:bg-red-700"
+            >
+              <Trash className="w-4 h-4" />
+              {isBulkDeleting ? 'Deleting...' : `Delete ${selectedBreeds.length} Selected`}
+            </Button>
+          )}
           <CSVImport onImportComplete={() => window.location.reload()} />
           <Button
             onClick={onCreate}
@@ -134,6 +221,14 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
             <table className="w-full text-left">
               <thead className="text-[#A3AED0] text-sm border-b border-[#E9EDF7]">
                 <tr>
+                  <th className="px-8 py-3 font-medium">
+                    <Checkbox
+                      checked={selectedBreeds.length === data?.breeds?.length && data?.breeds?.length > 0}
+                      onCheckedChange={handleSelectAll}
+                      className="data-[state=checked]:bg-black data-[state=checked]:border-black"
+                    />
+                  </th>
+                  <th className="px-8 py-3 font-medium">Image</th>
                   <th className="px-8 py-3 font-medium">Name</th>
                   <th className="px-8 py-3 font-medium">Category</th>
                   <th className="px-8 py-3 font-medium">Size</th>
@@ -145,6 +240,31 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
               <tbody>
                 {data?.breeds?.map((breed) => (
                   <tr key={breed.id} className="border-b border-[#E9EDF7]">
+                    <td className="px-8 py-3 text-sm font-medium">
+                      <Checkbox
+                        checked={selectedBreeds.includes(breed.id)}
+                        onCheckedChange={(checked) => handleSelectBreed(breed.id, checked as boolean)}
+                        className="data-[state=checked]:bg-black data-[state=checked]:border-black"
+                      />
+                    </td>
+                    <td className="px-8 py-3 text-sm font-medium">
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
+                        {breed.imageUrl ? (
+                          <img
+                            src={breed.imageUrl}
+                            alt={breed.name}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.currentTarget.style.display = 'none';
+                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <div className={`w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs ${breed.imageUrl ? 'hidden' : ''}`}>
+                          No Image
+                        </div>
+                      </div>
+                    </td>
                     <td className="px-8 py-3 text-sm font-medium">
                       <div>
                         <div className="font-medium">{breed.name}</div>

@@ -13,6 +13,7 @@ export interface Breed {
   lifeExpectancy?: string;
   isActive: boolean;
   sortOrder: number;
+  imageUrl?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,6 +28,7 @@ export interface CreateBreedData {
   lifeExpectancy?: string;
   isActive?: boolean;
   sortOrder?: number;
+  imageUrl?: string;
 }
 
 export interface UpdateBreedData extends Partial<CreateBreedData> {}

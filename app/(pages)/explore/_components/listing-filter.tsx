@@ -270,7 +270,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
         <Controller name="priceTypes" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">
             <span className="text-xl font-medium">Price Type</span>
-            <div className="flex flex-wrap justify-start gap-2">
+            <div className="flex flex-col gap-2">
               {[
                 { value: "price_on_request", label: "Price on Request" },
                 { value: "price_range", label: "Price Range" },
@@ -300,7 +300,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
                       }
                     }}
                   />
-                  <span className="h-10 px-3 text-[13px] border-2 border-black/20 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:border-black peer-checked:pr-8 peer-checked:bg-CPrimary/20 text-[#736E6E]">{option.label}</span>
+                  <span className="h-10 px-3 text-[13px] border-2 border-black/20 rounded-full flex items-center bg-[#F3F3F3] justify-center peer-checked:border-black peer-checked:pr-8 peer-checked:bg-CPrimary/20 text-[#736E6E] w-full">{option.label}</span>
                   <svg xmlns="http://www.w3.org/2000/svg" className="hidden peer-checked:inline w-4 h-4 absolute right-3 top-0 bottom-0 my-auto cursor-pointer" viewBox="0 0 384 512">
                     <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
                   </svg>

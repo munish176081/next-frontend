@@ -3,7 +3,8 @@
 import { PawsIconIndigo } from "@/_components/icons/paws-icon-indigo";
 import ActionIcon from "@/_components/ui/action-icon";
 import { PuppyButton } from "@/_components/ui/puppy-button";
-import { FEATURED_BREEDS } from "@/_config/data";
+import { useHomepageBreeds } from "@/_services/hooks/homepage/use-homepage-breeds";
+import { truncateBreedDescription } from "@/_utils/text-utils";
 import Link from "next/link";
 import { useRef } from "react";
 import SwiperCore from "swiper";
@@ -12,6 +13,42 @@ import { Swiper, SwiperSlide } from "swiper/react";
 
 export const FeaturedBreeds = () => {
   const swiperRef = useRef<SwiperCore | null>(null);
+  const { data: breeds, isLoading, error } = useHomepageBreeds();
+
+  // Show loading state
+  if (isLoading) {
+    return (
+      <section className="container rounded-max border border-black/20 bg-white flex flex-col relative p-8 mt-16 max-md:mt-4 max-md:px-4 max-md:pt-6 max-md:pb-0 max-md:rounded-40">
+        <div className="flex flex-col gap-4 items-center m-auto relative w-full">
+          <PawsIconIndigo className="w-16 h-16 max-md:max-w-5 max-md:max-h-5" />
+          <h1 className="text-40 max-md:text-[32px] font-medium leading-none">
+            Browse by Breed
+          </h1>
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading breeds...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
+  // Show error state
+  if (error) {
+    return (
+      <section className="container rounded-max border border-black/20 bg-white flex flex-col relative p-8 mt-16 max-md:mt-4 max-md:px-4 max-md:pt-6 max-md:pb-0 max-md:rounded-40">
+        <div className="flex flex-col gap-4 items-center m-auto relative w-full">
+          <PawsIconIndigo className="w-16 h-16 max-md:max-w-5 max-md:max-h-5" />
+          <h1 className="text-40 max-md:text-[32px] font-medium leading-none">
+            Browse by Breed
+          </h1>
+          <div className="text-center py-8">
+            <p className="text-red-500">Failed to load breeds. Please try again later.</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -68,38 +105,46 @@ export const FeaturedBreeds = () => {
             }}
             className="!px-8 !pt-12 !pb-12 max-md:!pb-4 !-mx-8"
           >
-            {FEATURED_BREEDS.map(
-              (
-                { slug, thumbnail, name, description, location },
-                index: number
-              ) => (
-                <SwiperSlide key={`breed-${index}`} className="">
-                  <Link
-                    href={slug}
-                    className="group flex w-full flex-col rounded-3xl bg-white p-4 transition-all shadow-CCard hover:shadow-CCardHover max-md:hover:shadow-CCard"
-                  >
-                    <div className="relative flex h-48 group-hover:h-60 max-md:group-hover:h-48 w-full overflow-hidden items-center justify-center rounded-2xl transition-all max-w-full self-center">
+            {breeds && Array.isArray(breeds) ? breeds.map((breed: any, index: number) => (
+              <SwiperSlide key={`breed-${breed.id}`} className="">
+                <Link
+                  href={`/explore?breed=${encodeURIComponent(breed.name)}`}
+                  className="group flex w-full flex-col rounded-3xl bg-white p-4 transition-all shadow-CCard hover:shadow-CCardHover max-md:hover:shadow-CCard h-full"
+                >
+                  <div className="relative flex h-48 group-hover:h-60 max-md:group-hover:h-48 w-full overflow-hidden items-center justify-center rounded-2xl transition-all max-w-full self-center">
+                    {breed.imageUrl ? (
                       <img
                         className="w-full h-full object-cover"
-                        src={thumbnail}
-                        alt={name}
+                        src={breed.imageUrl}
+                        alt={breed.name}
                       />
-                    </div>
-                    <h3 className="!text-2xl font-medium mt-3">{name}</h3>
-                    <span className="text-gray-500 min-h-10 mt-1 text-sm">
-                      {description}
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <div className="text-center">
+                          <PawsIconIndigo className="w-16 h-16 mx-auto mb-2 text-gray-400" />
+                          <p className="text-gray-500 text-sm">No Image</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-col flex-grow">
+                    <h3 className="!text-2xl font-medium mt-3">{breed.name}</h3>
+                    <span className="text-gray-500 mt-1 text-sm h-16 flex items-start leading-relaxed">
+                      {truncateBreedDescription(breed.description || breed.temperament) || 'Find dogs from this breed'}
                     </span>
-                    <PuppyButton
-                      className="w-full text-sm md:text-base mt-3"
-                      iconSrc="/images/paws/paws-white-vertical.svg"
-                      altText="Paws icon"
-                    >
-                      {location}
-                    </PuppyButton>
-                  </Link>
-                </SwiperSlide>
-              )
-            )}
+                    <div className="mt-auto pt-3">
+                      <PuppyButton
+                        className="w-full text-sm md:text-base"
+                        iconSrc="/images/paws/paws-white-vertical.svg"
+                        altText="Paws icon"
+                      >
+                        Find dogs from this breed
+                      </PuppyButton>
+                    </div>
+                  </div>
+                </Link>
+              </SwiperSlide>
+            )) : null}
           </Swiper>
         </div>
         <img

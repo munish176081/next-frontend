@@ -18,6 +18,7 @@ import { Switch } from '@/_components/ui/switch';
 import { toast } from '@/_hooks/use-toast';
 import { Breed, CreateBreedData, UpdateBreedData } from '@/_services/hooks/admin';
 import { Save, X, RotateCcw } from 'lucide-react';
+import { BreedImageUpload } from './breed-image-upload';
 
 const breedSchema = z.object({
   name: z.string().min(1, 'Name is required').max(255, 'Name must be less than 255 characters'),
@@ -30,6 +31,7 @@ const breedSchema = z.object({
   lifeExpectancy: z.string().optional(),
   isActive: z.boolean().default(true),
   sortOrder: z.number().min(0, 'Sort order must be 0 or greater').default(0),
+  imageUrl: z.string().optional(),
 });
 
 type BreedFormData = z.infer<typeof breedSchema>;
@@ -44,6 +46,18 @@ interface BreedFormProps {
 const CATEGORIES = [
   'toy', 'sporting', 'herding', 'working', 'terrier', 'hound', 'companion', 'mixed'
 ];
+
+// Normalize category value for comparison
+const normalizeCategory = (category: string | undefined) => {
+  if (!category) return '';
+  return category.toLowerCase();
+};
+
+// Normalize size value for comparison
+const normalizeSize = (size: string | undefined) => {
+  if (!size) return '';
+  return size.toLowerCase();
+};
 
 const SIZES = [
   'small', 'medium', 'large', 'giant'
@@ -71,6 +85,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
       lifeExpectancy: breed?.lifeExpectancy || '',
       isActive: breed?.isActive ?? true,
       sortOrder: breed?.sortOrder || 0,
+      imageUrl: breed?.imageUrl || '',
     },
   });
 
@@ -110,6 +125,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
         lifeExpectancy: data.lifeExpectancy,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
+        imageUrl: data.imageUrl,
       };
       onSubmit(createData);
     } else {
@@ -124,6 +140,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
         lifeExpectancy: data.lifeExpectancy,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
+        imageUrl: data.imageUrl,
       };
       onSubmit(updateData);
     }
@@ -213,7 +230,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
                   Category
                 </label>
                 <Select
-                  value={watch('category')}
+                  value={normalizeCategory(watch('category'))}
                   onValueChange={(value) => setValue('category', value)}
                   disabled={isLoading}
                 >
@@ -234,7 +251,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
                   Size
                 </label>
                 <Select
-                  value={watch('size')}
+                  value={normalizeSize(watch('size'))}
                   onValueChange={(value) => setValue('size', value)}
                   disabled={isLoading}
                 >
@@ -251,6 +268,19 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
                 </Select>
               </div>
             </div>
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 border-b border-gray-200 pb-2">
+              Breed Image
+            </h3>
+            <BreedImageUpload
+              value={watch('imageUrl')}
+              onChange={(value) => setValue('imageUrl', value)}
+              disabled={isLoading}
+              error={errors.imageUrl?.message}
+            />
           </div>
 
           {/* Description Section */}

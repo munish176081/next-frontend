@@ -7,7 +7,7 @@ interface RequestUploadUrlData {
   mimeType: string;
   chunkIndex: number;
   totalChunks: number;
-  fileType: 'image' | 'video' | 'document';
+  fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document';
   uploadId?: string;
   metadata?: string;
 }

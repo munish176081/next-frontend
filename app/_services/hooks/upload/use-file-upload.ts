@@ -18,7 +18,7 @@ export const useFileUpload = (options: UseFileUploadOptions = {}) => {
   };
 
   const mutation = useMutation({
-    mutationFn: async ({ file, fileType }: { file: File; fileType: 'image' | 'video' | 'document' }) => {
+    mutationFn: async ({ file, fileType }: { file: File; fileType: 'image' | 'breed-image' | 'breed-type-image' | 'video' | 'document' }) => {
       return uploadFile(file, fileType, handleProgress);
     },
     onSuccess: (result) => {

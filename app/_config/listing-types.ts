@@ -140,7 +140,8 @@ const MEDIA_FIELDS = {
       multiple: true,
       accept: 'image/*',
       maxSize: 15,
-      minCount: 1
+      minCount: 1,
+      maxCount: 5
     },
     fieldCategory: 'media' as const
   },
@@ -153,7 +154,8 @@ const MEDIA_FIELDS = {
       multiple: true,
       accept: 'video/*',
       maxSize: 500,
-      minCount: 1
+      minCount: 1,
+      maxCount: 5
     },
     fieldCategory: 'media' as const
   },
@@ -166,7 +168,8 @@ const MEDIA_FIELDS = {
       multiple: true,
       accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf',
       maxSize: 25,
-      minCount: 1
+      minCount: 1,
+      maxCount: 5
     },
     fieldCategory: 'media' as const
   }
@@ -216,7 +219,7 @@ export const LISTING_TYPES: ListingType[] = [
       },
       {
         name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available * (Select All That Apply)',
+        label: 'Pickup / Delivery Available (Select All That Apply)',
         type: 'checkbox',
         required: true,
         options: [
@@ -297,7 +300,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*',
           maxSize: 5,
-          minCount: 3
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -325,7 +329,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10
+          maxSize: 10,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       }
@@ -349,7 +355,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5
+          maxSize: 5,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -430,7 +438,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*',
           maxSize: 5,
-          minCount: 3
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -528,7 +537,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5
+          maxSize: 5,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -564,7 +575,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10
+          maxSize: 10,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -639,7 +652,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,video/*',
           maxSize: 10,
-          minCount: 3
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -652,7 +666,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10
+          maxSize: 10,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       }
@@ -667,7 +683,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5
+          maxSize: 5,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -771,7 +789,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*',
           maxSize: 5,
-          minCount: 3
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -784,7 +803,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,.pdf',
           maxSize: 5,
-          minCount: 1
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
@@ -797,13 +817,14 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,.pdf',
           maxSize: 5,
-          minCount: 1
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
       {
         name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available * (Select All That Apply)',
+        label: 'Pickup / Delivery Available (Select All That Apply)',
         type: 'checkbox',
         required: true,
         options: [
@@ -821,7 +842,9 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10
+          maxSize: 10,
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       }
@@ -996,7 +1019,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*',
           maxSize: 5,
-          minCount: 1
+          minCount: 1,
+          maxCount: 5
         },
         fieldCategory: 'dynamic'
       }

@@ -123,6 +123,7 @@ interface CheckboxProps
   inputClassName?: string;
   errorClassName?: string;
   helperClassName?: string;
+  onCheckedChange?: (checked: boolean) => void;
 }
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
@@ -172,6 +173,14 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
                 inputClassName
               )}
               {...checkboxProps}
+              onChange={(e) => {
+                if (checkboxProps.onChange) {
+                  checkboxProps.onChange(e);
+                }
+                if (checkboxProps.onCheckedChange) {
+                  checkboxProps.onCheckedChange(e.target.checked);
+                }
+              }}
             />
             <CheckIcon
               className={clsx(
