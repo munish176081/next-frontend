@@ -128,7 +128,7 @@ export const FeaturedBreeds = () => {
                     )}
                   </div>
                   <div className="flex flex-col flex-grow">
-                    <h3 className="!text-2xl font-medium mt-3">{breed.name}</h3>
+                    <h3 className="!text-2xl font-medium mt-3 text-ellipsis overflow-hidden whitespace-nowrap">{breed.name}</h3>
                     <span className="text-gray-500 mt-1 text-sm h-16 flex items-start leading-relaxed">
                       {truncateBreedDescription(breed.description || breed.temperament) || 'Find dogs from this breed'}
                     </span>

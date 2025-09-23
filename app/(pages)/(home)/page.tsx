@@ -19,7 +19,7 @@ function Home() {
     <>
       <Hero />
       <FeaturedBreeds />
-      <FeaturedBreedsByType />
+      {/* <FeaturedBreedsByType /> */}
       <Services />
       <FeaturedPuppies />
       <PromotionBlock />
