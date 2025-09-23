@@ -147,12 +147,20 @@ function Startlistingform() {
         // Initialize form data
         const initialData: Record<string, any> = {};
         [...listingData.requiredFields, ...listingData.optionalFields].forEach(field => {
-          if (field.type === 'checkbox') {
+          console.log('Field name:', field.name, 'Type:', field.type);
+          if (field.name === 'deliveryOptions') {
+            console.log('Delivery options field found');
+            console.log('Delivery options field config:', field);
+            initialData[field.name] = ['Pickup'];
+            console.log('Delivery options field value set to:', initialData[field.name]);
+          } else if (field.type === 'checkbox') {
             initialData[field.name] = [];
+            console.log('Checkbox field initialized:', field.name, 'with value:', initialData[field.name]);
           } else if (field.name === 'pricingOption') {
             // Set default value for pricing option to fixed price
             initialData[field.name] = 'fixedPrice';
-          } else {
+          }
+          else {
             initialData[field.name] = '';
           }
         });
@@ -294,6 +302,8 @@ function Startlistingform() {
           }
         }
 
+        console.log('Final initial data being set:', initialData);
+        console.log('Delivery options in final data:', initialData.deliveryOptions);
         setFormData(initialData);
       }
     }
@@ -312,10 +322,16 @@ function Startlistingform() {
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
     console.log(`Field change - ${name}:`, value, 'Breed ID:', breedId);
+    if (name === 'deliveryOptions') {
+      console.log('Delivery options change detected:', value);
+    }
     
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
       console.log('Updated form data:', newData);
+      if (name === 'deliveryOptions') {
+        console.log('Delivery options in updated form data:', newData.deliveryOptions);
+      }
       return newData;
     });
 
