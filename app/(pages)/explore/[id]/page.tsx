@@ -586,7 +586,7 @@ const ExploreDetail = () => {
           ))}
         </div>
       </section>
-      {/* <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col items-center bg-aboutOwner bg-no-repeat bg-center bg-container max-md:p-4 max-md:rounded-[20px]">
+      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col items-center bg-aboutOwner bg-no-repeat bg-center bg-container max-md:p-4 max-md:rounded-[20px]">
         <span className="text-[40px] font-medium relative max-md:text-[32px]">
           <img className="absolute -left-32 top-6 max-md:w-14 max-md:-left-14" src="/images/vectors/line-12.png" />About Owner
         </span>
@@ -644,8 +644,8 @@ const ExploreDetail = () => {
           <div className="overflow-hidden w-5/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog4.png" className="w-full h-full object-cover" /></div>
           <div className="overflow-hidden w-3/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog5.png" className="w-full h-full object-cover" /></div>
         </div>
-      </section> */}
-      {/* <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col gap-8 max-md:gap-4 max-md:p-4 max-md:rounded-[20px]">
+      </section>
+      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col gap-8 max-md:gap-4 max-md:p-4 max-md:rounded-[20px]">
         <span className="text-[40px] font-medium m-auto">Reviews</span>
         <div className="flex border-2 border-dashed border-[#B8B8B8]/50 p-6 rounded-[20px] max-md:flex-col max-md:p-4 max-md:gap-4">
           <div className="flex w-3/12 items-center gap-2 max-md:w-full max-md:justify-center">
@@ -710,7 +710,7 @@ const ExploreDetail = () => {
             ))}
           </div>
         </div>
-      </section> */}
+      </section>
       <section className="flex flex-col gap-6 container">
         <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
         <div className="flex gap-6 max-md:flex-col">
