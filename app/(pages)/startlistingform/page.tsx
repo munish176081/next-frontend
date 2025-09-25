@@ -82,6 +82,7 @@ function Startlistingform() {
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [showMotherSection, setShowMotherSection] = useState(false);
   const [showFatherSection, setShowFatherSection] = useState(false);
+  const [showStudSection, setShowStudSection] = useState(false);
 
   // Add breedId to track the selected breed ID separately
   const [breedId, setBreedId] = useState<string | undefined>();
@@ -147,15 +148,10 @@ function Startlistingform() {
         // Initialize form data
         const initialData: Record<string, any> = {};
         [...listingData.requiredFields, ...listingData.optionalFields].forEach(field => {
-          console.log('Field name:', field.name, 'Type:', field.type);
           if (field.name === 'deliveryOptions') {
-            console.log('Delivery options field found');
-            console.log('Delivery options field config:', field);
             initialData[field.name] = ['Pickup'];
-            console.log('Delivery options field value set to:', initialData[field.name]);
           } else if (field.type === 'checkbox') {
             initialData[field.name] = [];
-            console.log('Checkbox field initialized:', field.name, 'with value:', initialData[field.name]);
           } else if (field.name === 'pricingOption') {
             // Set default value for pricing option to fixed price
             initialData[field.name] = 'fixedPrice';
@@ -168,8 +164,15 @@ function Startlistingform() {
         // Initialize parent fields
         const motherFields = getParentFields('mother');
         const fatherFields = getParentFields('father');
+        
+        // Only initialize stud fields for stud listings
+        const fieldsToInitialize = [...motherFields, ...fatherFields];
+        if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
+          const studFields = getParentFields('stud');
+          fieldsToInitialize.push(...studFields);
+        }
 
-        [...motherFields, ...fatherFields].forEach(field => {
+        fieldsToInitialize.forEach(field => {
           if (field.type === 'file') {
             initialData[field.name] = [];
           } else {
@@ -229,6 +232,12 @@ function Startlistingform() {
           if (existingListing.metadata?.fatherVideos) {
             initialData.fatherVideos = existingListing.metadata.fatherVideos;
           }
+          if (existingListing.metadata?.studImages) {
+            initialData.studImages = existingListing.metadata.studImages;
+          }
+          if (existingListing.metadata?.studVideos) {
+            initialData.studVideos = existingListing.metadata.studVideos;
+          }
 
           // Populate parent info from dedicated columns
           if (existingListing.motherInfo) {
@@ -247,6 +256,15 @@ function Startlistingform() {
             initialData.fatherWeight = existingListing.fatherInfo.weight;
             initialData.fatherTemperament = existingListing.fatherInfo.temperament;
             initialData.fatherHealthInfo = existingListing.fatherInfo.healthInfo;
+          }
+
+          if (existingListing.studInfo) {
+            initialData.studName = existingListing.studInfo.name;
+            initialData.studBreed = existingListing.studInfo.breed;
+            initialData.studColor = existingListing.studInfo.color;
+            initialData.studWeight = existingListing.studInfo.weight;
+            initialData.studTemperament = existingListing.studInfo.temperament;
+            initialData.studHealthInfo = existingListing.studInfo.healthInfo;
           }
 
           // Populate dynamic fields from the listing's fields
@@ -302,8 +320,6 @@ function Startlistingform() {
           }
         }
 
-        console.log('Final initial data being set:', initialData);
-        console.log('Delivery options in final data:', initialData.deliveryOptions);
         setFormData(initialData);
       }
     }
@@ -321,17 +337,8 @@ function Startlistingform() {
   }, [breedId, existingListing, selectedListingType]);
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
-    console.log(`Field change - ${name}:`, value, 'Breed ID:', breedId);
-    if (name === 'deliveryOptions') {
-      console.log('Delivery options change detected:', value);
-    }
-    
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
-      console.log('Updated form data:', newData);
-      if (name === 'deliveryOptions') {
-        console.log('Delivery options in updated form data:', newData.deliveryOptions);
-      }
       return newData;
     });
 
@@ -430,11 +437,18 @@ function Startlistingform() {
     });
 
     // Validate parent fields if required
-    if (isParentInfoRequired(selectedListingType.id as ListingTypeEnum)) {
+    if (selectedListingType && isParentInfoRequired(selectedListingType.id as ListingTypeEnum)) {
       const motherFields = getParentFields('mother');
       const fatherFields = getParentFields('father');
+      
+      // Only include stud fields for stud listings
+      const fieldsToValidate = [...motherFields, ...fatherFields];
+      if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
+        const studFields = getParentFields('stud');
+        fieldsToValidate.push(...studFields);
+      }
 
-      [...motherFields, ...fatherFields].forEach(field => {
+      fieldsToValidate.forEach(field => {
         const value = formData[field.name];
 
         if (field.validation.required) {
@@ -579,11 +593,22 @@ function Startlistingform() {
         healthInfo: formData.fatherHealthInfo
       };
 
+      const studInfo = {
+        name: formData.studName,
+        breed: formData.studBreed,
+        color: formData.studColor,
+        weight: formData.studWeight,
+        temperament: formData.studTemperament,
+        healthInfo: formData.studHealthInfo
+      };
+
       // Extract parent media
       const motherImages = formData.motherImages || [];
       const fatherImages = formData.fatherImages || [];
+      const studImages = formData.studImages || [];
       const motherVideos = formData.motherVideos || [];
       const fatherVideos = formData.fatherVideos || [];
+      const studVideos = formData.studVideos || [];
 
       // Also collect all file fields from dynamic fields for media arrays
       const allImages: string[] = [];
@@ -612,8 +637,10 @@ function Startlistingform() {
       const metadata: Record<string, any> = {};
       if (motherImages.length > 0) metadata.motherImages = motherImages;
       if (fatherImages.length > 0) metadata.fatherImages = fatherImages;
+      if (studImages.length > 0) metadata.studImages = studImages;
       if (motherVideos.length > 0) metadata.motherVideos = motherVideos;
       if (fatherVideos.length > 0) metadata.fatherVideos = fatherVideos;
+      if (studVideos.length > 0) metadata.studVideos = studVideos;
 
       // Extract price from various possible fields
       const price = commonData.price || formData.pricePerPuppy || formData.fee || null;
@@ -631,6 +658,7 @@ function Startlistingform() {
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
           motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
           fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
+          studInfo: Object.values(studInfo).some(v => v) ? studInfo : undefined,
           images: allImages.length > 0 ? allImages : undefined,
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
@@ -658,6 +686,7 @@ function Startlistingform() {
           contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
           motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
           fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
+          studInfo: Object.values(studInfo).some(v => v) ? studInfo : undefined,
           images: allImages.length > 0 ? allImages : undefined,
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
@@ -726,7 +755,7 @@ function Startlistingform() {
     return tags;
   };
 
-  const isParentSectionComplete = (parentType: 'mother' | 'father'): boolean => {
+  const isParentSectionComplete = (parentType: 'mother' | 'father' | 'stud'): boolean => {
     const fields = getParentFields(parentType);
     return !fields.some(field => {
       if (field.validation.required) {
@@ -970,6 +999,83 @@ function Startlistingform() {
 
             {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
               <div className="space-y-6">
+                {/* Stud Information Section - Only show for stud listings */}
+                {selectedListingType.id === ListingTypeEnum.STUD_LISTING && (
+                  <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+                    <div
+                      className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                      onClick={() => setShowStudSection(!showStudSection)}
+                      aria-expanded={showStudSection}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div className="flex items-center gap-4">
+                        <div className="p-2.5 bg-purple-50 rounded-lg">
+                          <svg className="w-5 h-5 text-purple-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                            <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                            <circle cx="12" cy="8" r="3" />
+                            <path d="M12 15v4m-2 0h4" />
+                          </svg>
+                        </div>
+                        <div>
+                          <h3 className="text-lg font-medium text-gray-900">Stud Details</h3>
+                          <p className="text-sm text-gray-500">Required information about the stud</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
+                            Required
+                          </span>
+                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('stud')
+                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}>
+                            {!isParentSectionComplete('stud') ? 'Incomplete' : 'Complete'}
+                          </span>
+                        </div>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${showStudSection ? 'rotate-180' : ''}`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          aria-hidden="true"
+                        >
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {showStudSection && (
+                      <div className="border-t border-gray-100 p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {getParentFields('stud').map((field) => (
+                            <DynamicFormField
+                              key={field.name}
+                              field={{
+                                ...field,
+                                required: field.validation.required || false,
+                                label: field.uploadConfig?.customLabel || field.label,
+                                fileConfig: field.type === 'file' ? {
+                                  minCount: field.validation.minCount,
+                                  maxCount: field.validation.maxCount,
+                                  accept: field.uploadConfig?.accept
+                                } : undefined
+                              }}
+                              value={formData[field.name]}
+                              onChange={handleFieldChange}
+                              error={errors[field.name]}
+                              layout="double"
+                              category={field.uploadConfig?.category}
+                              onPendingDeletionsChange={handlePendingDeletions}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
                 {/* Mother Information Section - Only show for non-semen listings */}
                 {selectedListingType.id !== ListingTypeEnum.SEMEN_LISTING && (
                   <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">

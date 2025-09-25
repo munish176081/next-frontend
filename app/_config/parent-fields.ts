@@ -16,7 +16,7 @@ export interface ParentField {
   placeholder?: string;
   validation: ParentFieldValidation;
   uploadConfig?: {
-    category: 'mother' | 'father';
+    category: 'mother' | 'father' | 'stud';
     customLabel: string;
     icon: string;
     className: string;
@@ -30,6 +30,7 @@ export interface ParentFieldConfig {
   fields: {
     mother: ParentField[];
     father: ParentField[];
+    stud: ParentField[];
   };
   // TODO: Cross-field validation (commented for client confirmation)
   // crossFieldValidation?: {
@@ -194,12 +195,82 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
           accept: "video/*"
         }
       }
+    ],
+    stud: [
+      {
+        name: "studName",
+        type: "text",
+        label: "Name",
+        placeholder: "Enter stud's name",
+        validation: { required: true, minLength: 2, maxLength: 50 }
+      },
+      {
+        name: "studBreed",
+        type: "select",
+        label: "Breed",
+        placeholder: "Select stud's breed",
+        validation: { required: true }
+      },
+      {
+        name: "studColor",
+        type: "text",
+        label: "Color",
+        placeholder: "Enter stud's color",
+        validation: { required: false, maxLength: 50 }
+      },
+      {
+        name: "studWeight",
+        type: "text",
+        label: "Weight",
+        placeholder: "e.g., 32kg",
+        validation: { required: false, maxLength: 20 }
+      },
+      {
+        name: "studTemperament",
+        type: "textarea",
+        label: "Temperament",
+        placeholder: "Describe stud's temperament",
+        validation: { required: false, maxLength: 200 }
+      },
+      {
+        name: "studHealthInfo",
+        type: "textarea",
+        label: "Health Information",
+        placeholder: "e.g., DNA Tested, Hip Scored, Vaccinated",
+        validation: { required: false, maxLength: 300 }
+      },
+      {
+        name: "studImages",
+        type: "file",
+        label: "Photos",
+        validation: { required: true, minCount: 1, maxCount: 5 },
+        uploadConfig: {
+          category: "stud",
+          customLabel: "Stud's Photos",
+          icon: "🐕",
+          className: "stud-upload",
+          accept: "image/*"
+        }
+      },
+      {
+        name: "studVideos",
+        type: "file",
+        label: "Videos",
+        validation: { required: false, maxCount: 2 },
+        uploadConfig: {
+          category: "stud",
+          customLabel: "Stud's Videos",
+          icon: "🐕",
+          className: "stud-upload",
+          accept: "video/*"
+        }
+      }
     ]
   }
 };
 
 // Helper functions for field management
-export const getParentFields = (parentType: 'mother' | 'father'): ParentField[] => {
+export const getParentFields = (parentType: 'mother' | 'father' | 'stud'): ParentField[] => {
   return PARENT_FIELD_CONFIG.fields[parentType];
 };
 
@@ -207,7 +278,7 @@ export const isParentInfoRequired = (listingType: ListingTypeEnum): boolean => {
   return PARENT_FIELD_CONFIG.listingTypes[listingType]?.required ?? PARENT_FIELD_CONFIG.required;
 };
 
-export const getParentFieldByName = (parentType: 'mother' | 'father', fieldName: string): ParentField | undefined => {
+export const getParentFieldByName = (parentType: 'mother' | 'father' | 'stud', fieldName: string): ParentField | undefined => {
   return PARENT_FIELD_CONFIG.fields[parentType].find(field => field.name === fieldName);
 };
 

@@ -123,7 +123,7 @@ export function Header(props: HeaderProps) {
                       {item.label}
                       <ChevronDown className="w-4 h-4 ml-1" />
                     </button>
-                    <ul className="absolute top-full mt-2 w-72 rounded-2xl bg-white opacity-0 invisible group-hover/parent:visible group-hover/parent:opacity-100 shadow-xl border-4 border-CPrimary z-10 transition-all duration-200 ease-out">
+                    <ul className="absolute top-full mt-2 w-72 rounded-2xl bg-white opacity-0 invisible group-hover/parent:visible group-hover/parent:opacity-100 shadow-xl border-4 border-CPrimary z-10 transition-all duration-200 ease-out" style={{ zIndex: 1000 }}>
                       <div className="p-2">
                         {item.dropdownItems.map((dropdownItem, index) => (
                           <li key={dropdownItem.id} className={index !== item.dropdownItems.length - 1 ? "border-b border-gray-100" : ""}>

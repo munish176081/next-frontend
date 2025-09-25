@@ -11,6 +11,7 @@ import {
 } from "@/_components/ui/slider";
 import { FreeMode, Thumbs } from 'swiper/modules';
 import { usePublicListing, useSimilarListings } from "@/_services/hooks/listings";
+import { useSellerListings } from "@/_services/hooks/listings/use-seller-listings";
 import { useParams } from "next/navigation";
 import { formatListingType } from "@/_utils/listing";
 import { ListingTypeEnum } from "@/_types/listing";
@@ -57,8 +58,28 @@ const ExploreDetail = () => {
     limit: 4,
   });
 
+  // Fetch seller listings
+  const { data: sellerListingsData } = useSellerListings({
+    userId: listing?.userId || '',
+    excludeId: listingId,
+    limit: 4,
+  });
+
   // Transform similar listings data to match the expected format
   const similarListings = similarListingsData?.data?.map(listing => ({
+    id: listing.id,
+    title: listing.title,
+    location: listing.location,
+    description: `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`, // Generate description from available data
+    price: listing.price,
+    rating: 4.5, // Default rating since it's not in the API
+    reviews: Math.floor(Math.random() * 50) + 10, // Random reviews for now
+    listingType: formatListingType(listing.type),
+    image: listing.featuredImage || "/images/breed-by-type/1.png", // Use featured image or fallback
+  })) || [];
+
+  // Transform seller listings data to match the expected format
+  const sellerListings = sellerListingsData?.data?.map(listing => ({
     id: listing.id,
     title: listing.title,
     location: listing.location,
@@ -645,6 +666,22 @@ const ExploreDetail = () => {
           <div className="overflow-hidden w-3/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog5.png" className="w-full h-full object-cover" /></div>
         </div>
       </section>
+       {/* More from this Seller section */}
+       {sellerListingsData && sellerListings.length > 0 && (
+        <section className="flex flex-col gap-6 container">
+          <span className="text-[40px] font-medium max-md:text-[32px]">{transformedListing.user?.name}'s Previous Listings</span>
+          <div className="flex gap-6 max-md:flex-col">
+            {sellerListings.map((listing) => (
+              <ListingCard 
+                key={listing.id} 
+                listing={{ ...listing, favourite: true }} 
+                currentUserId={currentUser?.id}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+      
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col gap-8 max-md:gap-4 max-md:p-4 max-md:rounded-[20px]">
         <span className="text-[40px] font-medium m-auto">Reviews</span>
         <div className="flex border-2 border-dashed border-[#B8B8B8]/50 p-6 rounded-[20px] max-md:flex-col max-md:p-4 max-md:gap-4">
@@ -711,6 +748,8 @@ const ExploreDetail = () => {
           </div>
         </div>
       </section>
+      
+     
       <section className="flex flex-col gap-6 container">
         <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
         <div className="flex gap-6 max-md:flex-col">

@@ -19,7 +19,7 @@ interface DynamicFormFieldProps {
   onChange: (name: string, value: any, breedId?: string) => void;
   error?: string;
   layout?: 'single' | 'double';
-  category?: 'mother' | 'father';
+  category?: 'mother' | 'father' | 'stud';
   onPendingDeletionsChange?: (fieldName: string, pendingUrls: string[]) => void;
 }
 
@@ -776,14 +776,12 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         }
 
         // Regular checkbox rendering for non-badge fields
-        console.log(`Rendering checkbox field ${field.name} with value:`, value, 'Type:', typeof value, 'Is Array:', Array.isArray(value));
         return (
           <div className="flex gap-4">
             {field.options?.map((option, index) => {
               const optionValue = typeof option === 'string' ? option : option.value;
               const optionLabel = typeof option === 'string' ? option : option.label;
               const isSelected = Array.isArray(value) && value.includes(optionValue);
-              console.log(`Option ${optionValue}: isSelected = ${isSelected}, value array:`, value);
               return (
               <label key={index} className="relative flex items-center cursor-pointer group">
                 <input

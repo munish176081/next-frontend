@@ -160,6 +160,7 @@ export interface CreateListingDto {
   isPremium?: boolean;
   motherInfo?: ParentInfo;
   fatherInfo?: ParentInfo;
+  studInfo?: ParentInfo;
   seoData?: {
     slug?: string;
     metaTitle?: string;
@@ -199,6 +200,7 @@ export interface ListingResponseDto {
   analytics: Record<string, any>;
   motherInfo?: ParentInfo;
   fatherInfo?: ParentInfo;
+  studInfo?: ParentInfo;
   createdAt: Date;
   updatedAt: Date;
   availability: ListingAvailabilityEnum;
