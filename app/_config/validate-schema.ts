@@ -182,9 +182,36 @@ export const contactFormSchema = z.object({
   message: z.string().min(1, "Message is required"),
 });
 
+export const updateUserProfileSchema = z.object({
+  name: z
+    .string()
+    .min(1, { message: "Name is required." })
+    .max(256, { message: "Name must be less than 256 characters." })
+    .regex(/^[a-zA-Z0-9 ]+$/, {
+      message: "Name must be alphanumeric and can include spaces only.",
+    }),
+  username: z
+    .string()
+    .min(3, { message: "Username must be at least 3 characters." })
+    .max(256, { message: "Username must be less than 256 characters." })
+    .regex(/^[a-zA-Z0-9_]+$/, {
+      message: "Username can only contain letters, numbers, and underscores.",
+    }),
+  email: z
+    .string()
+    .min(1, { message: "Email is required." })
+    .email({ message: "Invalid email format." }),
+  imageUrl: z
+    .string()
+    .url({ message: "Please provide a valid image URL." })
+    .optional()
+    .or(z.literal("")),
+});
+
 export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;
 export type ForgotPasswordType = z.infer<typeof forgotPasswordSchema>;
 export type SignInType = z.infer<typeof loginInfoSchema>;
 export type SignUpType = z.infer<typeof signUpSchema>;
 export type ListingFormType = z.infer<typeof listingFormSchema>;
 export type ContactFormType = z.infer<typeof contactFormSchema>;
+export type UpdateUserProfileType = z.infer<typeof updateUserProfileSchema>;

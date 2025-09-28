@@ -22,8 +22,6 @@ const Favorites = () => {
 
   // Transform wishlist data to table format
   const favoriteRows = wishlistData?.items?.map((item) => ({
-    id: item.id,
-    listingId: item.listingId,
     title: item.listing.title,
     breeder: item.listing.breed || "Unknown Breed",
     price: item.listing.price ? `$${item.listing.price}` : "Price on Request",
@@ -34,6 +32,9 @@ const Favorites = () => {
     }),
     status: "Available", // You might want to add status to the listing data
     action: item.id,
+    // Keep these for internal use but don't include in table display
+    _id: item.id,
+    _listingId: item.listingId,
   })) || [];
 
   const handleRemoveFromWishlist = async (wishlistItemId: string, listingId: string) => {
@@ -86,10 +87,13 @@ const Favorites = () => {
   );
 
   // Enhanced table data with action buttons
-  const enhancedFavoriteRows = favoriteRows.map((row) => ({
-    ...row,
-    action: <ActionButtons wishlistItemId={row.id} listingId={row.listingId} />,
-  }));
+  const enhancedFavoriteRows = favoriteRows.map((row) => {
+    const { _id, _listingId, ...displayData } = row;
+    return {
+      ...displayData,
+      action: <ActionButtons wishlistItemId={_id} listingId={_listingId} />,
+    };
+  });
 
   if (isLoading) {
     return (
