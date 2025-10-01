@@ -101,6 +101,12 @@ export const sidebarConfig: SidebarConfig = {
         description: "Manage dog breeds"
       },
       {
+        name: "Featured Breeds",
+        href: "/admin/settings/featured-breeds",
+        icon: Star,
+        description: "Manage featured breeds for homepage"
+      },
+      {
         name: "Manage Breed Type",
         href: "/admin/breed-type-images",
         icon: Image,

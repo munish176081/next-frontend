@@ -90,7 +90,30 @@ const COMMON_FIELDS = {
     required: false,
     placeholder: 'Enter Australian location',
     fieldCategory: 'common' as const
+  },
+  fee: {
+    name: 'fee',
+    label: 'Price for Stud Service',
+    type: 'number' as const,
+    required: false,
+    placeholder: 'Enter fee amount',
+    validation: { min: 0 },
+    fieldCategory: 'common' as const
   }
+};
+
+// Gender field for stud listings
+export const GENDER_FIELD: ListingField = {
+  name: 'gender',
+  label: 'Stud or Bitch?',
+  type: 'radio',
+  required: true,
+  options: [
+    { value: 'stud', label: 'Stud' },
+    { value: 'bitch', label: 'Bitch' }
+  ],
+  fieldCategory: 'dynamic',
+  layout: 'single'
 };
 
 // Contact fields that go to metadata.contactInfo
@@ -601,15 +624,8 @@ export const LISTING_TYPES: ListingType[] = [
     
     requiredFields: [
       COMMON_FIELDS.title,
-      {
-        name: 'gender',
-        label: 'Gender',
-        type: 'select',
-        required: true,
-        options: ['Select Gender', 'Stud (Male)', 'Bitch (Female)'],
-        fieldCategory: 'dynamic'
-      },
       COMMON_FIELDS.breed,
+      GENDER_FIELD,
       {
         name: 'dogName',
         label: 'Dog Name',
@@ -626,15 +642,8 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       COMMON_FIELDS.location,
-      {
-        name: 'fee',
-        label: 'Price for Bitch or Stud Service',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter fee amount',
-        validation: { min: 0 },
-        fieldCategory: 'common'
-      },
+      COMMON_FIELDS.price,
+      COMMON_FIELDS.fee,
       {
         name: 'registrationNumber',
         label: 'ANKC / State Breeder Registration Number',

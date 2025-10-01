@@ -25,7 +25,8 @@ import {
   type Breed,
   type BreedQueryParams,
 } from "@/_services/hooks/admin";
-import { Search, Plus, Edit, Trash2, Eye, EyeOff, Trash } from "lucide-react";
+import { useToggleFeaturedBreed } from "@/_services/hooks/breeds/use-toggle-featured-breed";
+import { Search, Plus, Edit, Trash2, Eye, EyeOff, Trash, Star, StarOff } from "lucide-react";
 import { CSVImport } from "./csv-import";
 import { toast } from "@/_hooks/use-toast";
 
@@ -61,6 +62,7 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
   const { data, isLoading, error } = useAdminBreeds(filters);
   const deleteBreed = useDeleteBreed();
   const toggleStatus = useToggleBreedStatus();
+  const toggleFeatured = useToggleFeaturedBreed();
 
   const handleFilterChange = (
     key: keyof BreedQueryParams,
@@ -88,6 +90,10 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
 
   const handleToggleStatus = async (breed: Breed) => {
     await toggleStatus.mutateAsync({ id: breed.id, isActive: !breed.isActive });
+  };
+
+  const handleToggleFeatured = async (breed: Breed) => {
+    await toggleFeatured.mutateAsync(breed.id);
   };
 
   const handleSelectBreed = (breedId: string, checked: boolean) => {
@@ -233,6 +239,7 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
                   <th className="px-8 py-3 font-medium">Category</th>
                   <th className="px-8 py-3 font-medium">Size</th>
                   <th className="px-8 py-3 font-medium text-center">Status</th>
+                  <th className="px-8 py-3 font-medium text-center">Featured</th>
                   <th className="px-8 py-3 font-medium">Sort Order</th>
                   <th className="px-8 py-3 font-medium text-center">Actions</th>
                 </tr>
@@ -293,6 +300,24 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
                       >
                         {breed.isActive ? "Active" : "Inactive"}
                       </span>
+                    </td>
+                    <td className="px-8 py-3 text-sm font-medium text-center">
+                      <button
+                        onClick={() => handleToggleFeatured(breed)}
+                        disabled={toggleFeatured.isPending}
+                        className={`flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${
+                          breed.isFeatured
+                            ? "text-yellow-600 bg-yellow-50 border border-yellow-200 hover:bg-yellow-100"
+                            : "text-gray-500 bg-gray-50 border border-gray-200 hover:bg-gray-100"
+                        }`}
+                      >
+                        {breed.isFeatured ? (
+                          <Star className="w-3 h-3 fill-current" />
+                        ) : (
+                          <StarOff className="w-3 h-3" />
+                        )}
+                        {breed.isFeatured ? "Featured" : "Not Featured"}
+                      </button>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium">
                       <span className="text-gray-600">{breed.sortOrder}</span>

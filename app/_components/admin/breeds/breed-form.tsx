@@ -30,6 +30,7 @@ const breedSchema = z.object({
   temperament: z.string().optional(),
   lifeExpectancy: z.string().optional(),
   isActive: z.boolean().default(true),
+  isFeatured: z.boolean().default(false),
   sortOrder: z.number().min(0, 'Sort order must be 0 or greater').default(0),
   imageUrl: z.string().optional(),
 });
@@ -84,6 +85,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
       temperament: breed?.temperament || '',
       lifeExpectancy: breed?.lifeExpectancy || '',
       isActive: breed?.isActive ?? true,
+      isFeatured: breed?.isFeatured ?? false,
       sortOrder: breed?.sortOrder || 0,
       imageUrl: breed?.imageUrl || '',
     },
@@ -159,19 +161,36 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
           <h2 className="text-[22px] font-semibold">
             {breed ? 'Edit Breed' : 'Create New Breed'}
           </h2>
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-600">Status:</span>
+          <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <Switch
-                checked={watch('isActive')}
-                onCheckedChange={(checked) => setValue('isActive', checked)}
-                disabled={isLoading}
-              />
-              <span className={`text-sm font-medium ${
-                watch('isActive') ? 'text-[#74D27E]' : 'text-[#EE5D50]'
-              }`}>
-                {watch('isActive') ? 'Active' : 'Inactive'}
-              </span>
+              <span className="text-sm text-gray-600">Status:</span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={watch('isActive')}
+                  onCheckedChange={(checked) => setValue('isActive', checked)}
+                  disabled={isLoading}
+                />
+                <span className={`text-sm font-medium ${
+                  watch('isActive') ? 'text-[#74D27E]' : 'text-[#EE5D50]'
+                }`}>
+                  {watch('isActive') ? 'Active' : 'Inactive'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="text-sm text-gray-600">Featured:</span>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={watch('isFeatured')}
+                  onCheckedChange={(checked) => setValue('isFeatured', checked)}
+                  disabled={isLoading}
+                />
+                <span className={`text-sm font-medium ${
+                  watch('isFeatured') ? 'text-yellow-600' : 'text-gray-500'
+                }`}>
+                  {watch('isFeatured') ? 'Featured' : 'Not Featured'}
+                </span>
+              </div>
             </div>
           </div>
         </div>

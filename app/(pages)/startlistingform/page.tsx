@@ -10,7 +10,8 @@ import {
   getCommonFields,
   getContactFields,
   getMediaFields,
-  getDynamicFields
+  getDynamicFields,
+  GENDER_FIELD
 } from "@/_config/listing-types";
 import { isParentInfoRequired, getParentFields } from "@/_config/parent-fields";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
@@ -83,6 +84,16 @@ function Startlistingform() {
   const [showMotherSection, setShowMotherSection] = useState(false);
   const [showFatherSection, setShowFatherSection] = useState(false);
   const [showStudSection, setShowStudSection] = useState(false);
+
+  // Helper function to get dynamic labels based on gender selection
+  const getDynamicLabel = (fieldName: string, defaultLabel: string) => {
+    if (fieldName === 'fee' && formData.gender) {
+      return formData.gender === 'bitch' 
+        ? 'Price for Bitch Service' 
+        : 'Price for Stud Service';
+    }
+    return defaultLabel;
+  };
 
   // Add breedId to track the selected breed ID separately
   const [breedId, setBreedId] = useState<string | undefined>();
@@ -197,6 +208,7 @@ function Startlistingform() {
           }
           if (existingListing.breedId) setBreedId(existingListing.breedId);
           if (existingListing.price) initialData.price = existingListing.price;
+          if (existingListing.price) initialData.fee = existingListing.price; // Also populate fee field for stud listings
           if (existingListing.location) initialData.location = existingListing.location;
 
           // Populate contact info from metadata
@@ -235,8 +247,14 @@ function Startlistingform() {
           if (existingListing.metadata?.studImages) {
             initialData.studImages = existingListing.metadata.studImages;
           }
+          if (existingListing.metadata?.bitchImages) {
+            initialData.bitchImages = existingListing.metadata.bitchImages;
+          }
           if (existingListing.metadata?.studVideos) {
             initialData.studVideos = existingListing.metadata.studVideos;
+          }
+          if (existingListing.metadata?.bitchVideos) {
+            initialData.bitchVideos = existingListing.metadata.bitchVideos;
           }
 
           // Populate parent info from dedicated columns
@@ -259,12 +277,23 @@ function Startlistingform() {
           }
 
           if (existingListing.studInfo) {
-            initialData.studName = existingListing.studInfo.name;
-            initialData.studBreed = existingListing.studInfo.breed;
-            initialData.studColor = existingListing.studInfo.color;
-            initialData.studWeight = existingListing.studInfo.weight;
-            initialData.studTemperament = existingListing.studInfo.temperament;
-            initialData.studHealthInfo = existingListing.studInfo.healthInfo;
+            // Check if this is a bitch or stud based on the gender field
+            const isBitch = existingListing.fields?.gender === 'bitch';
+            if (isBitch) {
+              initialData.bitchName = existingListing.studInfo.name;
+              initialData.bitchBreed = existingListing.studInfo.breed;
+              initialData.bitchColor = existingListing.studInfo.color;
+              initialData.bitchWeight = existingListing.studInfo.weight;
+              initialData.bitchTemperament = existingListing.studInfo.temperament;
+              initialData.bitchHealthInfo = existingListing.studInfo.healthInfo;
+            } else {
+              initialData.studName = existingListing.studInfo.name;
+              initialData.studBreed = existingListing.studInfo.breed;
+              initialData.studColor = existingListing.studInfo.color;
+              initialData.studWeight = existingListing.studInfo.weight;
+              initialData.studTemperament = existingListing.studInfo.temperament;
+              initialData.studHealthInfo = existingListing.studInfo.healthInfo;
+            }
           }
 
           // Populate dynamic fields from the listing's fields
@@ -274,6 +303,11 @@ function Startlistingform() {
                 initialData[key] = value;
               }
             });
+          }
+
+          // Ensure gender field is properly set for stud listings
+          if (selectedListingType?.id === 'STUD_LISTING' && existingListing.fields?.gender) {
+            initialData.gender = existingListing.fields.gender;
           }
 
           // Special handling for wanted listings - populate fields from different sources
@@ -594,21 +628,21 @@ function Startlistingform() {
       };
 
       const studInfo = {
-        name: formData.studName,
-        breed: formData.studBreed,
-        color: formData.studColor,
-        weight: formData.studWeight,
-        temperament: formData.studTemperament,
-        healthInfo: formData.studHealthInfo
+        name: formData.gender === 'bitch' ? formData.bitchName : formData.studName,
+        breed: formData.gender === 'bitch' ? formData.bitchBreed : formData.studBreed,
+        color: formData.gender === 'bitch' ? formData.bitchColor : formData.studColor,
+        weight: formData.gender === 'bitch' ? formData.bitchWeight : formData.studWeight,
+        temperament: formData.gender === 'bitch' ? formData.bitchTemperament : formData.studTemperament,
+        healthInfo: formData.gender === 'bitch' ? formData.bitchHealthInfo : formData.studHealthInfo
       };
 
       // Extract parent media
       const motherImages = formData.motherImages || [];
       const fatherImages = formData.fatherImages || [];
-      const studImages = formData.studImages || [];
+      const studImages = formData.gender === 'bitch' ? (formData.bitchImages || []) : (formData.studImages || []);
       const motherVideos = formData.motherVideos || [];
       const fatherVideos = formData.fatherVideos || [];
-      const studVideos = formData.studVideos || [];
+      const studVideos = formData.gender === 'bitch' ? (formData.bitchVideos || []) : (formData.studVideos || []);
 
       // Also collect all file fields from dynamic fields for media arrays
       const allImages: string[] = [];
@@ -637,10 +671,22 @@ function Startlistingform() {
       const metadata: Record<string, any> = {};
       if (motherImages.length > 0) metadata.motherImages = motherImages;
       if (fatherImages.length > 0) metadata.fatherImages = fatherImages;
-      if (studImages.length > 0) metadata.studImages = studImages;
+      if (studImages.length > 0) {
+        if (formData.gender === 'bitch') {
+          metadata.bitchImages = studImages;
+        } else {
+          metadata.studImages = studImages;
+        }
+      }
       if (motherVideos.length > 0) metadata.motherVideos = motherVideos;
       if (fatherVideos.length > 0) metadata.fatherVideos = fatherVideos;
-      if (studVideos.length > 0) metadata.studVideos = studVideos;
+      if (studVideos.length > 0) {
+        if (formData.gender === 'bitch') {
+          metadata.bitchVideos = studVideos;
+        } else {
+          metadata.studVideos = studVideos;
+        }
+      }
 
       // Extract price from various possible fields
       const price = commonData.price || formData.pricePerPuppy || formData.fee || null;
@@ -755,7 +801,7 @@ function Startlistingform() {
     return tags;
   };
 
-  const isParentSectionComplete = (parentType: 'mother' | 'father' | 'stud'): boolean => {
+  const isParentSectionComplete = (parentType: 'mother' | 'father' | 'stud' | 'bitch'): boolean => {
     const fields = getParentFields(parentType);
     return !fields.some(field => {
       if (field.validation.required) {
@@ -872,6 +918,7 @@ function Startlistingform() {
               error={errors[field.name]}
               layout="single"
               onPendingDeletionsChange={handlePendingDeletions}
+              getDynamicLabel={getDynamicLabel}
             />
           ))}
         </div>
@@ -900,6 +947,7 @@ function Startlistingform() {
                   onChange={handleFieldChange}
                   error={errors[field.name]}
                   layout="single"
+                  getDynamicLabel={getDynamicLabel}
                 />
               </div>
             ))}
@@ -913,6 +961,7 @@ function Startlistingform() {
                   onChange={handleFieldChange}
                   error={errors[field.name]}
                   layout="single"
+                  getDynamicLabel={getDynamicLabel}
                 />
               </div>
             ))}
@@ -943,6 +992,7 @@ function Startlistingform() {
                   onChange={handleFieldChange}
                   error={errors[field.name]}
                   layout="single"
+                  getDynamicLabel={getDynamicLabel}
                 />
               </div>
             ))}
@@ -981,6 +1031,20 @@ function Startlistingform() {
             </div>
           </div>
 
+          {/* Gender Selection - Only for Stud Listings */}
+          {selectedListingType.id === 'STUD_LISTING' && (
+            <div className="w-full mt-6">
+              <DynamicFormField
+                field={GENDER_FIELD}
+                value={formData.gender}
+                onChange={handleFieldChange}
+                error={errors.gender}
+                layout="single"
+                getDynamicLabel={getDynamicLabel}
+              />
+            </div>
+          )}
+
           {/* Common Fields */}
           {commonFields.length > 0 && renderFieldGroup(commonFields, 'Basic Information')}
 
@@ -994,7 +1058,7 @@ function Startlistingform() {
            selectedListingType.id !== ListingTypeEnum.WANTED_LISTING && (
           <div className="w-full mt-8">
             <h2 className="text-2xl font-semibold text-gray-800 border-b border-gray-100 pb-4">
-              Parent Information 
+              {formData.gender === 'bitch' ? 'Bitch Details' : 'Stud Details'}
             </h2>
 
             {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
@@ -1018,8 +1082,12 @@ function Startlistingform() {
                           </svg>
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium text-gray-900">Stud Details</h3>
-                          <p className="text-sm text-gray-500">Required information about the stud</p>
+                          <h3 className="text-lg font-medium text-gray-900">
+                            {formData.gender === 'bitch' ? 'Bitch Details' : 'Stud Details'}
+                          </h3>
+                          <p className="text-sm text-gray-500">
+                            Required information about the {formData.gender === 'bitch' ? 'bitch' : 'stud'}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-3">
@@ -1027,11 +1095,11 @@ function Startlistingform() {
                           <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
                             Required
                           </span>
-                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete('stud')
+                          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!isParentSectionComplete(formData.gender === 'bitch' ? 'bitch' : 'stud')
                               ? 'bg-amber-50 text-amber-700 border border-amber-200'
                               : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                             }`}>
-                            {!isParentSectionComplete('stud') ? 'Incomplete' : 'Complete'}
+                            {!isParentSectionComplete(formData.gender === 'bitch' ? 'bitch' : 'stud') ? 'Incomplete' : 'Complete'}
                           </span>
                         </div>
                         <svg
@@ -1049,7 +1117,7 @@ function Startlistingform() {
                     {showStudSection && (
                       <div className="border-t border-gray-100 p-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                          {getParentFields('stud').map((field) => (
+                          {getParentFields(formData.gender === 'bitch' ? 'bitch' : 'stud').map((field) => (
                             <DynamicFormField
                               key={field.name}
                               field={{
@@ -1068,6 +1136,7 @@ function Startlistingform() {
                               layout="double"
                               category={field.uploadConfig?.category}
                               onPendingDeletionsChange={handlePendingDeletions}
+                              getDynamicLabel={getDynamicLabel}
                             />
                           ))}
                         </div>
@@ -1145,6 +1214,7 @@ function Startlistingform() {
                               layout="double"
                               category={field.uploadConfig?.category}
                               onPendingDeletionsChange={handlePendingDeletions}
+                              getDynamicLabel={getDynamicLabel}
                             />
                           ))}
                         </div>
@@ -1245,15 +1315,16 @@ function Startlistingform() {
               <span className="text-[32px] font-medium max-md:text-[28px] max-md:mt-10">Contact Details</span>
               <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
                 {contactFields.map((field) => (
-                  <DynamicFormField
-                    key={field.name}
-                    field={field}
-                    value={formData[field.name]}
-                    onChange={handleFieldChange}
-                    error={errors[field.name]}
-                    layout="double"
-                    onPendingDeletionsChange={handlePendingDeletions}
-                  />
+              <DynamicFormField
+                key={field.name}
+                field={field}
+                value={formData[field.name]}
+                onChange={handleFieldChange}
+                error={errors[field.name]}
+                layout="double"
+                onPendingDeletionsChange={handlePendingDeletions}
+                getDynamicLabel={getDynamicLabel}
+              />
                 ))}
               </div>
             </div>

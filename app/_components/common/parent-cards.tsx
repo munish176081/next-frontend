@@ -9,6 +9,7 @@ interface ParentCardsProps {
   fatherImages?: string[];
   motherVideos?: string[];
   fatherVideos?: string[];
+  gender?: 'stud' | 'bitch';
 }
 
 export default function ParentCards({
@@ -17,7 +18,8 @@ export default function ParentCards({
   motherImages = [],
   fatherImages = [],
   motherVideos = [],
-  fatherVideos = []
+  fatherVideos = [],
+  gender = 'stud'
 }: ParentCardsProps) {
   const hasMotherInfo = motherInfo && Object.values(motherInfo).some(v => v);
   const hasFatherInfo = fatherInfo && Object.values(fatherInfo).some(v => v);
@@ -66,7 +68,7 @@ export default function ParentCards({
         <div className="flex items-center gap-2 mb-3">
           <span className="text-xl">{icon}</span>
           <h3 className={`font-semibold ${textColor}`}>
-            {isMother ? 'Mother' : 'Father'} Information
+            {isMother ? 'Mother' : (gender === 'bitch' ? 'Bitch' : 'Stud')} Information
           </h3>
         </div>
 

@@ -11,12 +11,13 @@ export interface ParentFieldValidation {
 
 export interface ParentField {
   name: string;
-  type: 'text' | 'textarea' | 'file' | 'select';
+  type: 'text' | 'textarea' | 'file' | 'select' | 'radio';
   label: string;
   placeholder?: string;
   validation: ParentFieldValidation;
+  options?: { value: string; label: string }[];
   uploadConfig?: {
-    category: 'mother' | 'father' | 'stud';
+    category: 'mother' | 'father' | 'stud' | 'bitch';
     customLabel: string;
     icon: string;
     className: string;
@@ -31,6 +32,7 @@ export interface ParentFieldConfig {
     mother: ParentField[];
     father: ParentField[];
     stud: ParentField[];
+    bitch: ParentField[];
   };
   // TODO: Cross-field validation (commented for client confirmation)
   // crossFieldValidation?: {
@@ -265,12 +267,82 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
           accept: "video/*"
         }
       }
+    ],
+    bitch: [
+      {
+        name: "bitchName",
+        type: "text",
+        label: "Name",
+        placeholder: "Enter bitch's name",
+        validation: { required: true, minLength: 2, maxLength: 50 }
+      },
+      {
+        name: "bitchBreed",
+        type: "select",
+        label: "Breed",
+        placeholder: "Select bitch's breed",
+        validation: { required: true }
+      },
+      {
+        name: "bitchColor",
+        type: "text",
+        label: "Color",
+        placeholder: "Enter bitch's color",
+        validation: { required: false, maxLength: 50 }
+      },
+      {
+        name: "bitchWeight",
+        type: "text",
+        label: "Weight",
+        placeholder: "e.g., 28kg",
+        validation: { required: false, maxLength: 20 }
+      },
+      {
+        name: "bitchTemperament",
+        type: "textarea",
+        label: "Temperament",
+        placeholder: "Describe bitch's temperament",
+        validation: { required: false, maxLength: 200 }
+      },
+      {
+        name: "bitchHealthInfo",
+        type: "textarea",
+        label: "Health Information",
+        placeholder: "e.g., DNA Tested, Hip Scored, Vaccinated",
+        validation: { required: false, maxLength: 300 }
+      },
+      {
+        name: "bitchImages",
+        type: "file",
+        label: "Photos",
+        validation: { required: true, minCount: 1, maxCount: 5 },
+        uploadConfig: {
+          category: "bitch",
+          customLabel: "Bitch's Photos",
+          icon: "🐕",
+          className: "bitch-upload",
+          accept: "image/*"
+        }
+      },
+      {
+        name: "bitchVideos",
+        type: "file",
+        label: "Videos",
+        validation: { required: false, maxCount: 2 },
+        uploadConfig: {
+          category: "bitch",
+          customLabel: "Bitch's Videos",
+          icon: "🐕",
+          className: "bitch-upload",
+          accept: "video/*"
+        }
+      }
     ]
   }
 };
 
 // Helper functions for field management
-export const getParentFields = (parentType: 'mother' | 'father' | 'stud'): ParentField[] => {
+export const getParentFields = (parentType: 'mother' | 'father' | 'stud' | 'bitch'): ParentField[] => {
   return PARENT_FIELD_CONFIG.fields[parentType];
 };
 
@@ -278,7 +350,7 @@ export const isParentInfoRequired = (listingType: ListingTypeEnum): boolean => {
   return PARENT_FIELD_CONFIG.listingTypes[listingType]?.required ?? PARENT_FIELD_CONFIG.required;
 };
 
-export const getParentFieldByName = (parentType: 'mother' | 'father' | 'stud', fieldName: string): ParentField | undefined => {
+export const getParentFieldByName = (parentType: 'mother' | 'father' | 'stud' | 'bitch', fieldName: string): ParentField | undefined => {
   return PARENT_FIELD_CONFIG.fields[parentType].find(field => field.name === fieldName);
 };
 
@@ -290,6 +362,10 @@ export const validateParentField = (field: ParentField, value: any): string | nu
     if (field.type === 'file') {
       const files = Array.isArray(value) ? value : [];
       if (files.length === 0) {
+        return `${field.label} is required`;
+      }
+    } else if (field.type === 'radio') {
+      if (!value || value.toString().trim() === '') {
         return `${field.label} is required`;
       }
     } else if (!value || value.toString().trim() === '') {

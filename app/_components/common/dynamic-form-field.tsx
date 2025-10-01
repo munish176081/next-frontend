@@ -19,11 +19,12 @@ interface DynamicFormFieldProps {
   onChange: (name: string, value: any, breedId?: string) => void;
   error?: string;
   layout?: 'single' | 'double';
-  category?: 'mother' | 'father' | 'stud';
+  category?: 'mother' | 'father' | 'stud' | 'bitch';
   onPendingDeletionsChange?: (fieldName: string, pendingUrls: string[]) => void;
+  getDynamicLabel?: (fieldName: string, defaultLabel: string) => string;
 }
 
-export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange }: DynamicFormFieldProps) {
+export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange, getDynamicLabel }: DynamicFormFieldProps) {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
@@ -952,7 +953,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   return (
     <div className={containerClasses}>
       <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
-        {field.label}
+        {getDynamicLabel ? getDynamicLabel(field.name, field.label) : field.label}
         {field.required && <span className="text-red-500 ml-1">*</span>}
       </label>
       {renderField()}
