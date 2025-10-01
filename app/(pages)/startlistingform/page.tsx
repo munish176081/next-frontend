@@ -87,8 +87,11 @@ function Startlistingform() {
 
   // Helper function to get dynamic labels based on gender selection
   const getDynamicLabel = (fieldName: string, defaultLabel: string) => {
-    if (fieldName === 'fee' && formData.gender) {
-      return formData.gender === 'bitch' 
+    if (fieldName === 'fee') {
+      // Use the current gender value or default to 'stud' if not set
+      const currentGender = formData.gender || 'stud';
+      console.log('getDynamicLabel - fieldName:', fieldName, 'currentGender:', currentGender, 'formData.gender:', formData.gender);
+      return currentGender === 'bitch' 
         ? 'Price for Bitch Service' 
         : 'Price for Stud Service';
     }
@@ -171,6 +174,11 @@ function Startlistingform() {
             initialData[field.name] = '';
           }
         });
+
+        // Initialize gender field for stud listings
+        if (listingData.id === 'STUD_LISTING') {
+          initialData.gender = 'stud';
+        }
 
         // Initialize parent fields
         const motherFields = getParentFields('mother');
@@ -354,6 +362,8 @@ function Startlistingform() {
           }
         }
 
+        console.log('Setting initial form data:', initialData);
+        console.log('Gender field value:', initialData.gender);
         setFormData(initialData);
       }
     }
@@ -371,8 +381,14 @@ function Startlistingform() {
   }, [breedId, existingListing, selectedListingType]);
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
+    console.log('handleFieldChange - name:', name, 'value:', value);
+    if (name === 'gender') {
+      console.log('Gender changed to:', value);
+    }
+    
     setFormData(prev => {
       const newData = { ...prev, [name]: value };
+      console.log('Updated form data:', newData);
       return newData;
     });
 
@@ -935,6 +951,7 @@ function Startlistingform() {
                 onChange={handleFieldChange}
                 error={errors[field.name]}
                 layout="double"
+                getDynamicLabel={getDynamicLabel}
               />
             ))}
             
@@ -978,6 +995,7 @@ function Startlistingform() {
                       onChange={handleFieldChange}
                       error={errors[field.name]}
                       layout="double"
+                      getDynamicLabel={getDynamicLabel}
                     />
                   ))}
                 </div>
