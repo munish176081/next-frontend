@@ -625,7 +625,6 @@ export const LISTING_TYPES: ListingType[] = [
     requiredFields: [
       COMMON_FIELDS.title,
       COMMON_FIELDS.breed,
-      GENDER_FIELD,
       {
         name: 'dogName',
         label: 'Dog Name',
