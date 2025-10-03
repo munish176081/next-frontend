@@ -33,15 +33,14 @@ export const PUPPY_LISTING_FIELD_CONFIG: FieldConfig = {
     
     // Required Information fields (required dynamic fields)
     required: [
-      'pricingOption', 'puppyImages', 'dnaResults', 'dateOfBirth', 
-      'puppyGender', 'vaccinationStatus', 'fixedPrice', 
+      'pricingOption', 'fixedPrice', 'minPrice', 'maxPrice', 'puppyImages', 
+      'dnaResults', 'dateOfBirth', 'puppyGender', 'vaccinationStatus', 
       'deliveryOptions', 'microchipNumber', 'registrationNumber'
     ],
     
     // Additional Information fields (optional dynamic fields)
     additional: [
-      'minPrice', 'maxPrice', 'puppyVideoUrls', 'healthCertificates',
-      'litterSize', 'sireName', 'damName', 'badges'
+      'puppyVideoUrls', 'healthCertificates', 'litterSize', 'sireName', 'damName', 'badges'
     ],
     
     // Contact fields order

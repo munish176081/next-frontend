@@ -261,7 +261,89 @@ export default function PuppyListingForm({
       {commonFields.length > 0 && baseForm.renderFieldGroup(commonFields, 'Basic Information', 'basic')}
 
       {/* Required Information */}
-      {dynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(dynamicRequiredFields, 'Required Information', 'required')}
+      {dynamicRequiredFields.length > 0 && (
+        <div className="w-full">
+          <h2 className="text-[32px] font-medium mt-8 max-md:text-[28px] max-md:mt-10">Required Information</h2>
+          
+          {/* Pricing fields first - at the top */}
+          {(() => {
+            const pricingFields = dynamicRequiredFields.filter(field => 
+              PUPPY_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
+              baseForm.shouldDisplayField(field)
+            );
+            
+            if (pricingFields.length > 0) {
+              return (
+                <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4 mb-6">
+                  {/* Pricing Option - Full Width */}
+                  {pricingFields.filter(field => field.name === 'pricingOption').map((field) => (
+                    <div key={field.name} className="col-span-2">
+                      <DynamicFormField
+                        field={field}
+                        value={formData[field.name]}
+                        onChange={handleFieldChange}
+                        error={errors[field.name]}
+                        layout="single"
+                        onPendingDeletionsChange={handlePendingDeletions}
+                        getDynamicLabel={baseForm.getDynamicLabel}
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Fixed Price - Full Width */}
+                  {pricingFields.filter(field => field.name === 'fixedPrice').map((field) => (
+                    <div key={field.name} className="col-span-2">
+                      <DynamicFormField
+                        field={field}
+                        value={formData[field.name]}
+                        onChange={handleFieldChange}
+                        error={errors[field.name]}
+                        layout="single"
+                        onPendingDeletionsChange={handlePendingDeletions}
+                        getDynamicLabel={baseForm.getDynamicLabel}
+                      />
+                    </div>
+                  ))}
+                  
+                  {/* Min/Max Price - Side by Side with Gray Background (matching future listing) */}
+                  {pricingFields.filter(field => field.name === 'minPrice' || field.name === 'maxPrice').length > 0 && (
+                    <div className="col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-6">
+                      <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
+                        {pricingFields.filter(field => field.name === 'minPrice' || field.name === 'maxPrice').map((field) => (
+                          <DynamicFormField
+                            key={field.name}
+                            field={field}
+                            value={formData[field.name]}
+                            onChange={handleFieldChange}
+                            error={errors[field.name]}
+                            layout="double"
+                            onPendingDeletionsChange={handlePendingDeletions}
+                            getDynamicLabel={baseForm.getDynamicLabel}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              );
+            }
+            return null;
+          })()}
+          
+          {/* Other required fields */}
+          {(() => {
+            const nonPricingFields = dynamicRequiredFields.filter(field => 
+              !PUPPY_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
+              baseForm.shouldDisplayField(field)
+            );
+            
+            if (nonPricingFields.length > 0) {
+              return baseForm.renderFieldGroup(nonPricingFields, '', 'required');
+            }
+            return null;
+          })()}
+        </div>
+      )}
 
       {/* Additional Information */}
       {dynamicOptionalFields.length > 0 && baseForm.renderFieldGroup(dynamicOptionalFields, 'Additional Information', 'additional')}
