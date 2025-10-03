@@ -639,7 +639,7 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       COMMON_FIELDS.location,
-      COMMON_FIELDS.price,
+      // COMMON_FIELDS.price,
       COMMON_FIELDS.fee,
       {
         name: 'registrationNumber',

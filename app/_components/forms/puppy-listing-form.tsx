@@ -252,22 +252,7 @@ export default function PuppyListingForm({
   // Get categorized fields
   const commonFields = getCommonFields(selectedListingType);
   const contactFields = getContactFields(selectedListingType);
-  const allDynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
-  
-  // Manually order the required fields according to the specified order
-  const fieldOrder = [
-    'pricingOption', 'puppyImages', 'dnaResults', 'dateOfBirth', 
-    'puppyGender', 'vaccinationStatus', 'fixedPrice', 
-    'deliveryOptions', 'microchipNumber', 'registrationNumber'
-  ];
-  
-  const dynamicRequiredFields = fieldOrder.map(fieldName => 
-    allDynamicRequiredFields.find(field => field.name === fieldName)
-  ).filter((field): field is ListingField => field !== undefined);
-
-  // Debug: Log the field order
-  console.log('Ordered required fields:', dynamicRequiredFields.map(f => f.name));
-  
+  const dynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
   const dynamicOptionalFields = selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
 
   return (
@@ -276,41 +261,7 @@ export default function PuppyListingForm({
       {commonFields.length > 0 && baseForm.renderFieldGroup(commonFields, 'Basic Information', 'basic')}
 
       {/* Required Information */}
-      {dynamicRequiredFields.length > 0 && (
-        <div className="w-full">
-          <h2 className="text-[32px] font-medium mt-8 max-md:text-[28px] max-md:mt-10">Required Information</h2>
-          
-          {/* Single row fields */}
-          <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4">
-            {dynamicRequiredFields.map((field) => {
-              // Determine layout based on field configuration
-              let layout = 'single';
-              if (PUPPY_LISTING_FIELD_CONFIG.layouts.full.includes(field.name)) {
-                layout = 'full';
-              } else if (PUPPY_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name)) {
-                layout = 'pricing-group';
-              } else if (PUPPY_LISTING_FIELD_CONFIG.layouts.fileTypes.includes(field.type)) {
-                layout = 'single';
-              } else if (PUPPY_LISTING_FIELD_CONFIG.layouts.textareaTypes.includes(field.type)) {
-                layout = 'single';
-              }
-              
-              return (
-                <DynamicFormField
-                  key={field.name}
-                  field={field}
-                  value={formData[field.name]}
-                  onChange={handleFieldChange}
-                  error={errors[field.name]}
-                  layout={layout as any}
-                  onPendingDeletionsChange={handlePendingDeletions}
-                  getDynamicLabel={baseForm.getDynamicLabel}
-                />
-              );
-            })}
-          </div>
-        </div>
-      )}
+      {dynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(dynamicRequiredFields, 'Required Information', 'required')}
 
       {/* Additional Information */}
       {dynamicOptionalFields.length > 0 && baseForm.renderFieldGroup(dynamicOptionalFields, 'Additional Information', 'additional')}

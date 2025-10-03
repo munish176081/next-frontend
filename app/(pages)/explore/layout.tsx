@@ -8,7 +8,7 @@ export default function ListingLayout({ children }: React.PropsWithChildren) {
       <Header />
       <main className="flex-grow bg-gray-main pb-12 max-md:pb-4">
         <Suspense>{children}</Suspense>
-        <Footer />
+        {/* <Footer /> */}
       </main>
     </>
   );
