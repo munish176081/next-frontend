@@ -218,6 +218,47 @@ export const LISTING_TYPES: ListingType[] = [
       COMMON_FIELDS.title,
       COMMON_FIELDS.breed,
       {
+        name: 'pricingOption',
+        label: 'Pricing Option',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'fixedPrice', label: 'Fixed Price' },
+          { value: 'displayPriceRange', label: 'Display price range' },
+          { value: 'priceOnRequest', label: 'Price on Request' }
+         
+        ],
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'puppyImages',
+        label: 'Upload Puppy Images',
+        type: 'file',
+        required: true,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*',
+          maxSize: 5,
+          minCount: 1,
+          maxCount: 5
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
+        name: 'dnaResults',
+        label: 'Upload DNA Results',
+        type: 'file',
+        required: true,
+        fileConfig: {
+          multiple: true,
+          accept: '.pdf,.doc,.docx',
+          maxSize: 10,
+          minCount: 1,
+          maxCount: 5
+        },
+        fieldCategory: 'dynamic'
+      },
+      {
         name: 'dateOfBirth',
         label: 'Date of Birth',
         type: 'date',
@@ -241,36 +282,10 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       {
-        name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available (Select All That Apply)',
-        type: 'checkbox',
-        required: true,
-        options: [
-          { value: 'Pickup', label: 'Pickup' },
-          { value: 'Road Transport', label: 'Road Transport' },
-          { value: 'Air Transport', label: 'Air Transport' }
-        ],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'pricingOption',
-        label: 'Pricing Option',
-        type: 'radio',
-        required: true,
-        options: [
-          { value: 'fixedPrice', label: 'Fixed Price' },
-          { value: 'displayPriceRange', label: 'Display price range' },
-          { value: 'priceOnRequest', label: 'Price on Request' }
-         
-        ],
-        fieldCategory: 'dynamic'
-      },
-      {
         name: 'fixedPrice',
         label: 'Fixed Price',
         type: 'number',
         required: true,
-
         placeholder: 'Enter fixed price',
         validation: { min: 0 },
         fieldCategory: 'dynamic',
@@ -305,27 +320,16 @@ export const LISTING_TYPES: ListingType[] = [
           value: 'displayPriceRange'
         }
       },
-     
       {
-        name: 'registrationNumber',
-        label: 'ANKC / State Breeder Registration Number',
-        type: 'text',
+        name: 'deliveryOptions',
+        label: 'Pickup / Delivery Available (Select All That Apply)',
+        type: 'checkbox',
         required: true,
-        placeholder: 'Enter registration number',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'puppyImages',
-        label: 'Upload Puppy Images',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*',
-          maxSize: 5,
-          minCount: 1,
-          maxCount: 5
-        },
+        options: [
+          { value: 'Pickup', label: 'Pickup' },
+          { value: 'Road Transport', label: 'Road Transport' },
+          { value: 'Air Transport', label: 'Air Transport' }
+        ],
         fieldCategory: 'dynamic'
       },
       {
@@ -344,20 +348,14 @@ export const LISTING_TYPES: ListingType[] = [
           removeButtonText: 'Remove'
         }
       },
-      {
-        name: 'dnaResults',
-        label: 'Upload DNA Results',
-        type: 'file',
-        required: false,
-        fileConfig: {
-          multiple: true,
-          accept: '.pdf,.doc,.docx',
-          maxSize: 10,
-          minCount: 1,
-          maxCount: 5
-        },
-        fieldCategory: 'dynamic'
-      }
+      // {
+      //   name: 'registrationNumber',
+      //   label: 'ANKC / State Breeder Registration Number',
+      //   type: 'text',
+      //   required: true,
+      //   placeholder: 'Enter registration number',
+      //   fieldCategory: 'dynamic'
+      // }
     ],
     optionalFields: [
       COMMON_FIELDS.description,
@@ -393,22 +391,22 @@ export const LISTING_TYPES: ListingType[] = [
         validation: { min: 1 },
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'sireName',
-        label: 'Sire Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter sire (father) name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'damName',
-        label: 'Dame Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter dame (mother) name',
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'sireName',
+      //   label: 'Sire Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter sire (father) name',
+      //   fieldCategory: 'dynamic'
+      // },
+      // {
+      //   name: 'damName',
+      //   label: 'Dame Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter dame (mother) name',
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'badges',
         label: 'Select Badges',
@@ -536,22 +534,22 @@ export const LISTING_TYPES: ListingType[] = [
       
       COMMON_FIELDS.description,
       COMMON_FIELDS.location,
-      {
-        name: 'sireName',
-        label: 'Sire Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter sire (father) name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'damName',
-        label: 'Dame Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter dame (mother) name',
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'sireName',
+      //   label: 'Sire Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter sire (father) name',
+      //   fieldCategory: 'dynamic'
+      // },
+      // {
+      //   name: 'damName',
+      //   label: 'Dame Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter dame (mother) name',
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'healthCertificates',
         label: 'Health Certificates',
@@ -1042,14 +1040,14 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter website or booking URL',
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'pricing',
-        label: 'Pricing',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter pricing information',
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'pricing',
+      //   label: 'Pricing',
+      //   type: 'textarea',
+      //   required: false,
+      //   placeholder: 'Enter pricing information',
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'businessABN',
         label: 'Business ABN',
@@ -1058,14 +1056,14 @@ export const LISTING_TYPES: ListingType[] = [
         placeholder: 'Enter business ABN',
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'operatingHours',
-        label: 'Operating Hours',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter operating hours',
-        fieldCategory: 'dynamic'
-      }
+      // {
+      //   name: 'operatingHours',
+      //   label: 'Operating Hours',
+      //   type: 'textarea',
+      //   required: false,
+      //   placeholder: 'Enter operating hours',
+      //   fieldCategory: 'dynamic'
+      // }
     ]
   }
 ];
