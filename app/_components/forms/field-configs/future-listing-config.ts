@@ -31,8 +31,8 @@ export const FUTURE_LISTING_FIELD_CONFIG: FieldConfig = {
     
     // Required Information fields
     required: [
-      'expectedDateOfBirth', 'estimatedAvailabilityDate', 'registrationNumber', 
-      'puppyImages', 'pricingOption', 'fixedPrice', 'minPrice', 'maxPrice'
+      'pricingOption', 'fixedPrice', 'minPrice', 'maxPrice', 'expectedDateOfBirth', 
+      'estimatedAvailabilityDate', 'registrationNumber', 'puppyImages'
     ],
     
     // Additional Information fields
