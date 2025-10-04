@@ -8,9 +8,10 @@ interface DashboardCardProps {
   icon?: LucideIcon;
   children: ReactNode;
   className?: string;
+  action?: ReactNode;
 }
 
-export const DashboardCard = ({ title, icon: Icon, children, className = "" }: DashboardCardProps) => {
+export const DashboardCard = ({ title, icon: Icon, children, className = "", action }: DashboardCardProps) => {
   return (
     <div className={`flex flex-col border border-black/20 rounded-[20px] ${className}`}>
       <div className="flex gap-4 items-center px-4 min-h-20 justify-between">
@@ -22,6 +23,7 @@ export const DashboardCard = ({ title, icon: Icon, children, className = "" }: D
           )}
           {title}
         </span>
+        {action && <div>{action}</div>}
       </div>
       <div className="flex-1 min-h-[400px]">
         {children}

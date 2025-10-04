@@ -25,6 +25,17 @@ export {
   type ActivityLogFilterParams
 } from "./use-admin-activity-logs";
 
+// Recent Activities (Specialized)
+export {
+  useRecentActivities as useRecentActivitiesFeed,
+  useRecentActivitiesStats,
+  useRecentSignups,
+  useRecentListings,
+  type RecentActivity,
+  type RecentActivitiesResponse,
+  type RecentActivitiesStats
+} from "./use-recent-activities";
+
 // Breeds Management
 export {
   useAdminBreeds,

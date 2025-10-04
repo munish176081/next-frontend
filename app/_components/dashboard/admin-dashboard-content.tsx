@@ -7,6 +7,7 @@ import { ActivityStats } from "@/_components/admin/activity-logs/activity-stats"
 import { UserManagementCard } from "@/_components/admin/user-management/user-management-card";
 import { RecentUsersTable } from "@/_components/admin/user-management/recent-users-table";
 import { SimpleAnalyticsChart } from "@/_components/admin/charts/simple-analytics-chart";
+import { SignupListingActivity } from "@/_components/admin/activity-feed/signup-listing-activity";
 import { useWeeklyUserAnalytics } from "@/_services/hooks/admin/use-admin-dashboard";
 
 const alerts = [
@@ -34,63 +35,51 @@ export const AdminDashboardContent = () => {
   const { data: weeklyData, isLoading: weeklyLoading } = useWeeklyUserAnalytics();
 
   return (
-    <div className="flex flex-col w-full gap-4 max-md:flex-col">
-      <div className="flex flex-col w-full gap-4 max-md:flex-col">
-        <div className="flex gap-4 h-full max-md:flex-col max-md:w-full">
-          {/* System Analytics Card */}
+    <div className="w-full space-y-6">
+      {/* Top Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2">
           <SimpleAnalyticsChart 
             data={weeklyData || []} 
             isLoading={weeklyLoading}
-            className="min-w-[298px] max-md:min-w-full max-md:max-w-full w-full"
+            className="w-full h-full"
           />
-
-          {/* User Management Card */}
+        </div>
+        <div className="space-y-6">
           <UserManagementCard />
-
-          {/* System Alerts Card */}
-          <DashboardCard title="System Alerts" icon={AlertTriangle} className="max-w-[298px] max-md:min-w-full max-md:max-w-full w-full">
-            <div className="flex mx-4 flex-col gap-2 max-md:pb-4">
+          <DashboardCard title="System Alerts" icon={AlertTriangle}>
+            <div className="p-4 space-y-3">
               {alerts.map((alert, index) => (
-                <div key={index} className="flex flex-col bg-[#F3F3F3] px-4 py-2.5 rounded-full gap-1">
-                  <div className="flex gap-2 text-[10px] font-semibold items-center relative">
-                    <span className={`size-1.5 rounded-full ${
-                      alert.priority === 'high' ? 'bg-[#FFCE20]' : 
-                      alert.priority === 'info' ? 'bg-[#74D27E]' : 'bg-[#74D27E]'
-                    } absolute left-[18px] top-[18px] border border-white`}></span>
-                    <span className="size-6 rounded-full overflow-hidden">
-                      <img className="w-full h-full object-cover" src="/images/vectors/profile.jpg" alt="" />
-                    </span>
-                    {alert.type}
-                    <span className={`size-3 rounded-full ${
-                      alert.priority === 'high' ? 'bg-[#EE5D50]' : 
-                      alert.priority === 'info' ? 'bg-[#74D27E]' : 'bg-[#74D27E]'
-                    } flex items-center justify-center text-[8px] text-white`}>
+                <div key={index} className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg">
+                  <div className="flex-shrink-0 pt-1">
+                    <span className={`size-3 rounded-full flex items-center justify-center text-xs text-white font-bold ${
+                      alert.priority === 'high' ? 'bg-red-500' : 
+                      alert.priority === 'info' ? 'bg-green-500' : 'bg-yellow-500'
+                    }`}>
                       {alert.icon}
                     </span>
                   </div>
-                  <span className="text-[9px] whitespace-nowrap text-ellipsis block overflow-hidden text-[#888787]">
-                    {alert.message}
-                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-800">{alert.type}</p>
+                    <p className="text-sm text-gray-600">{alert.message}</p>
+                  </div>
                 </div>
               ))}
-              <button className="w-full h-16 bg-black text-white text-[22px] rounded-full max-md:h-12 max-md:text-base">
-                View Alerts
-              </button>
             </div>
           </DashboardCard>
         </div>
-
-                  {/* Recent Users Table */}
-          <RecentUsersTable />
       </div>
 
-      {/* Right Sidebar */}
-      <div className="flex flex-col w-72 min-w-72 gap-4 max-md:w-full max-md:min-w-full">
-        {/* Recent Activities */}
-        <RecentActivities limit={5} className="w-full" />
+      {/* Recent Users Table */}
+      <div>
+        <RecentUsersTable />
+      </div>
 
-        {/* Activity Statistics */}
-        <ActivityStats className="w-full mt-auto" />
+      {/* Activity Feeds */}
+      <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+        <SignupListingActivity limit={5} className="w-full" />
+        <RecentActivities limit={5} className="w-full" />
+        <ActivityStats className="w-full" />
       </div>
     </div>
   );

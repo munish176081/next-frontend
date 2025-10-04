@@ -1,168 +1,105 @@
 "use client";
 
 import { useActivityStats } from "@/_services/hooks/admin/use-admin-activity-logs";
-import { Card, CardContent, CardHeader, CardTitle } from "@/_components/ui/card";
-import { Badge } from "@/_components/ui/badge";
-import { 
-  BarChart3, 
-  TrendingUp, 
-  Users, 
-  Activity, 
-  AlertTriangle,
-  RefreshCw,
-  AlertCircle 
-} from "lucide-react";
-import { Button } from "@/_components/ui/button";
+import { DashboardCard } from "@/_components/common/dashboard-widgets";
+import { Activity, Users, AlertTriangle, List, RefreshCw } from "lucide-react";
 
 interface ActivityStatsProps {
-  showTitle?: boolean;
   className?: string;
 }
 
-export const ActivityStats = ({ showTitle = true, className = "" }: ActivityStatsProps) => {
-  const { data, isLoading, error, refetch } = useActivityStats();
+export const ActivityStats = ({ className = "" }: ActivityStatsProps) => {
+  const { data: stats, isLoading, error, refetch } = useActivityStats();
 
   if (isLoading) {
     return (
-      <Card className={className}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center space-x-2">
-            <RefreshCw className="w-4 h-4 animate-spin" />
-            <span className="text-sm text-gray-500">Loading activity statistics...</span>
-          </div>
-        </CardContent>
-      </Card>
+      <DashboardCard title="Activity Statistics" icon={Activity} className={className}>
+        <div className="p-4 space-y-3 animate-pulse">
+          <div className="h-8 bg-gray-200 rounded-md w-3/4"></div>
+          <div className="h-6 bg-gray-200 rounded-md w-1/2"></div>
+          <div className="h-6 bg-gray-200 rounded-md w-2/3"></div>
+        </div>
+      </DashboardCard>
     );
   }
 
   if (error) {
     return (
-      <Card className={className}>
-        <CardContent className="p-6">
-          <div className="flex items-center justify-center space-x-2 text-red-500">
-            <AlertCircle className="w-4 h-4" />
-            <span className="text-sm">Failed to load activity statistics</span>
-          </div>
-        </CardContent>
-      </Card>
+      <DashboardCard title="Activity Statistics" icon={Activity} className={className}>
+        <div className="p-4 text-center">
+          <p className="text-sm text-red-600">Failed to load stats</p>
+        </div>
+      </DashboardCard>
     );
   }
 
-  if (!data) return null;
-
   return (
-    <Card className={className}>
-      {showTitle && (
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center space-x-2">
-              <BarChart3 className="w-5 h-5" />
-              <span>Activity Statistics</span>
-            </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => refetch()}
-              className="h-8"
-            >
-              <RefreshCw className="w-3 h-3 mr-1" />
-              Refresh
-            </Button>
+    <DashboardCard 
+      title="Activity Statistics" 
+      icon={Activity} 
+      className={className}
+      action={
+        <button
+          onClick={() => refetch()}
+          className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+          title="Refresh"
+        >
+          <RefreshCw className="w-4 h-4 text-gray-500" />
+        </button>
+      }
+    >
+      <div className="p-4">
+        <div className="grid grid-cols-2 gap-3 mb-4">
+          <div className="bg-blue-50 text-blue-800 p-3 rounded-lg text-center">
+            <p className="text-2xl font-bold">{stats?.totalActivities || 0}</p>
+            <p className="text-xs font-medium">Total</p>
           </div>
-        </CardHeader>
-      )}
-      
-      <CardContent className="pt-0">
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          {/* Total Activities */}
-          <div className="text-center p-3 bg-blue-50 rounded-lg">
-            <Activity className="w-6 h-6 mx-auto mb-2 text-blue-600" />
-            <div className="text-2xl font-bold text-blue-600">
-              {data.totalActivities.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600">Total Activities</div>
+          <div className="bg-green-50 text-green-800 p-3 rounded-lg text-center">
+            <p className="text-2xl font-bold">{stats?.activitiesToday || 0}</p>
+            <p className="text-xs font-medium">Today</p>
           </div>
-
-          {/* Today's Activities */}
-          <div className="text-center p-3 bg-green-50 rounded-lg">
-            <TrendingUp className="w-6 h-6 mx-auto mb-2 text-green-600" />
-            <div className="text-2xl font-bold text-green-600">
-              {data.activitiesToday.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600">Today</div>
+          <div className="bg-yellow-50 text-yellow-800 p-3 rounded-lg text-center">
+            <p className="text-2xl font-bold">{stats?.activitiesThisWeek || 0}</p>
+            <p className="text-xs font-medium">This Week</p>
           </div>
-
-          {/* This Week */}
-          <div className="text-center p-3 bg-yellow-50 rounded-lg">
-            <BarChart3 className="w-6 h-6 mx-auto mb-2 text-yellow-600" />
-            <div className="text-2xl font-bold text-yellow-600">
-              {data.activitiesThisWeek.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600">This Week</div>
-          </div>
-
-          {/* This Month */}
-          <div className="text-center p-3 bg-purple-50 rounded-lg">
-            <Users className="w-6 h-6 mx-auto mb-2 text-purple-600" />
-            <div className="text-2xl font-bold text-purple-600">
-              {data.activitiesThisMonth.toLocaleString()}
-            </div>
-            <div className="text-xs text-gray-600">This Month</div>
+          <div className="bg-purple-50 text-purple-800 p-3 rounded-lg text-center">
+            <p className="text-2xl font-bold">{stats?.activitiesThisMonth || 0}</p>
+            <p className="text-xs font-medium">This Month</p>
           </div>
         </div>
 
-        {/* Top Activity Types */}
-        <div className="space-y-4">
+        <div className="space-y-3">
           <div>
-            <h4 className="font-medium text-sm mb-3 flex items-center space-x-2">
-              <AlertTriangle className="w-4 h-4" />
-              <span>Top Activity Types</span>
+            <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+              <List className="w-4 h-4 text-gray-500" />
+              Top Activity Types
             </h4>
-            <div className="space-y-2">
-              {data.topActivityTypes.slice(0, 5).map((item, index) => (
-                <div key={item.type} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
-                      #{index + 1}
-                    </Badge>
-                    <span className="text-sm font-medium">
-                      {item.type.replace(/_/g, ' ').toLowerCase()}
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {item.count}
-                  </Badge>
+            <div className="space-y-1 text-sm">
+              {stats?.topActivityTypes.map((type, index) => (
+                <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded-md">
+                  <span className="font-medium text-gray-700">#{index + 1} {type.type}</span>
+                  <span className="font-bold text-gray-800">{type.count}</span>
                 </div>
               ))}
             </div>
           </div>
 
-          {/* Top Actors */}
           <div>
-            <h4 className="font-medium text-sm mb-3 flex items-center space-x-2">
-              <Users className="w-4 h-4" />
-              <span>Top Actors</span>
+            <h4 className="text-sm font-semibold text-gray-800 mb-2 flex items-center gap-2">
+              <Users className="w-4 h-4 text-gray-500" />
+              Top Actors
             </h4>
-            <div className="space-y-2">
-              {data.topActors.slice(0, 5).map((actor, index) => (
-                <div key={actor.actorId} className="flex items-center justify-between p-2 bg-gray-50 rounded">
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
-                      #{index + 1}
-                    </Badge>
-                    <span className="text-sm font-medium truncate max-w-[150px]">
-                      {actor.actorEmail}
-                    </span>
-                  </div>
-                  <Badge variant="secondary" className="text-xs">
-                    {actor.count}
-                  </Badge>
+            <div className="space-y-1 text-sm">
+              {stats?.topActors.map((actor, index) => (
+                <div key={index} className="flex justify-between items-center bg-gray-50 p-2 rounded-md">
+                  <span className="font-medium text-gray-700 truncate">#{index + 1} {actor.actorEmail}</span>
+                  <span className="font-bold text-gray-800">{actor.count}</span>
                 </div>
               ))}
             </div>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </DashboardCard>
   );
 }; 
