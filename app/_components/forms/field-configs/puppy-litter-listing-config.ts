@@ -1,14 +1,17 @@
 import { FieldConfig } from "../base-listing-form";
 
-export const PUPPY_LISTING_FIELD_CONFIG: FieldConfig = {
+export const PUPPY_LITTER_LISTING_FIELD_CONFIG: FieldConfig = {
   layouts: {
     // Single row fields (full width)
     single: [
-      'title', 'description', 'registrationNumber', 'badges', 'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies', 'deliveryOptions'
+      'title', 'description', 'breed', 'location', 'registrationNumber', 'listingType',
+      'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies', 'individualPuppiesLitter',
+      'dnaResults', 'deliveryOptions', 'healthCertificates', 'badges'
     ],
     
     // Full width fields in two-column section
     full: [
+      'title', 'description'
     ],
     
     // Pricing group fields (special handling)
@@ -32,14 +35,13 @@ export const PUPPY_LISTING_FIELD_CONFIG: FieldConfig = {
     
     // Required Information fields (required dynamic fields)
     required: [
-      'registrationNumber', 'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies',
-      'pricingOption', 'fixedPrice', 'minPrice', 'maxPrice', 'dnaResults', 'dateOfBirth', 
-      'deliveryOptions'
+      'registrationNumber', 'listingType', 'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies', 'individualPuppiesLitter',
+      'pricingOption', 'fixedPrice', 'minPrice', 'maxPrice', 'dnaResults', 'deliveryOptions'
     ],
     
     // Additional Information fields (optional dynamic fields)
     additional: [
-      'puppyVideoUrls', 'healthCertificates', 'sireName', 'damName', 'badges'
+      'healthCertificates', 'badges'
     ],
     
     // Contact fields order
@@ -58,8 +60,11 @@ export const PUPPY_LISTING_FIELD_CONFIG: FieldConfig = {
   groups: {
     pricing: ['pricingOption', 'fixedPrice', 'minPrice', 'maxPrice'],
     identification: ['registrationNumber', 'badges'],
-    health: ['healthInfo', 'dnaResults'],
-    puppyDetails: ['listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies'],
-    litterDetails: ['listLitterOption', 'litterSize']
+    health: ['dnaResults', 'healthCertificates'],
+    puppyDetails: ['listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies', 'individualPuppiesLitter'],
+    litterDetails: ['listLitterOption', 'litterSize'],
+    listingType: ['listingType']
   }
 };
+
+export default PUPPY_LITTER_LISTING_FIELD_CONFIG;

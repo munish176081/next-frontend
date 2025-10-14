@@ -808,6 +808,32 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         );
 
       case 'radio':
+        // Special case: For the field "listLitterOption" we need classic/native radio buttons
+        if (field.name === 'listLitterOption') {
+          return (
+            <div className="flex flex-col gap-4">
+              {field.options?.map((option, index) => {
+                const optionValue = typeof option === 'string' ? option : option.value;
+                const optionLabel = typeof option === 'string' ? option : option.label;
+                const isSelected = value === optionValue;
+                return (
+                  <label key={index} className="flex items-center gap-3 cursor-pointer select-none">
+                    <input
+                      type="radio"
+                      name={field.name}
+                      value={optionValue}
+                      checked={isSelected}
+                      onChange={handleInputChange}
+                      className="h-5 w-5"
+                    />
+                    <span className="text-lg text-gray-900">{optionLabel}</span>
+                  </label>
+                );
+              })}
+            </div>
+          );
+        }
+        // Default pill-style radios for all other radio fields
         return (
           <div className="flex gap-4">
             {field.options?.map((option, index) => {
@@ -845,8 +871,19 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         const config = field.repeaterConfig;
         
         const addItem = () => {
-          const newValue = [...repeaterValue, ''];
-          onChange(field.name, newValue);
+          if (config?.subFieldType === 'group' && config.subFieldGroup) {
+            // For group repeaters, add an empty object with all group fields
+            const newItem: Record<string, any> = {};
+            config.subFieldGroup.forEach(groupField => {
+              newItem[groupField.name] = groupField.type === 'checkbox' ? [] : '';
+            });
+            const newValue = [...repeaterValue, newItem];
+            onChange(field.name, newValue);
+          } else {
+            // For simple repeaters, add empty string
+            const newValue = [...repeaterValue, ''];
+            onChange(field.name, newValue);
+          }
         };
         
         const removeItem = (index: number) => {
@@ -854,9 +891,13 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           onChange(field.name, newValue);
         };
         
-        const updateItem = (index: number, newItemValue: string) => {
+        const updateItem = (index: number, fieldName: string, fieldValue: any) => {
           const newValue = [...repeaterValue];
-          newValue[index] = newItemValue;
+          if (config?.subFieldType === 'group') {
+            newValue[index] = { ...newValue[index], [fieldName]: fieldValue };
+          } else {
+            newValue[index] = fieldValue;
+          }
           onChange(field.name, newValue);
         };
         
@@ -864,66 +905,89 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         const canRemove = !config?.minItems || repeaterValue.length > config.minItems;
         
         return (
-          <div className="space-y-3">
+          <div className="space-y-4">
             {repeaterValue.map((item, index) => (
-              <div key={index} className="flex items-center gap-3">
-                <div className="flex-1">
-                  {config?.subFieldType === 'text' && (
-                    <input
-                      type="text"
-                      placeholder={config.subFieldPlaceholder || 'Enter value'}
-                      value={item}
-                      onChange={(e) => updateItem(index, e.target.value)}
-                      className={`${baseClasses} ${errorClasses}`}
-                    />
-                  )}
-                  {config?.subFieldType === 'number' && (
-                    <input
-                      type="number"
-                      placeholder={config.subFieldPlaceholder || 'Enter number'}
-                      value={item}
-                      onChange={(e) => updateItem(index, e.target.value)}
-                      className={`${baseClasses} ${errorClasses}`}
-                    />
-                  )}
-                  {config?.subFieldType === 'date' && (
-                    <input
-                      type="date"
-                      value={item}
-                      onChange={(e) => updateItem(index, e.target.value)}
-                      className={`${baseClasses} ${errorClasses}`}
-                    />
-                  )}
-                  {config?.subFieldType === 'select' && (
-                    <select
-                      value={item}
-                      onChange={(e) => updateItem(index, e.target.value)}
-                      className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+              <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-gray-900">
+                    {field.label} {index + 1}
+                  </h4>
+                  {canRemove && (
+                    <button
+                      type="button"
+                      onClick={() => removeItem(index)}
+                      className="px-3 py-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors text-sm"
+                      title={config?.removeButtonText || 'Remove'}
                     >
-                      <option value="">{config.subFieldPlaceholder || 'Select option'}</option>
-                      {config.subFieldOptions?.map((option, optionIndex) => {
-                        const optionValue = typeof option === 'string' ? option : option.value;
-                        const optionLabel = typeof option === 'string' ? option : option.label;
-                        return (
-                          <option key={optionIndex} value={optionValue}>
-                            {optionLabel}
-                          </option>
-                        );
-                      })}
-                    </select>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
                   )}
                 </div>
-                {canRemove && (
-                  <button
-                    type="button"
-                    onClick={() => removeItem(index)}
-                    className="px-3 py-2 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-lg transition-colors"
-                    title={config?.removeButtonText || 'Remove'}
-                  >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
+                
+                {config?.subFieldType === 'group' && config.subFieldGroup ? (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {config.subFieldGroup.map((groupField) => (
+                      <DynamicFormField
+                        key={groupField.name}
+                        field={groupField}
+                        value={item?.[groupField.name] || (groupField.type === 'checkbox' ? [] : '')}
+                        onChange={(name, val) => updateItem(index, name, val)}
+                        error={error}
+                        layout="double"
+                        onPendingDeletionsChange={onPendingDeletionsChange}
+                        getDynamicLabel={getDynamicLabel}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex-1">
+                    {config?.subFieldType === 'text' && (
+                      <input
+                        type="text"
+                        placeholder={config.subFieldPlaceholder || 'Enter value'}
+                        value={item}
+                        onChange={(e) => updateItem(index, field.name, e.target.value)}
+                        className={`${baseClasses} ${errorClasses}`}
+                      />
+                    )}
+                    {config?.subFieldType === 'number' && (
+                      <input
+                        type="number"
+                        placeholder={config.subFieldPlaceholder || 'Enter number'}
+                        value={item}
+                        onChange={(e) => updateItem(index, field.name, e.target.value)}
+                        className={`${baseClasses} ${errorClasses}`}
+                      />
+                    )}
+                    {config?.subFieldType === 'date' && (
+                      <input
+                        type="date"
+                        value={item}
+                        onChange={(e) => updateItem(index, field.name, e.target.value)}
+                        className={`${baseClasses} ${errorClasses}`}
+                      />
+                    )}
+                    {config?.subFieldType === 'select' && (
+                      <select
+                        value={item}
+                        onChange={(e) => updateItem(index, field.name, e.target.value)}
+                        className={`${baseClasses} ${errorClasses} appearance-none bg-selectArrow2 bg-no-repeat bg-[95%]`}
+                      >
+                        <option value="">{config.subFieldPlaceholder || 'Select option'}</option>
+                        {config.subFieldOptions?.map((option, optionIndex) => {
+                          const optionValue = typeof option === 'string' ? option : option.value;
+                          const optionLabel = typeof option === 'string' ? option : option.label;
+                          return (
+                            <option key={optionIndex} value={optionValue}>
+                              {optionLabel}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    )}
+                  </div>
                 )}
               </div>
             ))}
@@ -932,7 +996,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
               <button
                 type="button"
                 onClick={addItem}
-                className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full py-3 px-4 border-2 border-dashed border-gray-300 rounded-lg text-gray-600 hover:border-gray-400 hover:text-gray-700 transition-colors flex items-center justify-center gap-2 bg-gray-50 hover:bg-gray-100"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
@@ -940,6 +1004,31 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                 {config?.addButtonText || 'Add Item'}
               </button>
             )}
+          </div>
+        );
+
+      case 'group':
+        const groupFields = field.groupConfig?.fields || [];
+        return (
+          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+            {layout !== 'single' && <h3 className="text-lg font-medium text-gray-900 mb-4">{field.label}</h3>}
+            <div className={`grid gap-4 ${layout === 'single' ? 'grid-cols-1' : 'grid-cols-1 md:grid-cols-2'}`}>
+              {groupFields.map((groupField) => (
+                <DynamicFormField
+                  key={groupField.name}
+                  field={groupField}
+                  value={value?.[groupField.name] || ''}
+                  onChange={(name, val) => {
+                    const newValue = { ...value, [name]: val };
+                    onChange(field.name, newValue);
+                  }}
+                  error={error}
+                  layout={layout === 'single' ? 'single' : 'double'}
+                  onPendingDeletionsChange={onPendingDeletionsChange}
+                  getDynamicLabel={getDynamicLabel}
+                />
+              ))}
+            </div>
           </div>
         );
 

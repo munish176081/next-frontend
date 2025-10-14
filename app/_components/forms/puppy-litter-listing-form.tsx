@@ -10,10 +10,11 @@ import { useDeletePendingFiles } from "@/_services/hooks/upload/use-delete-pendi
 import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
-import { PUPPY_LISTING_FIELD_CONFIG } from "./field-configs/puppy-listing-config";
+import { PUPPY_LITTER_LISTING_FIELD_CONFIG } from "./field-configs/puppy-litter-listing-config";
+import { puppyLitterListingSchema } from "@/_config/validate-schema";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 
-interface PuppyListingFormProps extends BaseFormProps {}
+interface PuppyLitterListingFormProps extends BaseFormProps {}
 
 // Custom component for individual puppies with single layout
 const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeletionsChange, getDynamicLabel }: {
@@ -116,7 +117,7 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
   );
 };
 
-export default function PuppyListingForm({
+export default function PuppyLitterListingForm({
   selectedListingType,
   formData,
   setFormData,
@@ -130,7 +131,7 @@ export default function PuppyListingForm({
   existingListing,
   breedId,
   setBreedId
-}: PuppyListingFormProps) {
+}: PuppyLitterListingFormProps) {
   const router = useRouter();
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
@@ -155,7 +156,7 @@ export default function PuppyListingForm({
     existingListing,
     breedId,
     setBreedId,
-    fieldConfig: PUPPY_LISTING_FIELD_CONFIG
+    fieldConfig: PUPPY_LITTER_LISTING_FIELD_CONFIG
   });
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
@@ -171,14 +172,6 @@ export default function PuppyListingForm({
 
   const handleSubmit = async () => {
     if (isSubmitting || isSubmitted) {
-      return;
-    }
-
-    if (!baseForm.validateForm()) {
-      toast({
-        title: 'Please fix the errors before submitting.',
-        variant: 'destructive',
-      });
       return;
     }
 
@@ -222,6 +215,112 @@ export default function PuppyListingForm({
           dynamicData[field.name] = formData[field.name];
         }
       });
+
+      // Clean up litter-specific fields when switching to single puppy mode
+      if (formData.listingType === 'puppy') {
+        // Remove litter-specific fields that shouldn't be saved for single puppy
+        delete dynamicData.listLitterOption;
+        delete dynamicData.litterSize;
+        delete dynamicData.litterPuppyDetails;
+        delete dynamicData.individualPuppiesLitter;
+        delete dynamicData.microchipNumbers;
+        
+        // Clean up microchip number fields (microchipNumber_0, microchipNumber_1, etc.)
+        Object.keys(dynamicData).forEach(key => {
+          if (key.startsWith('microchipNumber_')) {
+            delete dynamicData[key];
+          }
+        });
+      }
+
+      // Process puppy details for same-details option
+      if (formData.listLitterOption === 'same-details' && formData.litterSize) {
+        const litterSize = parseInt(formData.litterSize) || 1;
+        const microchipNumbers: string[] = [];
+        
+        // Collect microchip numbers
+        for (let i = 0; i < litterSize; i++) {
+          const microchipKey = `microchipNumber_${i}`;
+          if (formData[microchipKey]) {
+            microchipNumbers.push(formData[microchipKey]);
+          }
+        }
+        
+        if (microchipNumbers.length > 0) {
+          dynamicData.microchipNumbers = microchipNumbers;
+        }
+
+        // Create individual puppy records for same-details option
+        const individualPuppies: any[] = [];
+        for (let i = 0; i < litterSize; i++) {
+          const puppyData: any = {
+            microchipNumber: formData[`microchipNumber_${i}`] || '',
+            puppyImages: formData.puppyImages || [],
+            puppyGender: formData.puppyGender || '',
+            puppyColour: formData.puppyColour || '',
+            puppyDateOfBirth: formData.puppyDateOfBirth || '',
+            vaccinationStatus: formData.vaccinationStatus || ''
+          };
+          
+          // Only add if at least microchip number is provided
+          if (puppyData.microchipNumber) {
+            individualPuppies.push(puppyData);
+          }
+        }
+        
+        if (individualPuppies.length > 0) {
+          dynamicData.individualPuppies = individualPuppies;
+        }
+      }
+
+      // Process single puppy data when listing type is 'puppy'
+      if (formData.listingType === 'puppy') {
+        // Add listLitterOption to indicate this is a single puppy
+        dynamicData.listLitterOption = 'single-puppy';
+        
+        // Create individual puppy record for single puppy
+        const singlePuppyData: any = {
+          microchipNumber: formData.microchipNumber || '',
+          puppyImages: formData.puppyImages || [],
+          puppyGender: formData.puppyGender || '',
+          puppyColour: formData.puppyColour || '',
+          puppyDateOfBirth: formData.puppyDateOfBirth || '',
+          vaccinationStatus: formData.vaccinationStatus || ''
+        };
+        
+        // Always add the single puppy data (validation will catch if required fields are missing)
+        dynamicData.individualPuppies = [singlePuppyData];
+      }
+
+      // Validate the processed data using the puppy litter schema
+      try {
+        const dataToValidate = {
+          ...formData,
+          ...dynamicData
+        };
+        const validatedData = puppyLitterListingSchema.parse(dataToValidate);
+        console.log('Form validation passed:', validatedData);
+      } catch (error: any) {
+        console.log('Form data:', formData);
+        console.log('Dynamic data:', dynamicData);
+        console.error('Form validation failed:', error);
+        const validationErrors: Record<string, string> = {};
+        
+        if (error.errors) {
+          error.errors.forEach((err: any) => {
+            const fieldName = err.path.join('.');
+            validationErrors[fieldName] = err.message;
+          });
+        }
+        
+        setErrors(validationErrors);
+        toast({
+          title: 'Please fix the errors before submitting.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       // Extract parent information
       const motherInfo = {
@@ -359,8 +458,10 @@ export default function PuppyListingForm({
 
   return (
     <div className="w-full">
+      {/* Special Information - Listing Type Selection */}
+      {specialRequiredFields.length > 0 && baseForm.renderFieldGroup(specialRequiredFields, 'Listing Type', 'required')}
+      
       {/* Basic Information */}
-      {specialRequiredFields.length > 0 && baseForm.renderFieldGroup(specialRequiredFields, 'Special Information', 'additional')}
       {commonFields.length > 0 && baseForm.renderFieldGroup(commonFields, 'Basic Information', 'basic')}
 
       {/* Required Information */}
@@ -400,7 +501,7 @@ export default function PuppyListingForm({
           {/* Pricing fields */}
           {(() => {
             const pricingFields = dynamicRequiredFields.filter(field => 
-              PUPPY_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
+              PUPPY_LITTER_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
               baseForm.shouldDisplayField(field)
             );
             
@@ -437,7 +538,7 @@ export default function PuppyListingForm({
                     </div>
                   ))}
                   
-                  {/* Min/Max Price - Side by Side with Gray Background (matching future listing) */}
+                  {/* Min/Max Price - Side by Side with Gray Background */}
                   {pricingFields.filter(field => field.name === 'minPrice' || field.name === 'maxPrice').length > 0 && (
                     <div className="col-span-2 bg-gray-50 border border-gray-200 rounded-lg p-6">
                       <div className="grid grid-cols-2 gap-6 w-full max-md:grid-cols-1 max-md:gap-4">
@@ -462,137 +563,164 @@ export default function PuppyListingForm({
             return null;
           })()}
           
-          {/* Puppy Details fields - Custom handling */}
-          {(() => {
-            const puppyDetailsFields = dynamicRequiredFields.filter(field => 
-              ['listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies'].includes(field.name) && 
+          {/* Litter Options - Only show when "Litter" is selected */}
+          {formData.listingType === 'litter' && (() => {
+            const litterFields = dynamicRequiredFields.filter(field => 
+              ['listLitterOption', 'litterSize'].includes(field.name) && 
               baseForm.shouldDisplayField(field)
             );
             
-            if (puppyDetailsFields.length > 0) {
+            if (litterFields.length > 0) {
               return (
                 <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4 mb-6">
-                  {puppyDetailsFields.map((field) => {
-                    // Special handling for litterPuppyDetails when "same-details" is selected
-                    if (field.name === 'litterPuppyDetails' && formData.listLitterOption === 'same-details') {
-                      const litterSize = parseInt(formData.litterSize) || 1;
-                      const groupFields = field.groupConfig?.fields || [];
-                      
-                      return (
-                        <div key={field.name} className="w-full">
-                          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                            <div className="grid grid-cols-1 gap-4">
-                              {groupFields.map((groupField) => {
-                                // Special handling for microchip numbers - show multiple based on litter size
-                                if (groupField.name === 'microchipNumber') {
-                                  return (
-                                    <div key={groupField.name} className="space-y-3">
-                                      <label className="block text-sm font-medium text-gray-700">
-                                        Microchip Numbers *
-                                      </label>
-                                      <p className="text-sm text-gray-500">
-                                        Enter microchip numbers for all {litterSize} puppy(ies)
-                                      </p>
-                                      {Array.from({ length: litterSize }, (_, index) => (
-                                        <div key={index} className="flex items-center gap-3">
-                                          <span className="text-sm font-medium text-gray-600 w-20">
-                                            Puppy {index + 1}:
-                                          </span>
-                                          <input
-                                            type="text"
-                                            placeholder="Enter microchip number"
-                                            value={formData[`microchipNumber_${index}`] || ''}
-                                            onChange={(e) => handleFieldChange(`microchipNumber_${index}`, e.target.value)}
-                                            className="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
-                                          />
-                                        </div>
-                                      ))}
-                                    </div>
-                                  );
-                                }
-                                
-                                // Regular field rendering for other fields
-                                return (
-                                  <DynamicFormField
-                                    key={groupField.name}
-                                    field={groupField}
-                                    value={formData[groupField.name] || ''}
-                                    onChange={handleFieldChange}
-                                    error={errors[groupField.name]}
-                                    layout="single"
-                                    onPendingDeletionsChange={handlePendingDeletions}
-                                    getDynamicLabel={baseForm.getDynamicLabel}
-                                  />
-                                );
-                              })}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-                    
-                    // Special handling for individualPuppies - different layouts based on listing type
-                    if (field.name === 'individualPuppies') {
-                      // Check if this is a single puppy listing (not litter)
-                      const isSinglePuppy = formData.listingType === 'puppy';
-                      
-                      if (isSinglePuppy) {
-                        // For single puppy, show simple layout without repeater
-                        const groupFields = field.repeaterConfig?.subFieldGroup || [];
-                        return (
-                          <div key={field.name} className="w-full">
-                            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                              <div className="grid grid-cols-1 gap-4">
-                                {groupFields.map((groupField: any) => (
-                                  <DynamicFormField
-                                    key={groupField.name}
-                                    field={groupField}
-                                    value={formData[groupField.name] || (groupField.type === 'checkbox' ? [] : '')}
-                                    onChange={handleFieldChange}
-                                    error={errors[groupField.name]}
-                                    layout="single"
-                                    onPendingDeletionsChange={handlePendingDeletions}
-                                    getDynamicLabel={baseForm.getDynamicLabel}
-                                  />
+                  {litterFields.map((field) => (
+                    <div key={field.name} className="w-full">
+                      <DynamicFormField
+                        field={field}
+                        value={formData[field.name]}
+                        onChange={handleFieldChange}
+                        error={errors[field.name]}
+                        layout="single"
+                        onPendingDeletionsChange={handlePendingDeletions}
+                        getDynamicLabel={baseForm.getDynamicLabel}
+                      />
+                    </div>
+                  ))}
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Litter Puppy Details - Only show when "Litter" is selected and "same-details" option is chosen */}
+          {formData.listingType === 'litter' && formData.listLitterOption === 'same-details' && (() => {
+            const litterPuppyFields = dynamicRequiredFields.filter(field => 
+              field.name === 'litterPuppyDetails' && 
+              baseForm.shouldDisplayField(field)
+            );
+            
+            if (litterPuppyFields.length > 0) {
+              const field = litterPuppyFields[0];
+              const litterSize = parseInt(formData.litterSize) || 1;
+              const groupFields = field.groupConfig?.fields || [];
+              
+              return (
+                <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4 mb-6">
+                  <div key={field.name} className="w-full">
+                    <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <div className="grid grid-cols-1 gap-4">
+                        {groupFields.map((groupField) => {
+                          // Special handling for microchip numbers - show multiple based on litter size
+                          if (groupField.name === 'microchipNumber') {
+                            return (
+                              <div key={groupField.name} className="space-y-3">
+                                <label className="block text-sm font-medium text-gray-700">
+                                  Microchip Numbers *
+                                </label>
+                                <p className="text-sm text-gray-500">
+                                  Enter microchip numbers for all {litterSize} puppy(ies)
+                                </p>
+                                {Array.from({ length: litterSize }, (_, index) => (
+                                  <div key={index} className="flex items-center gap-3">
+                                    <span className="text-sm font-medium text-gray-600 w-20">
+                                      Puppy {index + 1}:
+                                    </span>
+                                    <input
+                                      type="text"
+                                      placeholder="Enter microchip number"
+                                      value={formData[`microchipNumber_${index}`] || ''}
+                                      onChange={(e) => handleFieldChange(`microchipNumber_${index}`, e.target.value)}
+                                      className="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
+                                    />
+                                  </div>
                                 ))}
                               </div>
-                            </div>
-                          </div>
-                        );
-                      } else {
-                        // For litter with individual puppies, show repeater
-                        return (
-                          <div key={field.name} className="w-full">
-                            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
-                              <IndividualPuppiesField
-                                field={field}
-                                value={formData[field.name]}
-                                onChange={handleFieldChange}
-                                error={errors[field.name]}
-                                onPendingDeletionsChange={handlePendingDeletions}
-                                getDynamicLabel={baseForm.getDynamicLabel}
-                              />
-                            </div>
-                          </div>
-                        );
-                      }
-                    }
-                    
-                    // Regular field rendering for other fields
-                    return (
-                      <div key={field.name} className="w-full">
-                        <DynamicFormField
-                          field={field}
-                          value={formData[field.name]}
-                          onChange={handleFieldChange}
-                          error={errors[field.name]}
-                          layout="single"
-                          onPendingDeletionsChange={handlePendingDeletions}
-                          getDynamicLabel={baseForm.getDynamicLabel}
-                        />
+                            );
+                          }
+                          
+                          // Regular field rendering for other fields
+                          return (
+                            <DynamicFormField
+                              key={groupField.name}
+                              field={groupField}
+                              value={formData[groupField.name] || ''}
+                              onChange={handleFieldChange}
+                              error={errors[groupField.name]}
+                              layout="single"
+                              onPendingDeletionsChange={handlePendingDeletions}
+                              getDynamicLabel={baseForm.getDynamicLabel}
+                            />
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Individual Puppies - Only show when "Litter" is selected and "add-individually" option is chosen */}
+          {formData.listingType === 'litter' && formData.listLitterOption === 'add-individually' && (() => {
+            const individualPuppyFields = dynamicRequiredFields.filter(field => 
+              field.name === 'individualPuppiesLitter' && 
+              baseForm.shouldDisplayField(field)
+            );
+            
+            if (individualPuppyFields.length > 0) {
+              const field = individualPuppyFields[0];
+              return (
+                <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4 mb-6">
+                  <div key={field.name} className="w-full">
+                    <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <IndividualPuppiesField
+                        field={field}
+                        value={formData[field.name]}
+                        onChange={handleFieldChange}
+                        error={errors[field.name]}
+                        onPendingDeletionsChange={handlePendingDeletions}
+                        getDynamicLabel={baseForm.getDynamicLabel}
+                      />
+                    </div>
+                  </div>
+                </div>
+              );
+            }
+            return null;
+          })()}
+
+          {/* Single Puppy Details - Only show when "Puppy" is selected */}
+          {formData.listingType === 'puppy' && (() => {
+            const singlePuppyFields = dynamicRequiredFields.filter(field => 
+              field.name === 'individualPuppies' && 
+              baseForm.shouldDisplayField(field)
+            );
+            
+            if (singlePuppyFields.length > 0) {
+              const field = singlePuppyFields[0];
+              const groupFields = field.repeaterConfig?.subFieldGroup || [];
+              
+              return (
+                <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4 mb-6">
+                  <div key={field.name} className="w-full">
+                    <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                      <div className="grid grid-cols-1 gap-4">
+                        {groupFields.map((groupField: any) => (
+                          <DynamicFormField
+                            key={groupField.name}
+                            field={groupField}
+                            value={formData[groupField.name] || (groupField.type === 'checkbox' ? [] : '')}
+                            onChange={handleFieldChange}
+                            error={errors[groupField.name]}
+                            layout="single"
+                            onPendingDeletionsChange={handlePendingDeletions}
+                            getDynamicLabel={baseForm.getDynamicLabel}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               );
             }
@@ -602,8 +730,8 @@ export default function PuppyListingForm({
            {/* Other required fields */}
            {(() => {
              const nonPricingFields = dynamicRequiredFields.filter(field => 
-               !PUPPY_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
-               !['registrationNumber', 'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies'].includes(field.name) &&
+               !PUPPY_LITTER_LISTING_FIELD_CONFIG.layouts.pricing.includes(field.name) && 
+               !['registrationNumber', 'listLitterOption', 'litterSize', 'litterPuppyDetails', 'individualPuppies', 'individualPuppiesLitter'].includes(field.name) &&
                baseForm.shouldDisplayField(field)
              );
              

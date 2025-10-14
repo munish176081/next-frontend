@@ -171,6 +171,123 @@ export const listingFormSchema = z.object({
   additionalNotes: z.string().optional(),
 });
 
+// Puppy Litter Listing validation schema
+export const puppyLitterListingSchema = z.object({
+  // Special fields
+  listingType: z.enum(['litter', 'puppy'], {
+    required_error: "Please select whether this is a litter or single puppy listing",
+  }),
+  
+  // Litter-specific fields
+  listLitterOption: z.enum(['same-details', 'add-individually', 'single-puppy']).optional(),
+  litterSize: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = typeof val === "string" ? parseInt(val) : val;
+    return isNaN(num) ? undefined : num;
+  }).refine((val) => val === undefined || (val >= 1 && val <= 20), {
+    message: "Litter size must be between 1 and 20"
+  }).optional(),
+  
+  // Common fields
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  breed: z.string().min(1, "Breed is required"),
+  location: z.string().optional(),
+  registrationNumber: z.string().min(1, "Registration number is required"),
+  
+  // Pricing fields
+  pricingOption: z.enum(['fixedPrice', 'displayPriceRange', 'priceOnRequest'], {
+    required_error: "Please select a pricing option",
+  }),
+  fixedPrice: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    return isNaN(num) ? undefined : num;
+  }).optional(),
+  minPrice: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    return isNaN(num) ? undefined : num;
+  }).optional(),
+  maxPrice: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    return isNaN(num) ? undefined : num;
+  }).optional(),
+  
+  // Delivery options
+  deliveryOptions: z.array(z.string()).min(1, "Please select at least one delivery option"),
+  
+  // DNA Results
+  dnaResults: z.array(z.string()).min(1, "DNA results are required"),
+  
+  // Microchip numbers for same-details option
+  microchipNumbers: z.array(z.string().min(1, "Microchip number is required")).optional(),
+  
+  // Individual puppies for add-individually option and single puppy
+  individualPuppies: z.array(z.object({
+    puppyImages: z.array(z.string()).min(1, "At least one puppy image is required"),
+    microchipNumber: z.string().min(1, "Microchip number is required"),
+    puppyGender: z.enum(['male', 'female'], { required_error: "Puppy gender is required" }),
+    puppyColour: z.string().optional(),
+    puppyDateOfBirth: z.string().min(1, "Date of birth is required"),
+    vaccinationStatus: z.enum(['Up to Date', 'Partial', 'Not Started'], {
+      required_error: "Vaccination status is required"
+    }),
+  })).optional(),
+  
+  // Optional fields
+  healthCertificates: z.array(z.string()).optional(),
+  badges: z.array(z.string()).optional(),
+}).refine((data) => {
+  // Validate pricing based on pricing option
+  if (data.pricingOption === 'fixedPrice' && (data.fixedPrice === undefined || data.fixedPrice <= 0)) {
+    return false;
+  }
+  if (data.pricingOption === 'displayPriceRange' && (data.minPrice === undefined || data.maxPrice === undefined || data.minPrice <= 0 || data.maxPrice <= 0)) {
+    return false;
+  }
+  if (data.pricingOption === 'displayPriceRange' && data.minPrice && data.maxPrice && data.minPrice >= data.maxPrice) {
+    return false;
+  }
+  return true;
+}, {
+  message: "Please provide valid pricing information based on your selected pricing option",
+  path: ["pricingOption"]
+}).refine((data) => {
+  // Validate litter-specific fields
+  if (data.listingType === 'litter') {
+    if (!data.listLitterOption) {
+      return false;
+    }
+    if (data.listLitterOption === 'same-details' && !data.litterSize) {
+      return false;
+    }
+    if (data.listLitterOption === 'add-individually' && (!data.individualPuppies || data.individualPuppies.length === 0)) {
+      return false;
+    }
+  }
+  
+  // Validate single puppy fields
+  if (data.listingType === 'puppy') {
+    if (!data.individualPuppies || data.individualPuppies.length === 0) {
+      return false;
+    }
+    if (data.individualPuppies.length !== 1) {
+      return false;
+    }
+    // Ensure listLitterOption is set to 'single-puppy' for single puppy listings
+    if (data.listLitterOption !== 'single-puppy') {
+      return false;
+    }
+  }
+  
+  return true;
+}, {
+  message: "Please complete all required fields for your selected listing type",
+  path: ["listingType"]
+});
+
 export const contactFormSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
   lastName: z.string().min(1, "Last name is required"),

@@ -1,6 +1,7 @@
 "use client";
 import { BaseFormProps } from "./base-listing-form";
 import PuppyListingForm from "./puppy-listing-form";
+import PuppyLitterListingForm from "./puppy-litter-listing-form";
 import FutureListingForm from "./future-listing-form";
 import StudListingForm from "./stud-listing-form";
 import SemenListingForm from "./semen-listing-form";
@@ -15,6 +16,9 @@ export default function ListingFormFactory(props: ListingFormFactoryProps) {
   switch (selectedListingType.id) {
     case 'PUPPY_LISTING':
       return <PuppyListingForm {...props} />;
+    
+    case 'PUPPY_LITTER_LISTING':
+      return <PuppyLitterListingForm {...props} />;
     
     case 'FUTURE_LISTING':
       return <FutureListingForm {...props} />;

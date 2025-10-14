@@ -165,6 +165,18 @@ function Startlistingform() {
           } else if (field.name === 'pricingOption') {
             // Set default value for pricing option to fixed price
             initialData[field.name] = 'fixedPrice';
+          } else if (field.name === 'listingType') {
+            // Set default value for listing type to 'litter'
+            initialData[field.name] = 'litter';
+          } else if (field.name === 'listLitterOption') {
+            // Set default value for litter listing option to 'same-details'
+            initialData[field.name] = 'same-details';
+          } else if (field.name === 'litterSize') {
+            // Set default value for litter size
+            initialData[field.name] = 1;
+          } else if (field.name === 'individualPuppies') {
+            // Initialize individual puppies as empty array
+            initialData[field.name] = [];
           }
           else {
             initialData[field.name] = '';
@@ -307,6 +319,50 @@ function Startlistingform() {
                 initialData[key] = value;
               }
             });
+          }
+
+          // Special handling for puppy litter listings - load individual puppy data
+          if (selectedListingType?.id === 'PUPPY_LITTER_LISTING' && existingListing.fields) {
+            // Load individual puppies data
+            if (existingListing.fields.individualPuppies && Array.isArray(existingListing.fields.individualPuppies)) {
+              initialData.individualPuppies = existingListing.fields.individualPuppies;
+            }
+
+            // Load microchip numbers for same-details option
+            if (existingListing.fields.microchipNumbers && Array.isArray(existingListing.fields.microchipNumbers)) {
+              const microchipNumbers = existingListing.fields.microchipNumbers;
+              microchipNumbers.forEach((microchip: string, index: number) => {
+                initialData[`microchipNumber_${index}`] = microchip;
+              });
+            }
+
+            // Load shared puppy details for same-details option
+            if (existingListing.fields.listLitterOption === 'same-details' && existingListing.fields.individualPuppies?.length > 0) {
+              const firstPuppy = existingListing.fields.individualPuppies[0];
+              if (firstPuppy) {
+                initialData.puppyImages = firstPuppy.puppyImages || [];
+                initialData.puppyGender = firstPuppy.puppyGender || '';
+                initialData.puppyColour = firstPuppy.puppyColour || '';
+                initialData.puppyDateOfBirth = firstPuppy.puppyDateOfBirth || '';
+                initialData.vaccinationStatus = firstPuppy.vaccinationStatus || '';
+              }
+            }
+
+            // Load single puppy details for single-puppy option
+            if (existingListing.fields.listLitterOption === 'single-puppy' && existingListing.fields.individualPuppies?.length > 0) {
+              // Set listing type to 'puppy' for single puppy listings
+              initialData.listingType = 'puppy';
+              
+              const singlePuppy = existingListing.fields.individualPuppies[0];
+              if (singlePuppy) {
+                initialData.puppyImages = singlePuppy.puppyImages || [];
+                initialData.puppyGender = singlePuppy.puppyGender || '';
+                initialData.puppyColour = singlePuppy.puppyColour || '';
+                initialData.puppyDateOfBirth = singlePuppy.puppyDateOfBirth || '';
+                initialData.vaccinationStatus = singlePuppy.vaccinationStatus || '';
+                initialData.microchipNumber = singlePuppy.microchipNumber || '';
+              }
+            }
           }
 
           // Ensure gender field is properly set for stud listings

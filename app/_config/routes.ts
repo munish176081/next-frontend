@@ -19,7 +19,8 @@ export const Routes = {
     blog: "/blog",
     blogDetail: "/blog-detail",
     createListing: {
-      puppyListing: "/startlistingform?type=puppy",
+      puppyListing: "/startlistingform?type=puppy_litter",
+      puppyLitterListing: "/startlistingform?type=puppy_litter",
       semenListing: "/startlistingform?type=semen",
       studListing: "/startlistingform?type=stud",
       futureListing: "/startlistingform?type=future",

@@ -52,6 +52,7 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
   listingTypes: {
     [ListingTypeEnum.SEMEN_LISTING]: { required: true },
     [ListingTypeEnum.PUPPY_LISTING]: { required: true },
+    [ListingTypeEnum.PUPPY_LITTER_LISTING]: { required: true },
     [ListingTypeEnum.STUD_LISTING]: { required: true },
     [ListingTypeEnum.FUTURE_LISTING]: { required: true },
     [ListingTypeEnum.WANTED_LISTING]: { required: false },

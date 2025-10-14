@@ -1,6 +1,7 @@
 export enum ListingTypeEnum {
   SEMEN_LISTING = 'SEMEN_LISTING',
   PUPPY_LISTING = 'PUPPY_LISTING',
+  PUPPY_LITTER_LISTING = 'PUPPY_LITTER_LISTING',
   STUD_LISTING = 'STUD_LISTING',
   FUTURE_LISTING = 'FUTURE_LISTING',
   WANTED_LISTING = 'WANTED_LISTING',
@@ -10,6 +11,7 @@ export enum ListingTypeEnum {
 export enum ListingTypeShortCodeEnum {
   SEMEN_LISTING = 'semen_listing',
   PUPPY_LISTING = 'puppy_listing',
+  PUPPY_LITTER_LISTING = 'puppy_litter_listing',
   STUD_LISTING = 'stud_listing',
   FUTURE_LISTING = 'future_listing',
   WANTED_LISTING = 'wanted_listing',

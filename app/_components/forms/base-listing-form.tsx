@@ -93,7 +93,9 @@ export const DEFAULT_FIELD_CONFIG: FieldConfig = {
 export interface BaseListingFormProps extends BaseFormProps {
   fieldConfig?: FieldConfig;
   customFieldOrder?: {
-    common?: string[];
+    basic?: string[];
+    required?: string[];
+    additional?: string[];
     contact?: string[];
     parent?: string[];
   };
@@ -138,8 +140,10 @@ export default function BaseListingForm({
   };
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
-    setFormData(prev => ({ ...prev, [name]: value }));
-    setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData((prev: Record<string, any>) => ({ ...prev, [name]: value }));
+    const newErrors = { ...errors };
+    newErrors[name] = '';
+    setErrors(newErrors);
     
     if (name === 'breed' && breedId) {
       setBreedId(breedId);
@@ -192,7 +196,7 @@ export default function BaseListingForm({
   };
 
   const getFieldOrder = (fields: ListingField[], category: 'basic' | 'required' | 'additional' | 'contact' | 'parent' = 'basic'): ListingField[] => {
-    const fieldOrder = customFieldOrder?.[category] || fieldConfig.ordering[category] || fieldConfig.ordering.basic;
+    const fieldOrder = customFieldOrder?.[category] || fieldConfig.ordering[category] || fieldConfig.ordering.basic || [];
 
     return fields.sort((a, b) => {
       const aIndex = fieldOrder.indexOf(a.name);
@@ -433,6 +437,7 @@ export default function BaseListingForm({
     const categoryMap: Record<ListingTypeEnum, ListingCategoryEnum> = {
       [ListingTypeEnum.SEMEN_LISTING]: ListingCategoryEnum.BREEDING,
       [ListingTypeEnum.PUPPY_LISTING]: ListingCategoryEnum.PUPPY,
+      [ListingTypeEnum.PUPPY_LITTER_LISTING]: ListingCategoryEnum.PUPPY,
       [ListingTypeEnum.STUD_LISTING]: ListingCategoryEnum.BREEDING,
       [ListingTypeEnum.FUTURE_LISTING]: ListingCategoryEnum.PUPPY,
       [ListingTypeEnum.WANTED_LISTING]: ListingCategoryEnum.WANTED,
