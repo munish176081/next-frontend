@@ -27,6 +27,7 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
 }) => {
   const repeaterValue = Array.isArray(value) ? value : [];
   const config = field.repeaterConfig;
+  const [collapsedItems, setCollapsedItems] = useState<Set<number>>(new Set());
   
   const addItem = () => {
     if (config?.subFieldType === 'group' && config.subFieldGroup) {
@@ -56,6 +57,18 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
     }
     onChange(field.name, newValue);
   };
+
+  const toggleCollapse = (index: number) => {
+    setCollapsedItems(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
   
   const canAddMore = !config?.maxItems || repeaterValue.length < config.maxItems;
   const canRemove = !config?.minItems || repeaterValue.length > config.minItems;
@@ -63,41 +76,70 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
   return (
     <div className="space-y-4">
       {repeaterValue.map((item, index) => (
-        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm">
+        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm relative">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-gray-900">
               {field.label} {index + 1}
             </h4>
-            {canRemove && (
+            
+            <button
+              type="button"
+              onClick={() => toggleCollapse(index)}
+              className="p-1 text-gray-500 hover:text-gray-700 transition-colors"
+              title={collapsedItems.has(index) ? 'Expand' : 'Collapse'}
+            >
+              <svg
+                className={`w-5 h-5 transform transition-transform duration-200 ${
+                  collapsedItems.has(index) ? 'rotate-180' : ''
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </button>
+          </div>
+          
+          {!collapsedItems.has(index) && (
+            <>
+              {config?.subFieldType === 'group' && config.subFieldGroup ? (
+                <div className="grid grid-cols-1 gap-4">
+                  {config.subFieldGroup.map((groupField: any) => (
+                    <DynamicFormField
+                      key={groupField.name}
+                      field={groupField}
+                      value={item?.[groupField.name] || (groupField.type === 'checkbox' ? [] : '')}
+                      onChange={(name, val) => updateItem(index, name, val)}
+                      error={error}
+                      layout="single"
+                      onPendingDeletionsChange={onPendingDeletionsChange}
+                      getDynamicLabel={getDynamicLabel}
+                    />
+                  ))}
+                </div>
+                
+              ) : null}
+            </>
+          )}
+          
+          {!collapsedItems.has(index) && canRemove && (
+            <div className="flex justify-end mt-4 pt-3 border-t border-gray-100">
               <button
                 type="button"
                 onClick={() => removeItem(index)}
                 className="px-3 py-1 text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors text-sm"
                 title={config?.removeButtonText || 'Remove'}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
+                Remove Puppy
               </button>
-            )}
-          </div>
-          
-          {config?.subFieldType === 'group' && config.subFieldGroup ? (
-            <div className="grid grid-cols-1 gap-4">
-              {config.subFieldGroup.map((groupField: any) => (
-                <DynamicFormField
-                  key={groupField.name}
-                  field={groupField}
-                  value={item?.[groupField.name] || (groupField.type === 'checkbox' ? [] : '')}
-                  onChange={(name, val) => updateItem(index, name, val)}
-                  error={error}
-                  layout="single"
-                  onPendingDeletionsChange={onPendingDeletionsChange}
-                  getDynamicLabel={getDynamicLabel}
-                />
-              ))}
             </div>
-          ) : null}
+          )}
         </div>
       ))}
       
