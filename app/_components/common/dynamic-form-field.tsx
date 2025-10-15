@@ -431,6 +431,15 @@ export default function DynamicFormField({ field, value, onChange, error, layout
             className={`${textareaClasses} ${errorClasses}`}
           />
         );
+      case 'textarea-v2':
+        return (
+          <textarea
+            placeholder={field.placeholder}
+            value={value || ''}
+            onChange={handleInputChange}
+            className={`${textareaClasses} ${errorClasses} w-full`}
+          />
+        );
 
       case 'file':
         const getCategoryStyles = () => {

@@ -239,6 +239,16 @@ export const puppyLitterListingSchema = z.object({
   // Optional fields
   healthCertificates: z.array(z.string()).optional(),
   badges: z.array(z.string()).optional(),
+  
+  // Pricing details
+  startingPrice: z.union([z.string(), z.number()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return undefined;
+    const num = typeof val === "string" ? parseFloat(val) : val;
+    return isNaN(num) ? undefined : num;
+  }).refine((val) => val === undefined || val >= 0, {
+    message: "Starting price must be a positive number"
+  }).optional(),
+  priceDetailsAndAddOns: z.string().optional(),
 }).refine((data) => {
   // Validate pricing based on pricing option
   if (data.pricingOption === 'fixedPrice' && (data.fixedPrice === undefined || data.fixedPrice <= 0)) {

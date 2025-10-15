@@ -116,6 +116,18 @@ export default function ServicesListingForm({
         delete commonData.serviceCategory;
       }
 
+      // Special handling for pricing fields - move to dynamic data
+      if (selectedListingType.id === 'OTHER_SERVICES') {
+        if (commonData.startingPrice !== undefined) {
+          dynamicData.startingPrice = commonData.startingPrice;
+          delete commonData.startingPrice;
+        }
+        if (commonData.priceDetailsAndAddOns !== undefined) {
+          dynamicData.priceDetailsAndAddOns = commonData.priceDetailsAndAddOns;
+          delete commonData.priceDetailsAndAddOns;
+        }
+      }
+
       // Also collect all file fields from dynamic fields for media arrays
       const allImages: string[] = [];
       const allVideos: string[] = [];
@@ -205,11 +217,13 @@ export default function ServicesListingForm({
   const contactFields = getContactFields(selectedListingType);
   const dynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
   const dynamicOptionalFields = selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
+  // const specialRequiredFields = selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'special');
 
   return (
     <div className="w-full">
       {/* Basic Information */}
       {commonFields.length > 0 && baseForm.renderFieldGroup(commonFields, 'Basic Information', 'basic')}
+      {/* {specialRequiredFields.length > 0 && baseForm.renderFieldGroup(specialRequiredFields, 'Basic Information', 'basic')} */}
 
       {/* Required Information */}
       {dynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(dynamicRequiredFields, 'Required Information', 'required')}

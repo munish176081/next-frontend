@@ -67,7 +67,7 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
 export interface ListingField {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location' | 'repeater' | 'group';
+  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location' | 'repeater' | 'group'| 'textarea-v2';
   required: boolean;
   placeholder?: string;
   options?: ({ value: string; label: string } | string)[];
@@ -1081,6 +1081,23 @@ export const LISTING_TYPES: ListingType[] = [
           'Training',
           'Veterinary',
           'Transport'],
+        fieldCategory: 'common'
+      },
+       {
+        name: 'startingPrice',
+        label: 'Starting Price (minimum cost)',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter starting price',
+        validation: { min: 0 },
+        fieldCategory: 'common'
+      },
+      {
+        name: 'priceDetailsAndAddOns',
+        label: 'Price Details and Add-Ons',
+        type: 'textarea-v2',
+        required: true,
+        placeholder: 'Enter price details and add-ons',
         fieldCategory: 'common'
       },
       COMMON_FIELDS.location,

@@ -4,7 +4,7 @@ export const SERVICES_LISTING_FIELD_CONFIG: FieldConfig = {
   layouts: {
     // Single row fields (full width)
     single: [
-      'title', 'description', 'serviceImages', 'websiteUrl', 'pricing', 'operatingHours'
+      'title', 'description', 'serviceImages', 'websiteUrl', 'pricing', 'operatingHours', 'serviceCategory', 'startingPrice', 'priceDetailsAndAddOns'
     ],
     
     // Full width fields in two-column section
@@ -32,6 +32,11 @@ export const SERVICES_LISTING_FIELD_CONFIG: FieldConfig = {
       'serviceImages'
     ],
     
+    // Pricing fields
+    pricing: [
+      'startingPrice', 'priceDetailsAndAddOns'
+    ],
+    
     // Additional Information fields
     additional: [
       'websiteUrl', 'pricing', 'operatingHours', 'businessABN'
@@ -52,6 +57,7 @@ export const SERVICES_LISTING_FIELD_CONFIG: FieldConfig = {
   // Field grouping for special sections
   groups: {
     serviceDetails: ['title', 'serviceCategory', 'description'],
+    pricing: ['startingPrice', 'priceDetailsAndAddOns'],
     business: ['websiteUrl', 'pricing', 'operatingHours', 'businessABN'],
     contact: ['contactName', 'contactEmail', 'contactPhone'],
     media: ['serviceImages']
