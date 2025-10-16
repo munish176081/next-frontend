@@ -298,7 +298,7 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
           </div>
         </div>
 
-        {/* Additional Images */}
+        {/* Additional Images
         <div className="bg-white shadow rounded-lg p-6">
           <h2 className="text-lg font-medium text-gray-900 mb-4">Additional Images</h2>
           <div className="space-y-4">
@@ -335,7 +335,7 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
               </div>
             )}
           </div>
-        </div>
+        </div> */}
 
         {/* Tags */}
         <div className="bg-white shadow rounded-lg p-6">
