@@ -4,11 +4,11 @@ export const SERVICES_LISTING_FIELD_CONFIG: FieldConfig = {
   layouts: {
     // Single row fields (full width)
     single: [
-      'title', 'description', 'serviceImages', 'websiteUrl', 'pricing', 'operatingHours', 'serviceCategory', 'startingPrice', 'priceDetailsAndAddOns'
+      'title', 'description', 'serviceImages', 'websiteUrl', 'pricing', 'operatingHours', 
     ],
     
     // Full width fields in two-column section
-    full: [],
+    full: ['priceDetailsAndAddOns'],
     
     // Pricing group fields (special handling)
     pricing: [],
