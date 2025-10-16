@@ -88,7 +88,7 @@ export function ProfileImageUpload({
       >
         <div className="relative">
           <img
-            src={value || ""}
+            src={value || "/images/placeholder.jpeg"}
             alt="Profile"
             className={`${className} rounded-lg object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors`}
           />

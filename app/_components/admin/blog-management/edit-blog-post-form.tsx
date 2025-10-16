@@ -260,7 +260,7 @@ export const EditBlogPostForm = ({ post, onCancel, onSuccess }: EditBlogPostForm
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Author Image</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Author Image *</label>
                   <ProfileImageUpload
                     value={formData.authorImage}
                     onChange={(url) => setFormData((prev) => ({ ...prev, authorImage: url }))}

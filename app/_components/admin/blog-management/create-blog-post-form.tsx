@@ -210,7 +210,7 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Author Image
+                Author Image *
               </label>
               <ProfileImageUpload
                 value={formData.authorImage}
