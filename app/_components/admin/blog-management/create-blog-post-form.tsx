@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBlogCategories } from "@/_services/hooks/blogs/use-blog-categories";
 import { useCreateBlogPost } from "@/_services/hooks/blogs/use-admin-blog-posts";
+import { useUser } from "@/_services/hooks/user/use-user";
 import { ArrowLeft, Save, Eye } from "lucide-react";
+import { ProfileImageUpload } from "@/_components/common/profile-image-upload";
 
 interface CreateBlogPostFormProps {
   onCancel: () => void;
@@ -12,6 +14,7 @@ interface CreateBlogPostFormProps {
 
 export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormProps) => {
   const { data: categories = [] } = useBlogCategories();
+  const { data: user } = useUser();
   const createPostMutation = useCreateBlogPost();
   
   const [formData, setFormData] = useState({
@@ -37,6 +40,16 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
   const [newImage, setNewImage] = useState('');
   const [newTag, setNewTag] = useState('');
   const [newKeyword, setNewKeyword] = useState('');
+
+  // Prepopulate author image with user's profile image
+  useEffect(() => {
+    if (user?.imageUrl && !formData.authorImage) {
+      setFormData(prev => ({
+        ...prev,
+        authorImage: user.imageUrl
+      }));
+    }
+  }, [user?.imageUrl, formData.authorImage]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -197,14 +210,12 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Author Image URL
+                Author Image
               </label>
-              <input
-                type="url"
-                name="authorImage"
+              <ProfileImageUpload
                 value={formData.authorImage}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
+                onChange={(url) => setFormData(prev => ({ ...prev, authorImage: url }))}
+                className="h-16 w-16 object-cover rounded-lg"
               />
             </div>
             <div>
@@ -250,15 +261,12 @@ export const CreateBlogPostForm = ({ onCancel, onSuccess }: CreateBlogPostFormPr
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Featured Image URL *
+                Featured Image *
               </label>
-              <input
-                type="url"
-                name="featuredImage"
+              <ProfileImageUpload
                 value={formData.featuredImage}
-                onChange={handleInputChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent"
-                required
+                onChange={(url) => setFormData(prev => ({ ...prev, featuredImage: url }))}
+                className="h-48 w-64 object-cover"
               />
             </div>
             <div>

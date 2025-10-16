@@ -11,13 +11,15 @@ interface ProfileImageUploadProps {
   onChange: (url: string) => void;
   disabled?: boolean;
   error?: string;
+  className?: string;
 }
 
 export function ProfileImageUpload({ 
   value, 
   onChange, 
   disabled = false, 
-  error 
+  error ,
+  className = '',
 }: ProfileImageUploadProps) {
   const [isHovered, setIsHovered] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -77,7 +79,7 @@ export function ProfileImageUpload({
   };
 
   return (
-    <div className="flex flex-col items-center space-y-4">
+    <div className={`flex flex-col items-center space-y-4 `}>
       <div
         className={`relative group cursor-pointer ${disabled ? 'cursor-not-allowed opacity-50' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
@@ -88,19 +90,19 @@ export function ProfileImageUpload({
           <img
             src={value || "/images/vectors/profile.jpg"}
             alt="Profile"
-            className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors"
+            className={`${className} rounded-lg object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors`}
           />
           
           {/* Overlay on hover */}
           {isHovered && !disabled && !isUploading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
               <Camera className="w-8 h-8 text-white" />
             </div>
           )}
 
           {/* Loading overlay */}
           {isUploading && (
-            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-full flex items-center justify-center">
+            <div className="absolute inset-0 bg-black bg-opacity-50 rounded-lg flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
             </div>
           )}
