@@ -321,7 +321,7 @@ export const EditBlogPostForm = ({ post, onCancel, onSuccess }: EditBlogPostForm
           )}
         </div>
 
-        {/* Additional Images Section */}
+        {/* Additional Images Section
         <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
           <button
             type="button"
@@ -371,7 +371,7 @@ export const EditBlogPostForm = ({ post, onCancel, onSuccess }: EditBlogPostForm
               </div>
             </div>
           )}
-        </div>
+        </div> */}
 
         {/* Tags Section */}
         <div className="bg-white shadow-sm border border-gray-200 rounded-lg">
