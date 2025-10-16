@@ -88,7 +88,7 @@ export function ProfileImageUpload({
       >
         <div className="relative">
           <img
-            src={value || "/images/vectors/profile.jpg"}
+            src={value || ""}
             alt="Profile"
             className={`${className} rounded-lg object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors`}
           />
