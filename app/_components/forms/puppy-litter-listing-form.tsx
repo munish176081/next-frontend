@@ -202,6 +202,57 @@ export default function PuppyLitterListingForm({
   });
 
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
+    // Special handling for listingType field to clear old data when switching
+    if (name === 'listingType') {
+      const currentListingType = formData.listingType;
+      const newListingType = value;
+      
+      // If switching from litter to puppy, clear litter-specific data
+      if (currentListingType === 'litter' && newListingType === 'puppy') {
+        const updatedFormData = { ...formData };
+        
+        // Clear litter-specific fields
+        delete updatedFormData.listLitterOption;
+        delete updatedFormData.litterSize;
+        delete updatedFormData.litterPuppyDetails;
+        delete updatedFormData.individualPuppiesLitter;
+        delete updatedFormData.microchipNumbers;
+        
+        // Clear microchip number fields
+        Object.keys(updatedFormData).forEach(key => {
+          if (key.startsWith('microchipNumber_')) {
+            delete updatedFormData[key];
+          }
+        });
+        
+        // Set the new listing type
+        updatedFormData[name] = value;
+        
+        setFormData(updatedFormData);
+        return;
+      }
+      
+      // If switching from puppy to litter, clear puppy-specific data
+      if (currentListingType === 'puppy' && newListingType === 'litter') {
+        const updatedFormData = { ...formData };
+        
+        // Clear puppy-specific fields
+        delete updatedFormData.microchipNumber;
+        delete updatedFormData.puppyImages;
+        delete updatedFormData.puppyGender;
+        delete updatedFormData.puppyColour;
+        delete updatedFormData.puppyDateOfBirth;
+        delete updatedFormData.vaccinationStatus;
+        delete updatedFormData.individualPuppies;
+        
+        // Set the new listing type
+        updatedFormData[name] = value;
+        
+        setFormData(updatedFormData);
+        return;
+      }
+    }
+    
     baseForm.handleFieldChange(name, value, breedId);
   };
 
@@ -261,7 +312,6 @@ export default function PuppyLitterListingForm({
       // Clean up litter-specific fields when switching to single puppy mode
       if (formData.listingType === 'puppy') {
         // Remove litter-specific fields that shouldn't be saved for single puppy
-        delete dynamicData.listLitterOption;
         delete dynamicData.litterSize;
         delete dynamicData.litterPuppyDetails;
         delete dynamicData.individualPuppiesLitter;
