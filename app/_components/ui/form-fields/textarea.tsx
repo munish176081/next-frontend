@@ -95,7 +95,7 @@ const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         <label className="block">
           {label && (
             <span
-              className={clsx("block", labelClasses.size[size], labelClassName)}
+              className={clsx("block font-bold", labelClasses.size[size], labelClassName)}
             >
               {label}
             </span>

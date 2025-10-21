@@ -333,6 +333,41 @@ export const updateUserProfileSchema = z.object({
     .url({ message: "Please provide a valid image URL." })
     .optional()
     .or(z.literal("")),
+  phone: z
+    .string()
+    .min(1, { message: "Phone number is required." }),
+  bio: z
+    .string()
+    .max(250, { message: "Bio must be 250 characters or less." })
+    .optional()
+    .or(z.literal("")),
+  website: z
+    .string()
+    .url({ message: "Please provide a valid website URL." })
+    .optional()
+    .or(z.literal("")),
+  businessName: z
+    .string()
+    .min(1, { message: "Business or Breeders name is required." })
+    .max(256, { message: "Business name must be less than 256 characters." }),
+  businessABN: z
+    .string()
+    .min(1, { message: "Business ABN is required." })
+    .regex(/^\d{11}$/, { message: "ABN must be exactly 11 digits." }),
+  description: z
+    .string()
+    .min(1, { message: "Description is required." })
+    .max(1000, { message: "Description must be 1000 characters or less." }),
+  location: z
+    .string()
+    .min(1, { message: "Location is required." })
+    .max(256, { message: "Location must be less than 256 characters." }),
+  idVerification: z
+    .object({
+      governmentId: z.array(z.string()).min(1, { message: "Please upload at least one government-issued ID." }),
+      selfieWithId: z.array(z.string()).min(1, { message: "Please upload at least one image of yourself holding the ID." }),
+    })
+    .optional(),
 });
 
 export type ResetPasswordType = z.infer<typeof resetPasswordSchema>;

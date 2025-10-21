@@ -58,7 +58,7 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
           pathname.startsWith('/explore') || pathname.startsWith('/wishlist') || 
           pathname.startsWith('/meetings') || pathname.startsWith('/contact') || 
           pathname.startsWith('/blog') || pathname.startsWith('/create-listing') ||
-          pathname.startsWith('/chat')) {
+          pathname.startsWith('/chat') || pathname.startsWith('/user')) {
         return;
       }
 

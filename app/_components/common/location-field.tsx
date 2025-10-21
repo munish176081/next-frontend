@@ -11,6 +11,7 @@ interface LocationFieldProps {
   error?: string;
   required?: boolean;
   label?: string;
+  variant?: 'default' | 'form-field';
 }
 
 const libraries: ("places")[] = ["places"];
@@ -21,7 +22,8 @@ export default function LocationField({
   placeholder = "Enter Australian location", 
   error, 
   required = false,
-  label = "Location"
+  label = "Location",
+  variant = 'default'
 }: LocationFieldProps) {
   const [inputValue, setInputValue] = useState(value || '');
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
@@ -32,7 +34,7 @@ export default function LocationField({
   }, [value]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: "AIzaSyDXoxQHS0GYsmo67rMzWUdxDywUoMgT6aE",
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDf0nuXtOo8kR-4iUlZcvGPvH85fflIJPg",
     libraries,
   });
 
@@ -66,8 +68,14 @@ export default function LocationField({
     onChange(newValue);
   };
 
-  const baseClasses = "text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12";
-  const errorClasses = error ? "border-red-500" : "";
+  // Styling based on variant
+  const baseClasses = variant === 'form-field' 
+    ? "block peer w-full bg-transparent font-normal focus:outline-none transition duration-200 disabled:bg-gray-100 disabled:placeholder:text-gray-400 disabled:cursor-not-allowed disabled:border-gray-200 px-4 py-2 text-sm h-10 lg:h-11 2xl:h-12 leading-[40px] lg:leading-[44px] 2xl:leading-[48px] rounded-md border border-gray-300 placeholder:text-gray-500 not-read-only:hover:enabled:border-gray-1000 focus:border-gray-1000 not-read-only:focus:enabled:border-gray-1000 focus:ring-gray-900/20"
+    : "text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12";
+  
+  const errorClasses = error 
+    ? (variant === 'form-field' ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-red-500")
+    : "";
 
   if (loadError) {
     // Fallback to regular input if Google Maps fails to load
@@ -78,13 +86,13 @@ export default function LocationField({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label> */}
         <div className="relative">
-          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
           <input
             type="text"
             placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
         {error && (
@@ -102,12 +110,12 @@ export default function LocationField({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label> */}
         <div className="relative">
-          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
           <input
             type="text"
             placeholder="Loading Australian locations..."
             disabled
-            className={`${baseClasses} ${errorClasses} pl-12 opacity-50 cursor-not-allowed`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12'} opacity-50 cursor-not-allowed`}
           />
         </div>
         {error && (
@@ -138,13 +146,13 @@ export default function LocationField({
           }}
         >
         <div className="relative">
-          <MapPin className="absolute left-6 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5 z-10" />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
           <input
             type="text"
             placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} pl-12 cursor-text hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-text hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
       </Autocomplete>

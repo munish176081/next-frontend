@@ -69,6 +69,7 @@ const ExploreListings = () => {
     rating: 4.8, // Default rating since API doesn't provide this yet
     reviews: 15, // Default reviews since API doesn't provide this yet
     listingType: formatListingType(listing.type),
+    type: listing.type, // Add type field for Other Services detection
     image: listing.featuredImage || "/images/comman/feature-puppy-1.png",
     favourite: false, // Will be handled by wishlist functionality
     age: listing.age, // Include calculated age from backend
@@ -86,6 +87,7 @@ const ExploreListings = () => {
     rating: 4.8,
     reviews: 15,
     listingType: "Puppy", // Default since we don't have type in wishlist response
+    type: item.listing.type || "PUPPY_LISTING", // Add type field for Other Services detection
     image: item.listing.imageUrl || "/images/comman/feature-puppy-1.png",
     favourite: true,
     age: "", // Not available in wishlist response

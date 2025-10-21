@@ -7,6 +7,7 @@ import { Heading, Text } from "../ui/typegraphy";
 import { useWishlist } from "@/_contexts/wishlist-context";
 import { useState } from "react";
 import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
+import { ListingTypeEnum } from "@/_types/listing";
 
 interface ListingCardProps {
   listing: {
@@ -20,6 +21,7 @@ interface ListingCardProps {
     reviews?: number;
     badge?: string;
     listingType?: string;
+    type?: string; // Add type field for enum comparison
     favourite?: boolean;
     age?: string;
     userId?: string; // Add userId to check if it's user's own listing
@@ -38,6 +40,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     badge,
     reviews,
     listingType,
+    type,
     image,
     favourite,
     age,
@@ -45,8 +48,16 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     fields,
   } = listing;
 
+  // Check if this is an Other Services listing
+  const isOtherServices = type === ListingTypeEnum.OTHER_SERVICES;
+  
+  // For Other Services, use startingPrice from fields if available, otherwise fall back to main price
+  const effectivePrice = isOtherServices && fields?.startingPrice 
+    ? parseFloat(fields.startingPrice) 
+    : price;
+  
   // Get pricing information
-  const pricingInfo = getPricingInfo(fields || {}, price);
+  const pricingInfo = getPricingInfo(fields || {}, effectivePrice);
   const pricingProps = getPricingDisplayProps(pricingInfo);
 
   const { isWishlisted, toggleWishlist, state } = useWishlist();
@@ -140,6 +151,9 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             ) : pricingProps.hasPriceRange ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
+                  {isOtherServices && (
+                    <Text className="text-lg text-gray-500 font-medium">From</Text>
+                  )}
                   <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.minPrice?.toLocaleString()}
                   </Text>
@@ -148,28 +162,51 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
                     ${pricingProps.maxPrice?.toLocaleString()}
                   </Text>
                 </div>
-                <Text className="text-sm text-gray-500 font-medium">Price Range</Text>
+                <Text className="text-sm text-gray-500 font-medium">
+                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price Range'}
+                </Text>
               </div>
             ) : pricingProps.hasFixedPrice ? (
               <div className="flex flex-col gap-1">
-                <Text className="text-2xl font-normal text-gray-900">
-                  ${pricingProps.price?.toLocaleString()}
+                <div className="flex items-baseline gap-2">
+                  {isOtherServices && (
+                    <Text className="text-lg text-gray-500 font-medium">From</Text>
+                  )}
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${pricingProps.price?.toLocaleString()}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">
+                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Fixed Price'}
                 </Text>
-                <Text className="text-sm text-gray-500 font-medium">Fixed Price</Text>
               </div>
             ) : pricingProps.hasBasicPrice ? (
               <div className="flex flex-col gap-1">
-                <Text className="text-2xl font-normal text-gray-900">
-                  ${pricingProps.price?.toLocaleString()}
+                <div className="flex items-baseline gap-2">
+                  {isOtherServices && (
+                    <Text className="text-lg text-gray-500 font-medium">From</Text>
+                  )}
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${pricingProps.price?.toLocaleString()}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">
+                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price'}
                 </Text>
-                <Text className="text-sm text-gray-500 font-medium">Price</Text>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
-                <Text className="text-2xl font-normal text-gray-900">
-                  ${price?.toLocaleString() || '0'}
+                <div className="flex items-baseline gap-2">
+                  {isOtherServices && (
+                    <Text className="text-lg text-gray-500 font-medium">From</Text>
+                  )}
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${effectivePrice?.toLocaleString() || '0'}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">
+                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price'}
                 </Text>
-                <Text className="text-sm text-gray-500 font-medium">Price</Text>
               </div>
             )}
           </div>

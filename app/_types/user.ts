@@ -10,6 +10,18 @@ export interface UserType {
   role?: "user" | "admin" | "super_admin";
   isSuperAdmin?: boolean;
   permissions?: Record<string, any>;
+  // Profile fields
+  phone?: string;
+  bio?: string;
+  website?: string;
+  businessName?: string;
+  businessABN?: string;
+  description?: string;
+  location?: string;
+  idVerification?: {
+    governmentId: string[];
+    selfieWithId: string[];
+  };
 }
 
 // Admin-specific types

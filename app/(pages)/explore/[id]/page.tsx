@@ -624,7 +624,7 @@ const ExploreDetail = () => {
               />
             </div>
           )}
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1">
             <span className="text-xl font-medium max-md:text-base text-center">
               {transformedListing.user?.name || "Owner Name Not Available"}
               <img className="absolute -bottom-2" src="/images/vectors/line-11.png" />
@@ -635,6 +635,17 @@ const ExploreDetail = () => {
               </span>
             )}
           </div>
+          {transformedListing.user?.username && (
+            <a
+              href={`/user/${transformedListing.user.username}`}
+              className="bg-[#EFC951] hover:bg-[#E6B847] text-black px-4 py-2 rounded-full text-sm font-medium transition-colors duration-200 flex items-center gap-2"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              View Profile
+            </a>
+          )}
         </div>
         <span className="text-[21px] text-[#7E7E7E] mt-5 max-md:text-sm max-md:mt-3">
           Member since: {transformedListing.createdAt ?

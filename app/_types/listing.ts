@@ -122,6 +122,7 @@ export interface UserListingType extends ListingType {
     id: string;
     name: string;
     email: string;
+    username: string;
     imageUrl?: string;
   };
 }
@@ -210,6 +211,7 @@ export interface ListingResponseDto {
     id: string;
     name: string;
     email: string;
+    username: string;
     imageUrl?: string;
   };
 }
@@ -239,6 +241,9 @@ export interface ListingSummaryDto {
   user?: {
     id: string;
     name: string;
+    email: string;
+    username: string;
+    imageUrl?: string;
   };
 }
 
