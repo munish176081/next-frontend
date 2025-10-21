@@ -90,7 +90,7 @@ export function ProfileImageUpload({
           <img
             src={value || "/images/placeholder.jpeg"}
             alt="Profile"
-            className={`${className} rounded-lg object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors`}
+            className={`${className} w-32 h-32 max-w-32 max-h-32 rounded-lg object-cover border-4 border-gray-200 hover:border-gray-300 transition-colors`}
           />
           
           {/* Overlay on hover */}
