@@ -360,22 +360,17 @@ function Startlistingform() {
             if (existingListing.fields.listLitterOption === 'same-details' && existingListing.fields.individualPuppies?.length > 0) {
               const firstPuppy = existingListing.fields.individualPuppies[0];
               if (firstPuppy) {
-                // For puppy litter listings, collect all puppy images from individualPuppies
-                const allPuppyImages: string[] = [];
-                existingListing.fields.individualPuppies.forEach((puppy: any) => {
-                  if (puppy.puppyImages && Array.isArray(puppy.puppyImages)) {
-                    allPuppyImages.push(...puppy.puppyImages);
-                  }
-                });
-                
-                initialData.puppyImages = allPuppyImages;
+                // For puppy litter listings, use only the first puppy's images (not all puppies)
+                // This prevents duplication when the same image is used for all puppies
+                initialData.puppyImages = firstPuppy.puppyImages || [];
                 initialData.puppyGender = firstPuppy.puppyGender || '';
                 initialData.puppyColour = firstPuppy.puppyColour || '';
                 initialData.puppyDateOfBirth = firstPuppy.puppyDateOfBirth || '';
                 initialData.vaccinationStatus = firstPuppy.vaccinationStatus || '';
                 
                 console.log('📱 Loaded puppy images for litter:', {
-                  allPuppyImages,
+                  puppyImages: initialData.puppyImages,
+                  firstPuppyImages: firstPuppy.puppyImages,
                   individualPuppies: existingListing.fields.individualPuppies.map((p: any) => p.puppyImages)
                 });
               }
@@ -465,7 +460,7 @@ function Startlistingform() {
           setFormData(initialData);
       }
     }
-  }, [searchParams, existingListing]);
+  }, [searchParams, existingListing, selectedListingType, type]);
 
   // Handle breed updates for wanted listings when breedId changes
   useEffect(() => {

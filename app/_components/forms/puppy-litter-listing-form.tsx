@@ -344,10 +344,14 @@ export default function PuppyLitterListingForm({
 
         // Create individual puppy records for same-details option
         const individualPuppies: any[] = [];
+        
+        // Deduplicate puppy images to prevent duplicates
+        const uniquePuppyImages = formData.puppyImages ? [...new Set(formData.puppyImages)] : [];
+        
         for (let i = 0; i < litterSize; i++) {
           const puppyData: any = {
             microchipNumber: formData[`microchipNumber_${i}`] || '',
-            puppyImages: formData.puppyImages || [],
+            puppyImages: uniquePuppyImages, // Use deduplicated images
             puppyGender: formData.puppyGender || '',
             puppyColour: formData.puppyColour || '',
             puppyDateOfBirth: formData.puppyDateOfBirth || '',
