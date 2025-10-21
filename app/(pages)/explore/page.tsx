@@ -60,7 +60,9 @@ const ExploreListings = () => {
   }, [state.filterActive, loadWishlist]);
 
   // Transform API data to match ListingCard expectations
-  const transformedListings = listingsResponse?.data?.map((listing) => ({
+  const transformedListings = listingsResponse?.data?.map((listing) => (
+    console.log('Listing:', listing),
+    {
     id: listing.id,
     title: listing.title,
     description: listing?.description || "A wonderful puppy looking for a loving home.",
@@ -70,13 +72,14 @@ const ExploreListings = () => {
     reviews: 15, // Default reviews since API doesn't provide this yet
     listingType: formatListingType(listing.type),
     type: listing.type, // Add type field for Other Services detection
-    image: listing.featuredImage || "/images/comman/feature-puppy-1.png",
+    image: listing.featuredImage ? listing.featuredImage : listing.metadata?.images?.[0],
     favourite: false, // Will be handled by wishlist functionality
     age: listing.age, // Include calculated age from backend
     userId: listing.user?.id, // Add userId for own listing check
     fields: listing.fields || {}, // Add fields for pricing options
   })) || [];
 
+  console.log('Transformed Listings:', transformedListings);
   // Transform wishlist items to match ListingCard expectations
   const transformedWishlistItems = wishlistItems.map((item) => ({
     id: item.listing.id,

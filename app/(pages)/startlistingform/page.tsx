@@ -329,10 +329,30 @@ function Startlistingform() {
             }
 
             // Load microchip numbers for same-details option
+            console.log('🔍 Debug microchip loading:', {
+              listLitterOption: existingListing.fields.listLitterOption,
+              hasMicrochipNumbers: !!existingListing.fields.microchipNumbers,
+              hasIndividualPuppies: !!existingListing.fields.individualPuppies,
+              individualPuppies: existingListing.fields.individualPuppies
+            });
+            
+            // First try the old format (microchipNumbers array)
             if (existingListing.fields.microchipNumbers && Array.isArray(existingListing.fields.microchipNumbers)) {
+              console.log('📱 Loading microchip numbers from old format');
               const microchipNumbers = existingListing.fields.microchipNumbers;
               microchipNumbers.forEach((microchip: string, index: number) => {
                 initialData[`microchipNumber_${index}`] = microchip;
+                console.log(`📱 Set microchipNumber_${index}:`, microchip);
+              });
+            }
+            // Then try the new format (individualPuppies array)
+            else if (existingListing.fields.individualPuppies && Array.isArray(existingListing.fields.individualPuppies)) {
+              console.log('📱 Loading microchip numbers from individualPuppies format');
+              existingListing.fields.individualPuppies.forEach((puppy: any, index: number) => {
+                if (puppy.microchipNumber) {
+                  initialData[`microchipNumber_${index}`] = puppy.microchipNumber;
+                  console.log(`📱 Set microchipNumber_${index} from puppy:`, puppy.microchipNumber);
+                }
               });
             }
 
@@ -340,11 +360,24 @@ function Startlistingform() {
             if (existingListing.fields.listLitterOption === 'same-details' && existingListing.fields.individualPuppies?.length > 0) {
               const firstPuppy = existingListing.fields.individualPuppies[0];
               if (firstPuppy) {
-                initialData.puppyImages = firstPuppy.puppyImages || [];
+                // For puppy litter listings, collect all puppy images from individualPuppies
+                const allPuppyImages: string[] = [];
+                existingListing.fields.individualPuppies.forEach((puppy: any) => {
+                  if (puppy.puppyImages && Array.isArray(puppy.puppyImages)) {
+                    allPuppyImages.push(...puppy.puppyImages);
+                  }
+                });
+                
+                initialData.puppyImages = allPuppyImages;
                 initialData.puppyGender = firstPuppy.puppyGender || '';
                 initialData.puppyColour = firstPuppy.puppyColour || '';
                 initialData.puppyDateOfBirth = firstPuppy.puppyDateOfBirth || '';
                 initialData.vaccinationStatus = firstPuppy.vaccinationStatus || '';
+                
+                console.log('📱 Loaded puppy images for litter:', {
+                  allPuppyImages,
+                  individualPuppies: existingListing.fields.individualPuppies.map((p: any) => p.puppyImages)
+                });
               }
             }
 
@@ -414,9 +447,22 @@ function Startlistingform() {
           }
         }
 
-        console.log('Setting initial form data:', initialData);
-        console.log('Gender field value:', initialData.gender);
-        setFormData(initialData);
+          console.log('Setting initial form data:', initialData);
+          console.log('Gender field value:', initialData.gender);
+          console.log('🔍 Microchip numbers in initial data:', {
+            microchipNumber_0: initialData.microchipNumber_0,
+            microchipNumber_1: initialData.microchipNumber_1,
+            microchipNumber_2: initialData.microchipNumber_2,
+            microchipNumber_3: initialData.microchipNumber_3,
+          });
+          console.log('🔍 Puppy images in initial data:', {
+            puppyImages: initialData.puppyImages,
+            puppyGender: initialData.puppyGender,
+            puppyColour: initialData.puppyColour,
+            puppyDateOfBirth: initialData.puppyDateOfBirth,
+            vaccinationStatus: initialData.vaccinationStatus,
+          });
+          setFormData(initialData);
       }
     }
   }, [searchParams, existingListing]);

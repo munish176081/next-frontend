@@ -43,12 +43,6 @@ const ExploreDetail = () => {
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
 
-  // Debug logging
-  console.log('Listing API Response:', listing);
-  console.log('Listing ID:', listingId);
-  console.log('Is Loading:', isLoading);
-  console.log('Error:', error);
-
   // Fetch similar listings based on current listing
   const { data: similarListingsData } = useSimilarListings({
     breed: listing?.breed,

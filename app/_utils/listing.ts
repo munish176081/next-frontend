@@ -4,6 +4,8 @@ export function formatListingType(listingType: ListingTypeEnum) {
   switch (listingType) {
     case ListingTypeEnum.PUPPY_LISTING:
       return "Puppy";
+    case ListingTypeEnum.PUPPY_LITTER_LISTING:
+      return "Puppy";
     case ListingTypeEnum.SEMEN_LISTING:
       return "Semen";
     case ListingTypeEnum.STUD_LISTING:

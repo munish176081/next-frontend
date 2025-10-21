@@ -190,6 +190,7 @@ export interface ListingResponseDto {
   breedId?: string;
   breedName: string;
   location: string;
+  featuredImage?: string;
   expiresAt: Date;
   startedOrRenewedAt: Date;
   publishedAt: Date;

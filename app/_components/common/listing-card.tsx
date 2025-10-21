@@ -128,7 +128,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
              {/* top-6 -left-7 */}
             <span className="bg-yellow-400 text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min">
-              {listingType || badge} listing
+              {listingType || badge}
             </span>
           </div>
         )}
