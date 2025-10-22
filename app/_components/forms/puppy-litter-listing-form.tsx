@@ -41,6 +41,22 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
       const newValue = [...repeaterValue, ''];
       onChange(field.name, newValue);
     }
+    
+    // Collapse all existing puppies when adding a new one
+    const newIndex = repeaterValue.length;
+    setCollapsedItems(new Set([...Array(newIndex).keys()]));
+    
+    // Scroll to the new accordion after a brief delay to allow DOM update
+    setTimeout(() => {
+      const newAccordionElement = document.querySelector(`[data-puppy-index="${newIndex}"]`);
+      if (newAccordionElement) {
+        newAccordionElement.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
   };
   
   const removeItem = (index: number) => {
@@ -76,7 +92,7 @@ const IndividualPuppiesField = ({ field, value, onChange, error, onPendingDeleti
   return (
     <div className="space-y-4">
       {repeaterValue.map((item, index) => (
-        <div key={index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm relative">
+        <div key={index} data-puppy-index={index} className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm relative">
           <div className="flex items-center justify-between mb-4">
             <h4 className="text-lg font-medium text-gray-900">
               {field.label} {index + 1}
