@@ -8,6 +8,7 @@ import { useWishlist } from "@/_contexts/wishlist-context";
 import { useState } from "react";
 import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
 import { ListingTypeEnum } from "@/_types/listing";
+import { getAvailabilityInfo, getAvailabilityBadgeText, getAvailabilityBadgeClasses, getAvailabilityBadgeIconPath, AvailabilityStatus } from "@/_utils/availability";
 
 interface ListingCardProps {
   listing: {
@@ -26,6 +27,7 @@ interface ListingCardProps {
     age?: string;
     userId?: string; // Add userId to check if it's user's own listing
     fields?: Record<string, any>; // Add fields for pricing options
+    individualPuppies?: Array<{ puppyDateOfBirth?: string }>; // Add for availability calculation
   };
   currentUserId?: string; // Add current user ID
 }
@@ -46,6 +48,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     age,
     userId,
     fields,
+    individualPuppies,
   } = listing;
 
   // Check if this is an Other Services listing
@@ -59,6 +62,42 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   // Get pricing information
   const pricingInfo = getPricingInfo(fields || {}, effectivePrice);
   const pricingProps = getPricingDisplayProps(pricingInfo);
+
+  // Get availability information - default to 'available' if not set
+  const availabilityStatus = (fields?.availabilityStatus as AvailabilityStatus) || 'available';
+  
+  // For PUPPY_LITTER_LISTING, check the appropriate array based on listLitterOption
+  let puppyBirthDates: Array<{ puppyDateOfBirth?: string }> = [];
+  if (type === 'PUPPY_LITTER_LISTING') {
+    const listLitterOption = fields?.listLitterOption;
+    
+    if (listLitterOption === 'single-puppy') {
+      // For single puppy, use individualPuppies array
+      puppyBirthDates = fields?.individualPuppies || [];
+    } else if (listLitterOption === 'add-individually') {
+      // For litter with individual details, use individualPuppiesLitter array
+      puppyBirthDates = fields?.individualPuppiesLitter || [];
+    } else if (listLitterOption === 'same-details') {
+      // For litter with same details, use individualPuppies array
+      puppyBirthDates = fields?.individualPuppies || [];
+    } else {
+      // Fallback: combine both arrays
+      const individualPups = fields?.individualPuppies || [];
+      const litterPups = fields?.individualPuppiesLitter || [];
+      puppyBirthDates = [...individualPups, ...litterPups];
+    }
+  } else {
+    // For other listing types, use the individualPuppies prop
+    puppyBirthDates = individualPuppies || [];
+  }
+  
+  const availabilityInfo = getAvailabilityInfo(
+    availabilityStatus,
+    undefined, // No direct birth date field
+    puppyBirthDates // Use the combined puppy arrays
+  );
+  const availabilityBadgeText = getAvailabilityBadgeText(availabilityInfo);
+  const availabilityBadgeClasses = getAvailabilityBadgeClasses(availabilityInfo.status);
 
   const { isWishlisted, toggleWishlist, state } = useWishlist();
   const [isToggling, setIsToggling] = useState(false);
@@ -132,11 +171,26 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             </span>
           </div>
         )}
+        {/* Availability Badge - Top Right Corner */}
+        
       </Link>
       <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4 flex-1">
         <div className="flex-1">
           <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
+          
           {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+          <div className=" top-4 right-4 z-10">
+          <span className={availabilityBadgeClasses}>
+            <svg 
+              className="w-3 h-3" 
+              viewBox="0 0 24 24" 
+              fill="currentColor"
+            >
+              <path d={getAvailabilityBadgeIconPath()} />
+            </svg>
+            {availabilityBadgeText}
+          </span>
+        </div>
           {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
           {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         </div>

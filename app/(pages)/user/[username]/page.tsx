@@ -159,7 +159,6 @@ export default function UserProfile() {
               {/* Section Headers */}
               {activeTab === 'puppies' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Newborn Litters</h2>
                   {renderListings()}
                 </div>
               )}
