@@ -99,6 +99,25 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   const availabilityBadgeText = getAvailabilityBadgeText(availabilityInfo);
   const availabilityBadgeClasses = getAvailabilityBadgeClasses(availabilityInfo.status);
 
+  // Get the correct image for the listing
+  const getListingImage = () => {
+    // First try the main image prop
+    if (image) return image;
+    
+    // For PUPPY_LITTER_LISTING, try to get image from individualPuppies
+    if (type === 'PUPPY_LITTER_LISTING' && puppyBirthDates.length > 0) {
+      const firstPuppy = puppyBirthDates[0];
+      if (firstPuppy.puppyImages && firstPuppy.puppyImages.length > 0) {
+        return firstPuppy.puppyImages[0];
+      }
+    }
+    
+    // Fallback to placeholder
+    return "/images/placeholder.png";
+  };
+
+  const listingImage = getListingImage();
+
   const { isWishlisted, toggleWishlist, state } = useWishlist();
   const [isToggling, setIsToggling] = useState(false);
 
@@ -162,7 +181,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
         </button>
       )}
       <Link href={`/explore/${listing.id}`} className="relative w-full h-56 bg-gray-100 overflow-hidden rounded-xl">
-        <Image src={image || "/images/placeholder.png"} alt={title || "Listing Image"} fill className="object-cover rounded-md"/>
+        <Image src={listingImage} alt={title || "Listing Image"} fill className="object-cover rounded-md"/>
         {(listingType || badge) && (
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
              {/* top-6 -left-7 */}
@@ -171,26 +190,23 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             </span>
           </div>
         )}
-        {/* Availability Badge - Top Right Corner */}
-        
       </Link>
       <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4 flex-1">
         <div className="flex-1">
           <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
-          
           {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
-          <div className=" top-4 right-4 z-10">
-          <span className={availabilityBadgeClasses}>
-            <svg 
-              className="w-3 h-3" 
-              viewBox="0 0 24 24" 
-              fill="currentColor"
-            >
-              <path d={getAvailabilityBadgeIconPath()} />
-            </svg>
-            {availabilityBadgeText}
-          </span>
-        </div>
+          <div className="flex justify-end mt-2">
+            <span className={availabilityBadgeClasses}>
+              <svg 
+                className="w-3 h-3" 
+                viewBox="0 0 24 24" 
+                fill="currentColor"
+              >
+                <path d={getAvailabilityBadgeIconPath()} />
+              </svg>
+              {availabilityBadgeText}
+            </span>
+          </div>
           {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
           {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         </div>

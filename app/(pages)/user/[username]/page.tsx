@@ -82,7 +82,12 @@ export default function UserProfile() {
         {currentListings.map((listing) => (
           <ListingCard 
             key={listing.id} 
-            listing={{ ...listing, favourite: false }} 
+            listing={{ 
+              ...listing, 
+              favourite: false,
+              individualPuppies: listing.fields?.individualPuppies || [],
+              fields: listing.fields || {}
+            }} 
             currentUserId={undefined}
           />
         ))}
