@@ -77,6 +77,59 @@ export default function UserProfile() {
       );
     }
 
+    // For litters tab, separate current litters and future litters
+    if (activeTab === 'litters') {
+      const currentLitters = currentListings.filter(listing => listing.type === 'PUPPY_LITTER_LISTING');
+      const futureLitters = currentListings.filter(listing => listing.type === 'FUTURE_LISTING');
+
+      return (
+        <div className="space-y-8">
+          {/* Current Litters */}
+          {currentLitters.length > 0 && (
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-4">Current Litters</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentLitters.map((listing) => (
+                  <ListingCard 
+                    key={listing.id} 
+                    listing={{ 
+                      ...listing, 
+                      favourite: false,
+                      individualPuppies: listing.fields?.individualPuppies || [],
+                      fields: listing.fields || {}
+                    }} 
+                    currentUserId={undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Future Litters */}
+          {futureLitters.length > 0 && (
+            <div>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-4">Future Litters</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {futureLitters.map((listing) => (
+                  <ListingCard 
+                    key={listing.id} 
+                    listing={{ 
+                      ...listing, 
+                      favourite: false,
+                      individualPuppies: listing.fields?.individualPuppies || [],
+                      fields: listing.fields || {}
+                    }} 
+                    currentUserId={undefined}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // For other tabs, show all listings normally
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {currentListings.map((listing) => (
@@ -170,7 +223,6 @@ export default function UserProfile() {
               
               {activeTab === 'litters' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Future Litters</h2>
                   {renderListings()}
                 </div>
               )}

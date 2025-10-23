@@ -195,7 +195,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
         <div className="flex-1">
           <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
           {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
-          <div className="flex justify-end mt-2">
+          <div className="flex justify-start mt-2">
             <span className={availabilityBadgeClasses}>
               <svg 
                 className="w-3 h-3" 
