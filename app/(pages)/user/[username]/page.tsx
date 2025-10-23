@@ -4,9 +4,11 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/_components/ui/button";
 import { Badge } from "@/_components/ui/badge";
-import { MapPin, Phone, Mail, Globe, Calendar, CheckCircle, User } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, Calendar, CheckCircle, User, Plus } from "lucide-react";
 import { useUserProfile, useUserListings } from "@/_services/hooks/user/use-user-profile";
 import { ListingCard } from "@/_components/common/listing-card";
+import { useUser } from "@/_services/hooks/user/use-user";
+import Link from "next/link";
 // import { CtaBlock } from "../(home)/_components/cta-block";
 
 
@@ -17,6 +19,10 @@ export default function UserProfile() {
   
   const { data: user, isLoading: userLoading, error: userError } = useUserProfile(username);
   const { data: listings, isLoading: listingsLoading } = useUserListings(username);
+  const { data: currentUser } = useUser();
+  
+  // Check if this is the current user's own profile
+  const isOwnProfile = currentUser?.username === username;
 
   const tabs = [
     { id: 'puppies', label: 'Puppies', count: listings?.puppies?.length || 0 },
@@ -33,6 +39,27 @@ export default function UserProfile() {
       year: 'numeric', 
       month: 'long' 
     });
+  };
+
+  // Get the add listing URL for each tab type
+  const getAddListingUrl = (tabId: string) => {
+    const baseUrl = '/startlistingform';
+    switch (tabId) {
+      case 'puppies':
+        return `${baseUrl}?type=puppy_litter`;
+      case 'litters':
+        return `${baseUrl}?type=puppy_litter`;
+      case 'stud':
+        return `${baseUrl}?type=stud`;
+      case 'semen':
+        return `${baseUrl}?type=semen`;
+      case 'wanted':
+        return `${baseUrl}?type=wanted`;
+      case 'services':
+        return `${baseUrl}?type=services`;
+      default:
+        return baseUrl;
+    }
   };
 
   if (userLoading) {
@@ -72,7 +99,34 @@ export default function UserProfile() {
     if (currentListings.length === 0) {
       return (
         <div className="text-center py-12">
-          <p className="text-gray-500">No {activeTab} listings available</p>
+          <p className="text-gray-500 mb-6">No {activeTab} listings available</p>
+          {isOwnProfile && (
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              {activeTab === 'litters' ? (
+                <>
+                  <Link href="/startlistingform?type=puppy_litter">
+                    <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-6 py-3 rounded-full flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Add New Born Litter
+                    </Button>
+                  </Link>
+                  <Link href="/startlistingform?type=future_litter">
+                    <Button className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded-full flex items-center gap-2">
+                      <Plus className="w-5 h-5" />
+                      Add Future Litter
+                    </Button>
+                  </Link>
+                </>
+              ) : (
+                <Link href={getAddListingUrl(activeTab)}>
+                  <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-6 py-3 rounded-full flex items-center gap-2">
+                    <Plus className="w-5 h-5" />
+                    Add {activeTab.charAt(0).toUpperCase() + activeTab.slice(1)} Listing
+                  </Button>
+                </Link>
+              )}
+            </div>
+          )}
         </div>
       );
     }
@@ -87,7 +141,7 @@ export default function UserProfile() {
           {/* Current Litters */}
           {currentLitters.length > 0 && (
             <div>
-              <h3 className="text-2xl font-semibold text-gray-800 mb-4">Current Litters</h3>
+              <h3 className="text-2xl font-semibold text-gray-800 mb-4">New Born Litters</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {currentLitters.map((listing) => (
                   <ListingCard 
@@ -217,40 +271,110 @@ export default function UserProfile() {
               {/* Section Headers */}
               {activeTab === 'puppies' && (
                 <div>
+                  <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-[40px] font-medium max-md:text-[32px]">Puppies</h2>
+                    {isOwnProfile && (
+                      <Link href={getAddListingUrl('puppies')}>
+                        <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Puppy
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
               
               {activeTab === 'litters' && (
                 <div>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Litters</h2>
+                    {isOwnProfile && (
+                      <div className="flex gap-3">
+                        <Link href="/startlistingform?type=puppy_litter">
+                          <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add New Born Litter
+                          </Button>
+                        </Link>
+                        <Link href="/startlistingform?type=future">
+                          <Button className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                            <Plus className="w-4 h-4" />
+                            Add Future Litter
+                          </Button>
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
 
               {activeTab === 'stud' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Stud Services</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Stud Services</h2>
+                    {isOwnProfile && (
+                      <Link href={getAddListingUrl('stud')}>
+                        <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Stud
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
 
               {activeTab === 'semen' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Semen Collection</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Semen Collection</h2>
+                    {isOwnProfile && (
+                      <Link href={getAddListingUrl('semen')}>
+                        <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Semen
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
 
               {activeTab === 'wanted' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Wanted Listings</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Wanted Listings</h2>
+                    {isOwnProfile && (
+                      <Link href={getAddListingUrl('wanted')}>
+                        <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Wanted
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
 
               {activeTab === 'services' && (
                 <div>
-                  <h2 className="text-[40px] font-medium mb-6 max-md:text-[32px]">Additional Services</h2>
+                  <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Additional Services</h2>
+                    {isOwnProfile && (
+                      <Link href={getAddListingUrl('services')}>
+                        <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
+                          <Plus className="w-4 h-4" />
+                          Add Service
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
                   {renderListings()}
                 </div>
               )}
@@ -264,7 +388,7 @@ export default function UserProfile() {
               <h3 className="text-[32px] font-medium mb-6 max-md:text-xl">Business Bio & Contact</h3>
               <div className="space-y-6">
                 <p className="text-[21px] text-[#7E7E7E] leading-relaxed max-md:text-sm">
-                  {user.description || 'No description available'}
+                  {user.bio || 'No Bio available'}
                 </p>
                 
                 <div className="space-y-4">
@@ -353,7 +477,13 @@ export default function UserProfile() {
             )}
           </div>
         </div>
-      </div>
+        <div className="container">
+          <h3 className="text-[32px] font-medium mb-6 max-md:text-xl">About {user?.businessName}</h3>
+          <p className="text-[21px] leading-relaxed max-md:text-sm">
+                  {user.description || 'No Bio available'}
+          </p>
+        </div>
+    </div>
 
       {/* CTA Block - Commented out for now */}
       {/* <CtaBlock /> */}
