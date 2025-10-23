@@ -397,8 +397,12 @@ export default function BaseListingForm({
       const motherFields = getParentFields('mother');
       const fatherFields = getParentFields('father');
       
-      const fieldsToValidate = [...motherFields, ...fatherFields];
-      if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
+      let fieldsToValidate = [...motherFields, ...fatherFields];
+      
+      // For semen listings, only validate father fields
+      if (selectedListingType?.id === ListingTypeEnum.SEMEN_LISTING) {
+        fieldsToValidate = fatherFields;
+      } else if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
         const studFields = getParentFields('stud');
         fieldsToValidate.push(...studFields);
       }
