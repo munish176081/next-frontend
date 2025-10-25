@@ -299,7 +299,8 @@ function UserListingsPage() {
                       {(() => {
                         const pricingResult = getListingPricingDisplay({
                           price: listing.price,
-                          fields: listing.fields || {}
+                          fields: listing.fields || {},
+                          type: listing.type
                         });
                         console.log(pricingResult, listing.fields, listing.price, "SUSHIL"  ) ;
                         return pricingResult.hasError ? "N/A" : pricingResult.displayText;

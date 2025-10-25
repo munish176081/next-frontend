@@ -397,19 +397,36 @@ export default function BaseListingForm({
 
     // Validate parent fields if required
     if (selectedListingType && isParentInfoRequired(selectedListingType.id as ListingTypeEnum)) {
-      const motherFields = getParentFields('mother');
-      const fatherFields = getParentFields('father');
+      const fieldsToValidate: any[] = [];
       
-      const fieldsToValidate = [...motherFields, ...fatherFields];
-      if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
-        const studFields = getParentFields('stud');
-        fieldsToValidate.push(...studFields);
+      // For semen listings, only validate father fields
+      if (selectedListingType?.id === ListingTypeEnum.SEMEN_LISTING) {
+        const fatherFields = getParentFields('father');
+        fieldsToValidate.push(...fatherFields);
+      }
+      // For stud listings, validate based on gender (stud or bitch)
+      else if (selectedListingType?.id === ListingTypeEnum.STUD_LISTING) {
+        const gender = formData.gender;
+        if (gender === 'bitch') {
+          const bitchFields = getParentFields('bitch');
+          fieldsToValidate.push(...bitchFields);
+        } else {
+          // Default to stud fields for 'stud' gender or unknown
+          const studFields = getParentFields('stud');
+          fieldsToValidate.push(...studFields);
+        }
+      }
+      // For other listings (puppy, litter, future), validate both mother and father
+      else {
+        const motherFields = getParentFields('mother');
+        const fatherFields = getParentFields('father');
+        fieldsToValidate.push(...motherFields, ...fatherFields);
       }
 
       fieldsToValidate.forEach(field => {
         const value = formData[field.name];
 
-        if (field.validation.required) {
+        if (field.validation?.required) {
           if (field.type === 'file') {
             const urls = Array.isArray(value) ? value : [];
             if (field.validation.minCount && urls.length < field.validation.minCount) {

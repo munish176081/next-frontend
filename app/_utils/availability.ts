@@ -34,7 +34,7 @@ export function calculateReadyDate(birthDate: string): string | null {
 }
 
 /**
- * Format the ready date for display (e.g., "Oct 20")
+ * Format the ready date for display (e.g., "Oct 20, 2024")
  * @param readyDate - The ready date in YYYY-MM-DD format
  * @returns Formatted date string or null if invalid
  */
@@ -47,7 +47,8 @@ export function formatReadyDate(readyDate: string | null): string | null {
     
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
-      day: 'numeric' 
+      day: 'numeric',
+      year: 'numeric'
     });
   } catch (error) {
     console.error('Error formatting ready date:', error);
@@ -101,7 +102,7 @@ export function getAvailabilityInfo(
  */
 export function getAvailabilityBadgeText(availabilityInfo: AvailabilityInfo): string {
   const { status, readyDateFormatted } = availabilityInfo;
-  
+  // sold_out
   const statusText = status.charAt(0).toUpperCase() + status.slice(1);
   
   if (status === 'adopted' || !readyDateFormatted) {
@@ -125,7 +126,7 @@ export function getAvailabilityBadgeIconPath(): string {
  * @returns CSS classes for styling the badge
  */
 export function getAvailabilityBadgeClasses(status: AvailabilityStatus): string {
-  const baseClasses = "px-3 py-1 text-sm font-medium rounded-full border flex items-center gap-1";
+  const baseClasses = "px-3 py-1 text-sm font-medium rounded-full border flex items-center gap-1 whitespace-nowrap";
   
   switch (status) {
     case 'available':

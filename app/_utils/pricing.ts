@@ -155,6 +155,7 @@ export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResul
 export const getListingPricingDisplay = (listingReference: {
   price?: number;
   fields?: Record<string, any>;
+  type?: string;
 }): PricingDisplayResult => {
   if (!listingReference) {
     return {
@@ -165,6 +166,56 @@ export const getListingPricingDisplay = (listingReference: {
     };
   }
 
+  // Handle wanted listings - show budget instead of price
+  if (listingReference.type === 'WANTED_LISTING') {
+    const budget = listingReference.fields?.budget;
+    
+    if (!budget) {
+      return {
+        displayText: 'Budget Not Specified',
+        isValid: true,
+        hasError: false
+      };
+    }
+
+    // If budget is a range (e.g., "$500 - $1,000"), extract min and max
+    if (budget.includes(' - ')) {
+      const [minStr, maxStr] = budget.split(' - ');
+      const min = parseInt(minStr.replace(/[^0-9]/g, ''));
+      const max = parseInt(maxStr.replace(/[^0-9]/g, ''));
+      return {
+        displayText: `$${min?.toLocaleString()} - $${max?.toLocaleString()}`,
+        isValid: true,
+        hasError: false
+      };
+    }
+    
+    // If budget is a single value or "No Budget"
+    if (budget.toLowerCase().includes('no budget') || budget.toLowerCase().includes('flexible')) {
+      return {
+        displayText: 'Budget Flexible',
+        isValid: true,
+        hasError: false
+      };
+    }
+    
+    // If it's a single value
+    const value = parseInt(budget.replace(/[^0-9]/g, ''));
+    if (value && !isNaN(value)) {
+      return {
+        displayText: `$${value?.toLocaleString()}`,
+        isValid: true,
+        hasError: false
+      };
+    }
+
+    // Fallback to original budget text
+    return {
+      displayText: budget,
+      isValid: true,
+      hasError: false
+    };
+  }
 
   const pricingData: PricingData = {
     pricingOption: listingReference.fields?.pricingOption,

@@ -54,6 +54,7 @@ export default function SemenListingForm({
     fieldConfig: SEMEN_LISTING_FIELD_CONFIG
   });
 
+
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
     baseForm.handleFieldChange(name, value, breedId);
   };

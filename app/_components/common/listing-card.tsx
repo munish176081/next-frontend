@@ -28,6 +28,8 @@ interface ListingCardProps {
     userId?: string; // Add userId to check if it's user's own listing
     fields?: Record<string, any>; // Add fields for pricing options
     individualPuppies?: Array<{ puppyDateOfBirth?: string }>; // Add for availability calculation
+    availability?: string; // Add availability field
+    breed?: string; // Add breed field
   };
   currentUserId?: string; // Add current user ID
 }
@@ -49,10 +51,21 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     userId,
     fields,
     individualPuppies,
+    availability,
+    breed,
   } = listing;
 
   // Check if this is an Other Services listing
   const isOtherServices = type === ListingTypeEnum.OTHER_SERVICES;
+  
+  // Check if this is a Wanted listing
+  const isWantedListing = type === ListingTypeEnum.WANTED_LISTING;
+  
+  // Check if this is a Semen listing
+  const isSemenListing = type === ListingTypeEnum.SEMEN_LISTING;
+  
+  // Check if this is a Stud listing
+  const isStudListing = type === ListingTypeEnum.STUD_LISTING;
   
   // For Other Services, use startingPrice from fields if available, otherwise fall back to main price
   const effectivePrice = isOtherServices && fields?.startingPrice 
@@ -63,12 +76,98 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   const pricingInfo = getPricingInfo(fields || {}, effectivePrice);
   const pricingProps = getPricingDisplayProps(pricingInfo);
 
-  // Get availability information - default to 'available' if not set
-  const availabilityStatus = (fields?.availabilityStatus as AvailabilityStatus) || 'available';
+  // Get budget information for wanted listings
+  const getBudgetInfo = () => {
+    if (!isWantedListing || !fields?.budget) {
+      return null;
+    }
+    
+    const budget = fields.budget;
+    
+    // If budget is a range (e.g., "$500 - $1,000"), extract min and max
+    if (budget.includes(' - ')) {
+      const [minStr, maxStr] = budget.split(' - ');
+      const min = parseInt(minStr.replace(/[^0-9]/g, ''));
+      const max = parseInt(maxStr.replace(/[^0-9]/g, ''));
+      return { min, max, display: budget, isRange: true };
+    }
+    
+    // If budget is a single value or "No Budget"
+    if (budget.toLowerCase().includes('no budget') || budget.toLowerCase().includes('flexible')) {
+      return { display: 'Budget Flexible', isRange: false };
+    }
+    
+    // If it's a single value
+    const value = parseInt(budget.replace(/[^0-9]/g, ''));
+    return { value, display: budget, isRange: false };
+  };
+
+  const budgetInfo = getBudgetInfo();
+
+  // Get semen-specific information
+  const getSemenInfo = () => {
+    if (!isSemenListing) return null;
+    
+    return {
+      dogName: fields?.dogName || 'Unknown Dog',
+      collectionDate: fields?.collectionDate ? new Date(fields.collectionDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : 'Unknown Date',
+      semenType: fields?.semenType || 'Unknown Type',
+      breed: breed || 'Unknown Breed',
+      price: price || 0
+    };
+  };
+
+  const semenInfo = getSemenInfo();
+
+  // Get stud-specific information
+  const getStudInfo = () => {
+    if (!isStudListing) return null;
+    
+    // Try to get gender from various possible locations
+    let gender = fields?.gender;
+    
+    // If not found in fields, try to determine from other indicators
+    if (!gender) {
+      // Check if there are stud-specific images vs bitch-specific images
+      if (fields?.studImages && fields.studImages.length > 0) {
+        gender = 'stud';
+      } else if (fields?.bitchImages && fields.bitchImages.length > 0) {
+        gender = 'bitch';
+      } else if (fields?.dogImages && fields.dogImages.length > 0) {
+        // If only dogImages, we can't determine gender, so use a default
+        gender = 'stud'; // Default to stud for now
+      }
+    }
+    
+    // Format gender display
+    const getGenderDisplay = (gender: string) => {
+      if (gender === 'stud') return 'Stud';
+      if (gender === 'bitch') return 'Bitch';
+      return 'Unknown';
+    };
+    
+    return {
+      dogName: fields?.dogName || title || 'Unknown Dog',
+      gender: getGenderDisplay(gender || 'Unknown'),
+      age: fields?.age || age || 'Unknown Age',
+      studFee: price || 0
+    };
+  };
+
+  const studInfo = getStudInfo();
+
+  // Get availability information - use the actual availability field from the listing
+  const availabilityStatus = (listing.availability as AvailabilityStatus) || 'available';
   
-  // For PUPPY_LITTER_LISTING, check the appropriate array based on listLitterOption
+  // For FUTURE_LISTING, use expectedDateOfBirth from fields
+  let birthDate: string | undefined;
   let puppyBirthDates: Array<{ puppyDateOfBirth?: string }> = [];
-  if (type === 'PUPPY_LITTER_LISTING') {
+  
+  if (type === 'FUTURE_LISTING') {
+    // For future listings, use expectedDateOfBirth
+    birthDate = fields?.expectedDateOfBirth;
+  } else if (type === 'PUPPY_LITTER_LISTING') {
+    // For PUPPY_LITTER_LISTING, check the appropriate array based on listLitterOption
     const listLitterOption = fields?.listLitterOption;
     
     if (listLitterOption === 'single-puppy') {
@@ -93,14 +192,24 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   
   const availabilityInfo = getAvailabilityInfo(
     availabilityStatus,
-    undefined, // No direct birth date field
-    puppyBirthDates // Use the combined puppy arrays
+    birthDate, // Use expectedDateOfBirth for future listings
+    puppyBirthDates // Use the combined puppy arrays for other types
   );
   const availabilityBadgeText = getAvailabilityBadgeText(availabilityInfo);
   const availabilityBadgeClasses = getAvailabilityBadgeClasses(availabilityInfo.status);
 
   // Get the correct image for the listing
   const getListingImage = () => {
+    // For semen listings, try to get image from semenImages
+    if (isSemenListing && fields?.semenImages && fields.semenImages.length > 0) {
+      return fields.semenImages[0];
+    }
+    
+    // For stud listings, try to get image from dogImages
+    if (type === ListingTypeEnum.STUD_LISTING && fields?.dogImages && fields.dogImages.length > 0) {
+      return fields.dogImages[0];
+    }
+    
     // First try the main image prop
     if (image) return image;
     
@@ -113,7 +222,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     }
     
     // Fallback to placeholder
-    return "/images/placeholder.png";
+    return "/images/placeholder.jpeg";
   };
 
   const listingImage = getListingImage();
@@ -193,26 +302,122 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       </Link>
       <Link href={`/explore/${listing.id}`} className="flex flex-col gap-2 mt-4 flex-1">
         <div className="flex-1">
-          <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
-          {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+          {isSemenListing && semenInfo ? (
+            <>
+              <Heading tag="h4" className="text-2xl font-semibold">{semenInfo.dogName}</Heading>
+              <div className="flex justify-start mt-2">
+                <span className={availabilityBadgeClasses}>
+                  Collected {semenInfo.collectionDate}
+                  <span className="text-gray-500">•</span> 
+                  {semenInfo.semenType}
+                </span>
+              </div>
+              <Text className="text-lg font-semibold text-gray-900 mt-1">{semenInfo.breed}</Text>
+            </>
+          ) : isStudListing && studInfo ? (
+            <>
+              <Heading tag="h4" className="text-2xl font-semibold">{studInfo.dogName}</Heading>
+              <div className={availabilityBadgeClasses}>
+                {studInfo.gender}
+                <span className="text-gray-500">•</span>
+                Age : {studInfo.age}
+              </div>
+            </>
+          ) : isOtherServices ? (
+            <>
+              <Heading tag="h4" className="text-2xl font-semibold">{fields?.serviceCategory || title}</Heading>
+              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+            </>
+          ) : (
+            <>
+              <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
+              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+            </>
+          )}
+          {listing.listingType == 'FUTURE_LISTING' || listing.listingType == 'PUPPY_LITTER_LISTING' && (
           <div className="flex justify-start mt-2">
             <span className={availabilityBadgeClasses}>
-              <svg 
+              {/* <svg 
                 className="w-3 h-3" 
                 viewBox="0 0 24 24" 
                 fill="currentColor"
               >
                 <path d={getAvailabilityBadgeIconPath()} />
-              </svg>
+              </svg> */}
               {availabilityBadgeText}
             </span>
           </div>
+          )}
           {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
           {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         </div>
         <div className="flex items-center justify-between mt-3">
           <div className="flex flex-col gap-1">
-            {pricingProps.isPriceOnRequest ? (
+            {isSemenListing && semenInfo ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${semenInfo.price?.toLocaleString()}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">per straw/dose</Text>
+              </div>
+            ) : isStudListing && studInfo ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${studInfo.studFee?.toLocaleString()}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">Stud fee</Text>
+              </div>
+            ) : isWantedListing ? (
+              budgetInfo ? (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-2">
+                    {budgetInfo.isRange ? (
+                      <>
+                        <Text className="text-2xl font-normal text-gray-900">
+                          ${budgetInfo.min?.toLocaleString()}
+                        </Text>
+                        <Text className="text-lg text-gray-500 font-medium">-</Text>
+                        <Text className="text-2xl font-normal text-gray-900">
+                          ${budgetInfo.max?.toLocaleString()}
+                        </Text>
+                      </>
+                    ) : budgetInfo.value ? (
+                      <Text className="text-2xl font-normal text-gray-900">
+                        ${budgetInfo.value?.toLocaleString()}
+                      </Text>
+                    ) : (
+                      <Text className="text-2xl font-normal text-gray-900">
+                        {budgetInfo.display}
+                      </Text>
+                    )}
+                  </div>
+                  <Text className="text-sm text-gray-500 font-medium">
+                    {budgetInfo.isRange ? 'Budget Range' : 'Budget'}
+                  </Text>
+                </div>
+              ) : (
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-baseline gap-2">
+                    <Text className="text-2xl font-normal text-gray-900">Budget Not Specified</Text>
+                  </div>
+                  <Text className="text-sm text-gray-500 font-medium">Budget</Text>
+                </div>
+              )
+            ) : isOtherServices ? (
+              <div className="flex flex-col gap-1">
+                <div className="flex items-baseline gap-2">
+                  <Text className="text-lg text-gray-500 font-medium">From</Text>
+                  <Text className="text-2xl font-normal text-gray-900">
+                    ${effectivePrice?.toLocaleString() || '0'}
+                  </Text>
+                </div>
+                <Text className="text-sm text-gray-500 font-medium">Starting Price</Text>
+              </div>
+            ) : pricingProps.isPriceOnRequest ? (
               <div className="flex items-center gap-2">
                 <div className="px-3 py-1 bg-gradient-to-r from-CPrimary/10 to-CPrimary/5 rounded-full border border-CPrimary/20">
                   <Text className="text-lg font-semibold text-CPrimary">Price on Request</Text>
@@ -221,9 +426,6 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             ) : pricingProps.hasPriceRange ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                  {isOtherServices && (
-                    <Text className="text-lg text-gray-500 font-medium">From</Text>
-                  )}
                   <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.minPrice?.toLocaleString()}
                   </Text>
@@ -232,51 +434,34 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
                     ${pricingProps.maxPrice?.toLocaleString()}
                   </Text>
                 </div>
-                <Text className="text-sm text-gray-500 font-medium">
-                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price Range'}
-                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Price Range</Text>
               </div>
             ) : pricingProps.hasFixedPrice ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                  {isOtherServices && (
-                    <Text className="text-lg text-gray-500 font-medium">From</Text>
-                  )}
                   <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.price?.toLocaleString()}
                   </Text>
                 </div>
-                <Text className="text-sm text-gray-500 font-medium">
-                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Fixed Price'}
-                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Fixed Price</Text>
               </div>
             ) : pricingProps.hasBasicPrice ? (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                  {isOtherServices && (
-                    <Text className="text-lg text-gray-500 font-medium">From</Text>
-                  )}
                   <Text className="text-2xl font-normal text-gray-900">
                     ${pricingProps.price?.toLocaleString()}
                   </Text>
                 </div>
-                <Text className="text-sm text-gray-500 font-medium">
-                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price'}
-                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Price</Text>
               </div>
             ) : (
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
-                  {isOtherServices && (
-                    <Text className="text-lg text-gray-500 font-medium">From</Text>
-                  )}
                   <Text className="text-2xl font-normal text-gray-900">
                     ${effectivePrice?.toLocaleString() || '0'}
                   </Text>
                 </div>
-                <Text className="text-sm text-gray-500 font-medium">
-                  {isOtherServices ? 'Starting Price (minimum cost)' : 'Price'}
-                </Text>
+                <Text className="text-sm text-gray-500 font-medium">Price</Text>
               </div>
             )}
           </div>

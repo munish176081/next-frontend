@@ -314,7 +314,7 @@ export default function UserProfile() {
               {activeTab === 'stud' && (
                 <div>
                   <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Stud Services</h2>
+                    <h2 className="text-[40px] font-medium max-md:text-[32px]">Stud & Bitch Dogs</h2>
                     {isOwnProfile && (
                       <Link href={getAddListingUrl('stud')}>
                         <Button className="bg-CPrimary hover:bg-CPrimary/90 text-white px-4 py-2 rounded-full flex items-center gap-2">
