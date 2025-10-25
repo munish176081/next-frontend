@@ -268,6 +268,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       setIsToggling(false);
     }
   };
+  console.log(listing, listing.listingType, "LISTING TYPE")
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6 h-full">
       {/* Wishlist Heart Icon - Show for all listings except own listings */}
@@ -341,19 +342,13 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
             </>
           )}
-          {(listing.listingType == 'FUTURE_LISTING' || listing.listingType == 'PUPPY_LITTER_LISTING') && (
-          <div className="flex justify-start mt-2">
-            <span className={availabilityBadgeClasses}>
-              {/* <svg 
-                className="w-3 h-3" 
-                viewBox="0 0 24 24" 
-                fill="currentColor"
-              >
-                <path d={getAvailabilityBadgeIconPath()} />
-              </svg> */}
-              {availabilityBadgeText}
-            </span>
-          </div>
+         
+         {(listing.type == ListingTypeEnum.FUTURE_LISTING || listing.type == ListingTypeEnum.PUPPY_LITTER_LISTING) && (
+            <div className="flex justify-start mt-2">
+              <span className={availabilityBadgeClasses}>
+                {availabilityBadgeText}
+              </span>
+            </div>
           )}
           {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
           {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
