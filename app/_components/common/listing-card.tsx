@@ -69,6 +69,9 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
   // Check if this is a Stud listing
   const isStudListing = type === ListingTypeEnum.STUD_LISTING;
   
+  // Check if this is a Future Litter listing
+  const isFutureLitter = type === ListingTypeEnum.FUTURE_LISTING;
+  
   // For Other Services, use startingPrice from fields if available, otherwise fall back to main price
   const effectivePrice = isOtherServices && fields?.startingPrice 
     ? parseFloat(fields.startingPrice) 
@@ -158,6 +161,14 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
 
   const studInfo = getStudInfo();
 
+  // Get past litter images for Future Litter listings
+  const getPastLitterImages = () => {
+    if (!isFutureLitter || !fields?.pastLitterImages) return [];
+    return Array.isArray(fields.pastLitterImages) ? fields.pastLitterImages : [];
+  };
+
+  const pastLitterImages = getPastLitterImages();
+
   // Get availability information - use the actual availability field from the listing
   const availabilityStatus = (listing.availability as AvailabilityStatus) || 'available';
   
@@ -210,6 +221,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     // For stud listings, try to get image from dogImages
     if (type === ListingTypeEnum.STUD_LISTING && fields?.dogImages && fields.dogImages.length > 0) {
       return fields.dogImages[0];
+    }
+    
+    // For Future Litter listings, try to get image from pastLitterImages first
+    if (isFutureLitter && pastLitterImages.length > 0) {
+      return pastLitterImages[0];
     }
     
     // For Other Services listings, try to get image from metadata.images
@@ -335,6 +351,18 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             <>
               <Heading tag="h4" className="text-2xl font-semibold">{fields?.serviceCategory || title}</Heading>
               {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+            </>
+          ) : isFutureLitter ? (
+            <>
+              <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
+              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+              {pastLitterImages.length > 0 && (
+                <div className="flex items-center gap-2 mt-2">
+                  <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
+                    📸 Past Litter Images Available
+                  </span>
+                </div>
+              )}
             </>
           ) : (
             <>
