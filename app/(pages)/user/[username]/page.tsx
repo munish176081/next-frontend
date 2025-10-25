@@ -478,10 +478,12 @@ export default function UserProfile() {
           </div>
         </div>
         <div className="container">
-          <h3 className="text-[32px] font-medium mb-6 max-md:text-xl">About {user?.businessName}</h3>
-          <p className="text-[21px] leading-relaxed max-md:text-sm">
-                  {user.description || 'No Bio available'}
-          </p>
+          <div className="bg-white rounded-40 border border-black/20 p-8 max-md:p-4 max-md:rounded-[20px]">
+            <h3 className="text-[32px] font-medium mb-6 max-md:text-xl">About {user?.businessName}</h3>
+            <p className="text-[21px] leading-relaxed max-md:text-sm text-gray-700">
+              {user.description || 'No Bio available'}
+            </p>
+          </div>
         </div>
     </div>
 
