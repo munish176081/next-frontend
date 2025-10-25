@@ -30,6 +30,7 @@ interface ListingCardProps {
     individualPuppies?: Array<{ puppyDateOfBirth?: string }>; // Add for availability calculation
     availability?: string; // Add availability field
     breed?: string; // Add breed field
+    metadata?: Record<string, any>; // Add metadata field for Other Services images
   };
   currentUserId?: string; // Add current user ID
 }
@@ -53,6 +54,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     individualPuppies,
     availability,
     breed,
+    metadata,
   } = listing;
 
   // Check if this is an Other Services listing
@@ -208,6 +210,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     // For stud listings, try to get image from dogImages
     if (type === ListingTypeEnum.STUD_LISTING && fields?.dogImages && fields.dogImages.length > 0) {
       return fields.dogImages[0];
+    }
+    
+    // For Other Services listings, try to get image from metadata.images
+    if (isOtherServices && listing.metadata?.images && listing.metadata.images.length > 0) {
+      return listing.metadata.images[0];
     }
     
     // First try the main image prop
