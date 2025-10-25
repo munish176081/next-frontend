@@ -272,6 +272,10 @@ export default function StudListingForm({
   const commonFields = getCommonFields(selectedListingType);
   const contactFields = getContactFields(selectedListingType);
   const dynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
+  const studdynamicRequiredFields = [
+    ...selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'studDynamic'),
+    ...selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'studDynamic')
+  ];
   const dynamicOptionalFields = selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
 
   return (
@@ -293,6 +297,7 @@ export default function StudListingForm({
 
       {/* Required Information */}
       {dynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(dynamicRequiredFields, 'Required Information', 'required')}
+      {studdynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(studdynamicRequiredFields, 'Required Information', 'required', false)}
 
       {/* Additional Information */}
       {dynamicOptionalFields.length > 0 && baseForm.renderFieldGroup(dynamicOptionalFields, 'Additional Information', 'additional')}

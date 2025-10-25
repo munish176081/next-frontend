@@ -102,7 +102,7 @@ export interface ListingField {
     };
   };
   layout?: 'single' | 'double'; // single = full width, double = half width
-  fieldCategory?: 'common' | 'contact' | 'media' | 'dynamic' | 'special'; // New field to categorize where data goes
+  fieldCategory?: 'common' | 'contact' | 'media' | 'dynamic' | 'special' | 'studDynamic'; // New field to categorize where data goes
   conditional?: {
     field: string;
     value: string;
@@ -507,20 +507,20 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'estimatedAvailabilityDate',
-        label: 'Estimated Availability Date',
-        type: 'date',
-        required: true,
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'estimatedAvailabilityDate',
+      //   label: 'Estimated Availability Date',
+      //   type: 'date',
+      //   required: true,
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'registrationNumber',
         label: 'ANKC / State Breeder Registration Number',
         type: 'text',
         required: true,
         placeholder: 'Enter registration number',
-        fieldCategory: 'dynamic'
+        fieldCategory: 'studDynamic'
       },
       {
         name: 'puppyImages',
@@ -781,24 +781,24 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'url',
         required: false,
         placeholder: 'Enter video URL',
-        fieldCategory: 'dynamic'
+        fieldCategory: 'studDynamic'
       },
-      {
-        name: 'sireName',
-        label: 'Sire Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter sire (father) name',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'damName',
-        label: 'Dame Name',
-        type: 'text',
-        required: false,
-        placeholder: 'Enter dame (mother) name',
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'sireName',
+      //   label: 'Sire Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter sire (father) name',
+      //   fieldCategory: 'dynamic'
+      // },
+      // {
+      //   name: 'damName',
+      //   label: 'Dame Name',
+      //   type: 'text',
+      //   required: false,
+      //   placeholder: 'Enter dame (mother) name',
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'badges',
         label: 'Select Badges',
@@ -946,14 +946,14 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'healthCertificateText',
-        label: 'Health Certificate (text)',
-        type: 'textarea',
-        required: false,
-        placeholder: 'Enter health certificate details',
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'healthCertificateText',
+      //   label: 'Health Certificate (text)',
+      //   type: 'textarea',
+      //   required: false,
+      //   placeholder: 'Enter health certificate details',
+      //   fieldCategory: 'dynamic'
+      // },
       {
         name: 'semenVideoUrls',
         label: 'Semen Video URL',

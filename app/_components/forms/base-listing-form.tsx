@@ -213,8 +213,9 @@ export default function BaseListingForm({
     });
   };
 
-  const renderFieldGroup = (fields: ListingField[], title: string, category: 'basic' | 'required' | 'additional' | 'contact' | 'parent' = 'basic') => {
+  const renderFieldGroup = (fields: ListingField[], title: string, category: 'basic' | 'required' | 'additional' | 'contact' | 'parent' = 'basic', showTitle?: boolean) => {
     if (fields.length === 0) return null;
+    const isTitleVisible = showTitle ?? true; // default true if undefined
 
     const visibleFields = getFieldOrder(fields.filter(shouldDisplayField), category);
 
@@ -225,9 +226,11 @@ export default function BaseListingForm({
       pricing: visibleFields.filter(field => getFieldLayout(field) === 'pricing-group')
     };
 
+    console.log(isTitleVisible, "IS")
     return (
       <div className="w-full">
-        <h2 className="text-[32px] font-medium mt-8 max-md:text-[28px] max-md:mt-10">{title}</h2>
+       
+        {isTitleVisible && <h2 className="text-[32px] font-medium mt-8 max-md:text-[28px] max-md:mt-10">{title}</h2> }
 
         {/* Single row fields */}
         {fieldGroups.single.length > 0 && (

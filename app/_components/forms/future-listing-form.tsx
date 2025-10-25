@@ -245,17 +245,17 @@ export default function FutureListingForm({
   const contactFields = getContactFields(selectedListingType);
   const dynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
   const dynamicOptionalFields = selectedListingType.optionalFields.filter((field: ListingField) => field.fieldCategory === 'dynamic');
+  const studDynamicRequiredFields = selectedListingType.requiredFields.filter((field: ListingField) => field.fieldCategory === 'studDynamic');
 
   return (
     <div className="w-full">
       {/* Basic Information */}
       {commonFields.length > 0 && baseForm.renderFieldGroup(commonFields, 'Basic Information', 'basic')}
+      {studDynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(studDynamicRequiredFields, 'Required Information', 'basic')}
 
       {/* Required Information */}
       {dynamicRequiredFields.length > 0 && (
         <div className="w-full">
-          <h2 className="text-[32px] font-medium mt-8 max-md:text-[28px] max-md:mt-10">Required Information</h2>
-          
           {/* Pricing fields first - at the top */}
           {(() => {
             const pricingFields = dynamicRequiredFields.filter(field => 

@@ -239,7 +239,7 @@ export default function SemenListingForm({
       {dynamicRequiredFields.length > 0 && baseForm.renderFieldGroup(dynamicRequiredFields, 'Required Information', 'required')}
 
       {/* Additional Information */}
-      {dynamicOptionalFields.length > 0 && baseForm.renderFieldGroup(dynamicOptionalFields, 'Additional Information', 'additional')}
+      {dynamicOptionalFields.length > 0 && baseForm.renderFieldGroup(dynamicOptionalFields, 'Additional Information', 'additional', false)}
 
       {/* Stud Information Section - Only show for semen listings */}
       {selectedListingType.id !== ListingTypeEnum.OTHER_SERVICES &&
