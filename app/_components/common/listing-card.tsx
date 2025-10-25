@@ -161,13 +161,13 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
 
   const studInfo = getStudInfo();
 
-  // Get past litter images for Future Litter listings
-  const getPastLitterImages = () => {
-    if (!isFutureLitter || !fields?.pastLitterImages) return [];
-    return Array.isArray(fields.pastLitterImages) ? fields.pastLitterImages : [];
+  // Get puppy images for Future Litter listings
+  const getPuppyImages = () => {
+    if (!isFutureLitter || !fields?.puppyImages) return [];
+    return Array.isArray(fields.puppyImages) ? fields.puppyImages : [];
   };
 
-  const pastLitterImages = getPastLitterImages();
+  const puppyImages = getPuppyImages();
 
   // Get availability information - use the actual availability field from the listing
   const availabilityStatus = (listing.availability as AvailabilityStatus) || 'available';
@@ -223,9 +223,9 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       return fields.dogImages[0];
     }
     
-    // For Future Litter listings, try to get image from pastLitterImages first
-    if (isFutureLitter && pastLitterImages.length > 0) {
-      return pastLitterImages[0];
+    // For Future Litter listings, try to get image from puppyImages first
+    if (isFutureLitter && puppyImages.length > 0) {
+      return puppyImages[0];
     }
     
     // For Other Services listings, try to get image from metadata.images
@@ -356,10 +356,10 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             <>
               <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
               {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
-              {pastLitterImages.length > 0 && (
+              {puppyImages.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                    📸 Past Litter Images Available
+                    📸 Puppy Images Available ({puppyImages.length})
                   </span>
                 </div>
               )}
