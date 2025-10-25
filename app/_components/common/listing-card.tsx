@@ -359,7 +359,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               {puppyImages.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
-                    📸 Puppy Images Available ({puppyImages.length})
+                    Past Litter Images ({puppyImages.length})
                   </span>
                 </div>
               )}
