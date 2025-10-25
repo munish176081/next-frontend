@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useParams } from "next/navigation";
 import { Button } from "@/_components/ui/button";
 import { Badge } from "@/_components/ui/badge";
-import { MapPin, Phone, Mail, Globe, Calendar, CheckCircle, User, Plus } from "lucide-react";
+import { MapPin, Phone, Mail, Globe, Calendar, CheckCircle, User, Plus, Clock } from "lucide-react";
 import { useUserProfile, useUserListings } from "@/_services/hooks/user/use-user-profile";
 import { ListingCard } from "@/_components/common/listing-card";
 import { useUser } from "@/_services/hooks/user/use-user";
@@ -415,6 +415,11 @@ export default function UserProfile() {
                       <span className="text-lg">{user.website}</span>
                     </div>
                   )}
+
+                  <div className="flex items-center gap-4">
+                    <Clock className="w-5 h-5 text-CPrimary" />
+                    <span className="text-lg">Business Hours: Mon-Sat 9am-5pm</span>
+                  </div>
                   
                   <div className="flex items-center gap-4">
                     <MapPin className="w-5 h-5 text-CPrimary" />
@@ -478,7 +483,7 @@ export default function UserProfile() {
           </div>
         </div>
         <div className="container">
-          <div className="bg-white rounded-40 border border-black/20 p-8 max-md:p-4 max-md:rounded-[20px]">
+          <div className="bg-white rounded-40 border border-black/20 p-8 max-md:p-4 max-md:rounded-[20px] mt-4">
             <h3 className="text-[32px] font-medium mb-6 max-md:text-xl">About {user?.businessName}</h3>
             <p className="text-[21px] leading-relaxed max-md:text-sm text-gray-700">
               {user.description || 'No Bio available'}

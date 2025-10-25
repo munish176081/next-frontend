@@ -341,7 +341,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
             </>
           )}
-          {listing.listingType == 'FUTURE_LISTING' || listing.listingType == 'PUPPY_LITTER_LISTING' && (
+          {(listing.listingType == 'FUTURE_LISTING' || listing.listingType == 'PUPPY_LITTER_LISTING') && (
           <div className="flex justify-start mt-2">
             <span className={availabilityBadgeClasses}>
               {/* <svg 
