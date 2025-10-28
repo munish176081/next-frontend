@@ -9,6 +9,7 @@ import { FileValidator } from '@/_utils/file-validation';
 import { toast } from '@/_hooks/use-toast';
 import { BreedSelect } from '@/_components/form-fields/breed-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { PhoneInput } from '@/_components/ui/form-fields';
 
 // Lazy load BadgeSelector to avoid SSR issues
 const BadgeSelector = lazy(() => import('@/_components/ui/badge/badge-selector'));
@@ -345,6 +346,22 @@ export default function DynamicFormField({ field, value, onChange, error, layout
             error={error}
             required={field.required}
             label={field.label}
+          />
+        );
+
+      case 'phone':
+        const phoneLabel = getDynamicLabel ? getDynamicLabel(field.name, field.label) : field.label;
+        return (
+          <PhoneInput
+            label={phoneLabel}
+            value={value || ''}
+            onChange={(newValue) => onChange(field.name, newValue)}
+            placeholder={field.placeholder}
+            error={error}
+            required={field.required}
+            unstyled
+            labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
+            inputClassName={`${baseClasses} ${errorClasses}`}
           />
         );
 
@@ -1048,14 +1065,24 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
   const containerClasses = layout === 'double' ? 'flex flex-col w-full' : 'flex flex-col w-full';
 
+  // Check if the field uses BreedSelect which handles its own errors
+  const isBreedSelect = field.type === 'select' && (field.name === 'breed' || field.name === 'breedWanted' || field.name === 'motherBreed' || field.name === 'fatherBreed' || !field.options);
+  
+  // Check if the field handles errors internally (phone, location, breed selects)
+  const handlesOwnError = field.type === 'phone' || field.type === 'location' || isBreedSelect;
+  
   return (
     <div className={containerClasses}>
-      <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
-        {getDynamicLabel ? getDynamicLabel(field.name, field.label) : field.label}
-        {field.required && <span className="text-red-500 ml-1">*</span>}
-      </label>
+      {/* Don't render label for phone type - PhoneInput handles it internally */}
+      {field.type !== 'phone' && (
+        <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+          {getDynamicLabel ? getDynamicLabel(field.name, field.label) : field.label}
+          {field.required && <span className="text-red-500 ml-1">*</span>}
+        </label>
+      )}
       {renderField()}
-      {error && (
+      {/* Components that handle errors internally: phone, location, breed selects */}
+      {error && !handlesOwnError && (
         <span className="text-red-500 text-sm mt-1">{error}</span>
       )}
     </div>

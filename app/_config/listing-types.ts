@@ -67,7 +67,7 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
 export interface ListingField {
   name: string;
   label: string;
-  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location' | 'repeater' | 'group'| 'textarea-v2';
+  type: 'text' | 'select' | 'date' | 'number' | 'textarea' | 'file' | 'checkbox' | 'radio' | 'url' | 'location' | 'repeater' | 'group'| 'textarea-v2' | 'phone';
   required: boolean;
   placeholder?: string;
   options?: ({ value: string; label: string } | string)[];
@@ -209,7 +209,7 @@ const CONTACT_FIELDS = {
   contactPhone: {
     name: 'contactPhone',
     label: 'Contact Phone',
-    type: 'text' as const,
+    type: 'phone' as const,
     required: true,
     placeholder: 'Enter contact phone',
     fieldCategory: 'contact' as const

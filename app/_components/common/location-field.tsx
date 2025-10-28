@@ -26,12 +26,43 @@ export default function LocationField({
   variant = 'default'
 }: LocationFieldProps) {
   const [inputValue, setInputValue] = useState(value || '');
+  const [autocompleteError, setAutocompleteError] = useState(false);
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
 
   // Sync internal state with prop value changes (for edit forms)
   useEffect(() => {
     setInputValue(value || '');
   }, [value]);
+
+  // Listen for Google Maps API errors
+  useEffect(() => {
+    const handleError = (event: ErrorEvent) => {
+      console.error('Window error event:', event);
+      if (event.message?.toLowerCase().includes('maps') || 
+          event.message?.toLowerCase().includes('google') ||
+          event.filename?.toLowerCase().includes('maps')) {
+        console.error('Google Maps error detected:', event);
+        setAutocompleteError(true);
+      }
+    };
+
+    const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+      console.error('Unhandled rejection:', event);
+      if (event.reason?.message?.toLowerCase().includes('maps') || 
+          event.reason?.message?.toLowerCase().includes('google')) {
+        console.error('Google Maps promise rejection:', event);
+        setAutocompleteError(true);
+      }
+    };
+
+    window.addEventListener('error', handleError);
+    window.addEventListener('unhandledrejection', handleUnhandledRejection);
+    
+    return () => {
+      window.removeEventListener('error', handleError);
+      window.removeEventListener('unhandledrejection', handleUnhandledRejection);
+    };
+  }, [setAutocompleteError]);
 
   const { isLoaded, loadError } = useLoadScript({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyDf0nuXtOo8kR-4iUlZcvGPvH85fflIJPg",
@@ -62,6 +93,84 @@ export default function LocationField({
     }
   };
 
+  const handleAutocompleteError = () => {
+    setAutocompleteError(true);
+  };
+
+  useEffect(() => {
+    // Set a timeout to detect if Google Maps API is not working properly
+    if (isLoaded && !loadError) {
+      // Check for Google's error dialog being present on the page
+      const checkForGoogleError = () => {
+        // Look for Google's error dialog elements
+        const googleErrorElements = document.querySelectorAll('div[style*="z-index"]');
+        let hasGoogleError = false;
+        
+        googleErrorElements.forEach(el => {
+          const text = el.textContent || '';
+          if (text.includes("can't load Google Maps") || 
+              text.includes("Do you own this website") ||
+              text.includes("Google Maps error")) {
+            hasGoogleError = true;
+            console.warn('Google Maps error dialog detected');
+          }
+        });
+
+        if (hasGoogleError) {
+          setAutocompleteError(true);
+          return;
+        }
+
+        // Also check if Google Maps API is actually available
+        try {
+          if (!window.google?.maps?.places) {
+            console.warn('Google Maps Places API not available');
+            setAutocompleteError(true);
+          }
+        } catch (e) {
+          console.error('Error checking Google Maps:', e);
+          setAutocompleteError(true);
+        }
+      };
+
+      // Check immediately and repeatedly
+      checkForGoogleError();
+      
+      // Set up an observer to watch for Google error dialogs
+      const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+          mutation.addedNodes.forEach((node) => {
+            if (node.nodeType === 1) { // Element node
+              const element = node as Element;
+              const text = element.textContent || '';
+              if (text.includes("can't load Google Maps") || 
+                  text.includes("Do you own this website")) {
+                console.warn('Google Maps error dialog detected via MutationObserver');
+                setAutocompleteError(true);
+              }
+            }
+          });
+        });
+      });
+
+      // Observe the document body for changes (Google dialogs are added to body)
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+
+      // Also set a delayed check in case of slow loading issues
+      const timer = setTimeout(() => {
+        checkForGoogleError();
+      }, 3000); // 3 seconds timeout
+
+      return () => {
+        clearTimeout(timer);
+        observer.disconnect();
+      };
+    }
+  }, [isLoaded, loadError]);
+
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = e.target.value;
     setInputValue(newValue);
@@ -77,7 +186,8 @@ export default function LocationField({
     ? (variant === 'form-field' ? "border-red-500 focus:border-red-500 focus:ring-red-500/30" : "border-red-500")
     : "";
 
-  if (loadError) {
+  // Show fallback input if there's an error loading maps or if autocomplete fails
+  if (loadError || autocompleteError) {
     // Fallback to regular input if Google Maps fails to load
     return (
       <div className="flex flex-col w-full">
@@ -89,12 +199,15 @@ export default function LocationField({
           <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
           <input
             type="text"
-            placeholder="Enter Australian location"
+            placeholder="Enter address manually"
             value={inputValue}
             onChange={handleInputChange}
             className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
+        <span className="text-amber-600 text-sm mt-1">
+          Unable to fetch address suggestions. Please enter the address manually.
+        </span>
         {error && (
           <span className="text-red-500 text-sm mt-1">{error}</span>
         )}
@@ -125,6 +238,30 @@ export default function LocationField({
     );
   }
 
+  // If we're showing the Google error, show fallback immediately
+  if (autocompleteError && !loadError && isLoaded) {
+    return (
+      <div className="flex flex-col w-full">
+        <div className="relative">
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
+          <input
+            type="text"
+            placeholder="Enter address manually"
+            value={inputValue}
+            onChange={handleInputChange}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
+          />
+        </div>
+        <span className="text-amber-600 text-sm mt-1">
+          Unable to fetch address suggestions. Please enter the address manually.
+        </span>
+        {error && (
+          <span className="text-red-500 text-sm mt-1">{error}</span>
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col w-full">
       {/* <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
@@ -132,7 +269,15 @@ export default function LocationField({
         {required && <span className="text-red-500 ml-1">*</span>}
       </label> */}
               <Autocomplete
-          onLoad={(autocomplete) => (autocompleteRef.current = autocomplete)}
+          onLoad={(autocomplete) => {
+            try {
+              autocompleteRef.current = autocomplete;
+              setAutocompleteError(false); // Reset error when autocomplete loads successfully
+            } catch (error) {
+              console.error('Error loading autocomplete:', error);
+              setAutocompleteError(true);
+            }
+          }}
           onPlaceChanged={handlePlaceChanged}
           options={{
             componentRestrictions: { country: "AU" },
