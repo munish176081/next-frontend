@@ -480,7 +480,7 @@ export default function PuppyListingForm({
                       
                       return (
                         <div key={field.name} className="w-full">
-                          <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                          <div className="space-y-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
                             <div className="grid grid-cols-1 gap-4">
                               {groupFields.map((groupField) => {
                                 // Special handling for microchip numbers - show multiple based on litter size
@@ -541,7 +541,7 @@ export default function PuppyListingForm({
                         const groupFields = field.repeaterConfig?.subFieldGroup || [];
                         return (
                           <div key={field.name} className="w-full">
-                            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="space-y-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
                               <div className="grid grid-cols-1 gap-4">
                                 {groupFields.map((groupField: any) => (
                                   <DynamicFormField
@@ -563,7 +563,7 @@ export default function PuppyListingForm({
                         // For litter with individual puppies, show repeater
                         return (
                           <div key={field.name} className="w-full">
-                            <div className="space-y-4 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <div className="space-y-4 p-4 border-2 border-gray-300 rounded-lg bg-gray-50">
                               <IndividualPuppiesField
                                 field={field}
                                 value={formData[field.name]}
