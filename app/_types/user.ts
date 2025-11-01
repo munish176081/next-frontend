@@ -22,6 +22,23 @@ export interface UserType {
     governmentId: string[];
     selfieWithId: string[];
   };
+  // CSV Import fields
+  email2?: string;
+  phone2?: string;
+  fax?: string;
+  address?: string;
+  address2?: string;
+  zip?: string;
+  city?: string;
+  state?: string;
+  country?: string;
+  firstName?: string;
+  lastName?: string;
+  // CSV Import tracking flags
+  isImportedFromCsv?: boolean;
+  isProfileComplete?: boolean;
+  missingRequiredFields?: string[];
+  csvOptionalFields?: Record<string, any>;
 }
 
 // Admin-specific types
