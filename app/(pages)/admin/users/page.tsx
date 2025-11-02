@@ -158,14 +158,14 @@ export default function UserManagement() {
                   <div>
                     <label className="block text-sm font-medium mb-2 text-gray-700">Role</label>
                     <Select
-                      value={filters.role || ""}
-                      onValueChange={(value) => handleFilterChange('role', value === "" ? undefined : value)}
+                      value={filters.role || "all"}
+                      onValueChange={(value) => handleFilterChange('role', value === "all" ? undefined : value as 'user' | 'admin' | 'super_admin')}
                     >
                       <SelectTrigger className="h-12 rounded-full">
                         <SelectValue placeholder="All Roles" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">All Roles</SelectItem>
+                        <SelectItem value="all">All Roles</SelectItem>
                         <SelectItem value="user">User</SelectItem>
                         <SelectItem value="admin">Admin</SelectItem>
                         <SelectItem value="super_admin">Super Admin</SelectItem>
