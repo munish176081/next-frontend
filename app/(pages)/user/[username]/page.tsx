@@ -150,9 +150,10 @@ export default function UserProfile() {
                       ...listing, 
                       favourite: false,
                       individualPuppies: listing.fields?.individualPuppies || [],
-                      fields: listing.fields || {}
+                      fields: listing.fields || {},
+                      userId: listing.userId || listing.user?.id || user?.id
                     }} 
-                    currentUserId={undefined}
+                    currentUserId={currentUser?.id}
                   />
                 ))}
               </div>
@@ -171,9 +172,10 @@ export default function UserProfile() {
                       ...listing, 
                       favourite: false,
                       individualPuppies: listing.fields?.individualPuppies || [],
-                      fields: listing.fields || {}
+                      fields: listing.fields || {},
+                      userId: listing.userId || listing.user?.id || user?.id
                     }} 
-                    currentUserId={undefined}
+                    currentUserId={currentUser?.id}
                   />
                 ))}
               </div>
@@ -193,9 +195,10 @@ export default function UserProfile() {
               ...listing, 
               favourite: false,
               individualPuppies: listing.fields?.individualPuppies || [],
-              fields: listing.fields || {}
+              fields: listing.fields || {},
+              userId: listing.userId || listing.user?.id || user?.id
             }} 
-            currentUserId={undefined}
+            currentUserId={currentUser?.id}
           />
         ))}
       </div>

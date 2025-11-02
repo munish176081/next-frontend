@@ -255,7 +255,6 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
 
   // Check if this is the user's own listing
   const isOwnListing = currentUserId && userId && currentUserId === userId;
-  console.log(isOwnListing, userId, currentUserId, "IS OWN LISTING")
   // Show heart for all listings except when it's confirmed to be own listing
   const shouldShowHeart = !isOwnListing;
   const isWishlistedItem = isWishlisted(listing.id);
@@ -267,13 +266,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     
     // Prevent action if it's own listing or already toggling
     if (isOwnListing || isToggling) {
-      console.log('Wishlist toggle prevented:', { isOwnListing, isToggling });
       return;
     }
 
     // If user is not logged in, show login message
     if (!currentUserId) {
-      console.log('User not logged in, showing login message');
       // The wishlist context will handle showing the login message
     }
 
@@ -284,7 +281,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       setIsToggling(false);
     }
   };
-  console.log(listing, listing.listingType, "LISTING TYPE")
+
   return (
     <div className="group relative flex flex-col overflow-hidden rounded-3xl bg-white transition shadow-section p-6 h-full">
       {/* Wishlist Heart Icon - Show for all listings except own listings */}

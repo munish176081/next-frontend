@@ -10,17 +10,23 @@ interface AdminUsersParams {
 }
 
 async function getAdminUsers(params: AdminUsersParams = {}): Promise<AdminUserListType> {
-  const { page = 1, limit = 10, search, role } = params;
+  const { page = 1, limit = 20, search, role } = params;
   
-  let url = `/admin/users?page=${page}&limit=${limit}`;
+  // Build query parameters - use main endpoint that handles both search and role
+  const queryParams = new URLSearchParams({
+    page: page.toString(),
+    limit: limit.toString(),
+  });
   
-  if (search) {
-    url = `/admin/users/search?q=${encodeURIComponent(search)}&page=${page}&limit=${limit}`;
-  } else if (role) {
-    url = `/admin/users/role/${role}?page=${page}&limit=${limit}`;
+  if (search && search.trim()) {
+    queryParams.append('search', search.trim());
   }
   
-  const { data } = await axios.get(url);
+  if (role) {
+    queryParams.append('role', role);
+  }
+  
+  const { data } = await axios.get(`/admin/users?${queryParams.toString()}`);
   return data;
 }
 

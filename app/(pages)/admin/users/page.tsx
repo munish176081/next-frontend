@@ -345,43 +345,45 @@ export default function UserManagement() {
                     {data && (
                       <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
                         <div className="text-sm text-gray-600">
-                          Showing <span className="font-medium text-gray-900">{((data.page - 1) * data.limit) + 1}</span> to{' '}
-                          <span className="font-medium text-gray-900">{Math.min(data.page * data.limit, data.total)}</span> of{' '}
-                          <span className="font-medium text-gray-900">{data.total}</span> users
+                          Showing <span className="font-medium text-gray-900">{((data.page || 1) - 1) * (data.limit || 20) + 1}</span> to{' '}
+                          <span className="font-medium text-gray-900">{Math.min((data.page || 1) * (data.limit || 20), data.total || 0)}</span> of{' '}
+                          <span className="font-medium text-gray-900">{data.total || 0}</span> users
                         </div>
-                        {data.totalPages > 1 && (
+                        {(data.totalPages || 0) > 1 && (
                           <div className="flex items-center gap-2">
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handlePageChange(data.page - 1)}
-                              disabled={data.page <= 1 || isLoading}
+                              onClick={() => handlePageChange((data.page || 1) - 1)}
+                              disabled={(data.page || 1) <= 1 || isLoading}
                               className="h-9 px-4 rounded-full"
                             >
                               <ChevronLeft className="h-4 w-4 mr-1" />
                               Previous
                             </Button>
                             <div className="flex items-center gap-1 px-3">
-                              {Array.from({ length: Math.min(5, data.totalPages) }, (_, i) => {
+                              {Array.from({ length: Math.min(5, data.totalPages || 1) }, (_, i) => {
                                 let pageNum;
-                                if (data.totalPages <= 5) {
+                                const totalPages = data.totalPages || 1;
+                                const currentPage = data.page || 1;
+                                if (totalPages <= 5) {
                                   pageNum = i + 1;
-                                } else if (data.page <= 3) {
+                                } else if (currentPage <= 3) {
                                   pageNum = i + 1;
-                                } else if (data.page >= data.totalPages - 2) {
-                                  pageNum = data.totalPages - 4 + i;
+                                } else if (currentPage >= totalPages - 2) {
+                                  pageNum = totalPages - 4 + i;
                                 } else {
-                                  pageNum = data.page - 2 + i;
+                                  pageNum = currentPage - 2 + i;
                                 }
                                 
                                 return (
                                   <Button
                                     key={pageNum}
-                                    variant={data.page === pageNum ? "default" : "outline"}
+                                    variant={(data.page || 1) === pageNum ? "default" : "outline"}
                                     size="sm"
                                     onClick={() => handlePageChange(pageNum)}
                                     disabled={isLoading}
-                                    className={`h-9 w-9 rounded-full ${data.page === pageNum ? 'bg-CPrimary hover:bg-CPrimary/90 text-white' : ''}`}
+                                    className={`h-9 w-9 rounded-full ${(data.page || 1) === pageNum ? 'bg-CPrimary hover:bg-CPrimary/90 text-white' : ''}`}
                                   >
                                     {pageNum}
                                   </Button>
@@ -391,8 +393,8 @@ export default function UserManagement() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handlePageChange(data.page + 1)}
-                              disabled={data.page >= data.totalPages || isLoading}
+                              onClick={() => handlePageChange((data.page || 1) + 1)}
+                              disabled={(data.page || 1) >= (data.totalPages || 1) || isLoading}
                               className="h-9 px-4 rounded-full"
                             >
                               Next
