@@ -82,7 +82,9 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
     // Basic debounce
     if ((onChangeSearch as any).t) clearTimeout((onChangeSearch as any).t);
     (onChangeSearch as any).t = setTimeout(() => {
-      handleFilterChange("search", value.trim());
+      const trimmedValue = value.trim();
+      // Set to undefined if empty to properly remove the filter
+      handleFilterChange("search", trimmedValue === "" ? undefined : trimmedValue);
     }, 300);
   };
 
