@@ -58,6 +58,7 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
 
   const [selectedBreeds, setSelectedBreeds] = useState<string[]>([]);
   const [isBulkDeleting, setIsBulkDeleting] = useState(false);
+  const [searchText, setSearchText] = useState<string>("");
 
   const { data, isLoading, error } = useAdminBreeds(filters);
   const deleteBreed = useDeleteBreed();
@@ -73,6 +74,16 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
       [key]: value,
       page: 1, // Reset to first page when filters change
     }));
+  };
+
+  // Debounce search input
+  const onChangeSearch = (value: string) => {
+    setSearchText(value);
+    // Basic debounce
+    if ((onChangeSearch as any).t) clearTimeout((onChangeSearch as any).t);
+    (onChangeSearch as any).t = setTimeout(() => {
+      handleFilterChange("search", value.trim());
+    }, 300);
   };
 
   const handlePageChange = (newPage: number) => {
@@ -185,7 +196,16 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
     <div className="flex flex-col border border-black/20 rounded-[20px] pb-4">
       <div className="flex gap-4 items-center p-6 justify-between">
         <span className="text-[22px] font-semibold">Breed Management</span>
-        <div className="flex gap-3">
+        <div className="flex gap-3 items-center">
+          <div className="relative">
+            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" />
+            <Input
+              value={searchText}
+              onChange={(e) => onChangeSearch(e.target.value)}
+              placeholder="Search breeds..."
+              className="pl-9 w-[240px]"
+            />
+          </div>
           {selectedBreeds.length > 0 && (
             <Button
               onClick={handleBulkDelete}
@@ -366,9 +386,7 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
           {data && data.totalPages > 1 && (
             <div className="flex items-center justify-between mt-6 px-6">
               <div className="text-sm text-gray-600">
-                Showing {(data.page - 1) * data.limit + 1} to{" "}
-                {Math.min(data.page * data.limit, data.total)} of {data.total}{" "}
-                breeds
+                Showing {(data.page - 1) * data.limit + 1} to {Math.min(data.page * data.limit, data.total)} of {data.total} breeds
               </div>
               <div className="flex items-center gap-2">
                 <Button
