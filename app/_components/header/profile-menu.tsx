@@ -14,41 +14,77 @@ import { Avatar } from "@/_components/ui";
 import { Routes } from "@/_config/routes";
 import { UserType } from "@/_types/user";
 import { useLogout } from "@/_services/hooks/auth/use-logout";
-import { useRouter } from "next/navigation";
 
 interface MenuItemProps {
   text: string;
   link?: string;
 }
 
-const menu = {
+// Menu items for super admin
+const superAdminMenu = {
   top: [
     {
+      path: Routes.admin.dashboard,
+      text: "Admin Dashboard",
+    },
+    {
+      path: Routes.admin.users,
+      text: "User Management",
+    },
+    {
       path: Routes.private.account,
-      text: "Account",
-    },
-    {
-      path: Routes.public.home,
-      text: "Trips",
-    },
-    {
-      path: Routes.public.home,
-      text: "Wishlist",
+      text: "My Account",
     },
   ],
   bottom: [
     {
-      path: Routes.public.home,
+      path: Routes.admin.settings,
+      text: "System Settings",
+    },
+    {
+      path: Routes.admin.passwords,
+      text: "Password Management",
+    },
+    {
+      path: Routes.private.profile,
+      text: "Account Settings",
+    },
+    {
+      path: Routes.public.contact,
+      text: "Help",
+    },
+  ],
+};
+
+// Menu items for normal users
+const normalUserMenu = {
+  top: [
+    {
+      path: Routes.private.account,
       text: "Dashboard",
     },
     {
-      path: Routes.public.home,
-      text: "Settings",
+      path: Routes.private.listings,
+      text: "My Listings",
     },
     {
-      path: Routes.public.home,
-      text: "Help",
+      path: Routes.private.inbox,
+      text: "Inbox",
     },
+  ],
+  bottom: [
+    {
+      path: Routes.private.profile,
+      text: "Profile",
+    },
+    // {
+    //   path: Routes.private.accountSettings || Routes.private.profile,
+    //   text: "Settings",
+    // },
+    // {
+    //   path: Routes.public.contact,
+    //   text: "Help",
+    // },
   ],
 };
 
@@ -78,7 +114,17 @@ export default function ProfileMenu({
   className?: string;
 }) {
   const { mutate: logout } = useLogout();
-  const router = useRouter();
+
+  // Determine if user is super admin
+  const isSuperAdmin = user.role === 'super_admin' || user.isSuperAdmin === true;
+  
+  // Select menu based on user role
+  const menu = isSuperAdmin ? superAdminMenu : normalUserMenu;
+  
+  // Debug: Log user role (remove in production if needed)
+  if (typeof window !== 'undefined') {
+    console.log('User role:', user.role, 'isSuperAdmin:', user.isSuperAdmin, 'Menu:', isSuperAdmin ? 'superAdmin' : 'normalUser');
+  }
 
   return (
     <Menu
