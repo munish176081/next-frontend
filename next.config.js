@@ -11,7 +11,7 @@ const nextConfig = {
         headers: [
           {
             key: "Referrer-Policy",
-            value: "no-referrer-when-downgrade",
+            value: "strict-origin-when-cross-origin",
           },
         ],
       },
@@ -22,7 +22,6 @@ const nextConfig = {
   },
 
   images: {
-    unoptimized: true,
     remotePatterns: [
       // temorarily as images are hosted on backend
       {
@@ -33,7 +32,21 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.pups4sale.com.au",
       },
+      {
+        protocol: "https",
+        hostname: "pups4sale.com.au",
+      },
+      {
+        protocol: "http",
+        hostname: "pups4sale.com.au",
+      },
+      {
+        protocol: "https",
+        hostname: "www.pups4sale.com.au",
+      },
     ],
+    loader: 'custom',
+    loaderFile: './app/_utils/image-loader-custom.ts',
   },
 }
 

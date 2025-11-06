@@ -494,8 +494,17 @@ const ExploreDetail = () => {
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex gap-12 max-md:flex-col-reverse max-md:p-4 max-md:rounded-[20px] max-md:gap-3">
         <div className="flex w-1/2 max-md:w-full flex-col gap-5 max-md:gap-2">
           <span className="text-[40px] font-medium leading-tight max-md:text-[30px]">Detailed Description</span>
-          <span className="text-2xl font-medium leading-tight max-md:text-base">About This {transformedListing.breed}</span>
-          <span className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs">{transformedListing.description}</span>
+          <span className="text-2xl font-medium leading-tight max-md:text-base">About This {transformedListing.title.split(' ')[0]}</span>
+          {typeof transformedListing.description === "string" && /<[a-z][\s\S]*>/i.test(transformedListing.description) ? (
+            <span
+              className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs"
+              dangerouslySetInnerHTML={{ __html: transformedListing.description }}
+            />
+          ) : (
+            <span className="text-[21px] text-[#7E7E7E] leading-tight max-md:text-xs">
+              {transformedListing.description}
+            </span>
+          )}
           <div className="flex p-2 rounded-full border border-black/20 text-lg gap-4 pr-8 items-center leading-snug max-md:text-xs max-md:gap-2 max-md:pr-2">
             <img className='max-md:w-16' src="/images/vectors/detailDescription1.png" />
             Your new pup comes with essentials like food, a blanket, and a few goodies—provided by the seller to help you get started right.
@@ -519,49 +528,110 @@ const ExploreDetail = () => {
             })()}
           </div>
         </div>
-        <div className="flex w-1/2 max-md:w-full rounded-3xl overflow-hidden max-md:rounded-xl">
-          <img className="w-full h-full object-cover" src={transformedListing.featuredImage} />
+        <div className="flex w-1/2 max-md:w-full rounded-3xl overflow-hidden max-md:rounded-xl relative">
+          <Image 
+            src={transformedListing.featuredImage || "/images/vectors/detailSlide1.png"} 
+            alt="Featured listing image"
+            fill
+            className="object-cover"
+          />
         </div>
       </section>
       
-      {transformedListing.listingType !== ListingTypeEnum.OTHER_SERVICES &&transformedListing.listingType !== ListingTypeEnum.WANTED_LISTING && (
+      {transformedListing.listingType !== ListingTypeEnum.OTHER_SERVICES && 
+       transformedListing.listingType !== ListingTypeEnum.WANTED_LISTING && 
+       (transformedListing.fatherInfo || transformedListing.motherInfo) && (
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
         <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
         <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Puppy Parents</span>
         <div className="flex gap-6 relative z-10 mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4">
-          <div className="overflow-hidden flex flex-col gap-2 w-full">
-            <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
-            <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-              <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
-                <img className="w-full h-full object-cover" src={transformedListing.fatherImages[0] || "/images/vectors/dogParent1.jpg"} />
-              </span>
-              <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.fatherInfo?.name || "Maximus"}</span>
-              <ul className="list-disc list-inside text-xs text-[#8A8585]">
-                <li>Breed: {transformedListing.fatherInfo?.breed || "Purebred Golden Retriever"}</li>
-                <li>Color: {transformedListing.fatherInfo?.color || "Cream"}</li>
-                <li>Weight: {transformedListing.fatherInfo?.weight || "32 kg"}</li>
-                <li>Temperament: {transformedListing.fatherInfo?.temperament || "Friendly, Calm"}</li>
-                <li>Health Info: {transformedListing.fatherInfo?.healthInfo || "DNA Tested, Hip Scored"}</li>
-              </ul>
+          {transformedListing.fatherInfo && (
+            <div className="overflow-hidden flex flex-col gap-2 w-full">
+              <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
+              <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
+                {transformedListing.fatherImages && transformedListing.fatherImages[0] && (
+                  <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden relative">
+                    <Image 
+                      src={transformedListing.fatherImages[0]} 
+                      alt="Father dog image"
+                      fill
+                      className="object-cover"
+                    />
+                  </span>
+                )}
+                {transformedListing.fatherInfo.name && (
+                  <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.fatherInfo.name}</span>
+                )}
+                {(transformedListing.fatherInfo.breed || 
+                  transformedListing.fatherInfo.color || 
+                  transformedListing.fatherInfo.weight || 
+                  transformedListing.fatherInfo.temperament || 
+                  transformedListing.fatherInfo.healthInfo) && (
+                  <ul className="list-disc list-inside text-xs text-[#8A8585]">
+                    {transformedListing.fatherInfo.breed && (
+                      <li>Breed: {transformedListing.fatherInfo.breed}</li>
+                    )}
+                    {transformedListing.fatherInfo.color && (
+                      <li>Color: {transformedListing.fatherInfo.color}</li>
+                    )}
+                    {transformedListing.fatherInfo.weight && (
+                      <li>Weight: {transformedListing.fatherInfo.weight}</li>
+                    )}
+                    {transformedListing.fatherInfo.temperament && (
+                      <li>Temperament: {transformedListing.fatherInfo.temperament}</li>
+                    )}
+                    {transformedListing.fatherInfo.healthInfo && (
+                      <li>Health Info: {transformedListing.fatherInfo.healthInfo}</li>
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
-          </div>
-          <div className="overflow-hidden flex flex-col gap-2 w-full">
-            <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
-            <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-              <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden">
-                <img className="w-full h-full object-top object-cover" src={transformedListing.motherImages[0] || "/images/vectors/dogParent2.jpg"} />
-              </span>
-              <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.motherInfo?.name || "Bella"}</span>
-              <ul className="list-disc list-inside text-xs text-[#8A8585]">
-                <li>Breed: {transformedListing.motherInfo?.breed || "Purebred Golden Retriever"}</li>
-                <li>Color: {transformedListing.motherInfo?.color || "Light Gold"}</li>
-                <li>Weight: {transformedListing.motherInfo?.weight || "28 kg"}</li>
-                <li>Temperament: {transformedListing.motherInfo?.temperament || "Nurturing, Playful"}</li>
-                <li>Health Info: {transformedListing.motherInfo?.healthInfo || "DNA Tested, Elbow Scored"}</li>
-              </ul>
+          )}
+          {transformedListing.motherInfo && (
+            <div className="overflow-hidden flex flex-col gap-2 w-full">
+              <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
+              <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
+                {transformedListing.motherImages && transformedListing.motherImages[0] && (
+                  <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden relative">
+                    <Image 
+                      src={transformedListing.motherImages[0]} 
+                      alt="Mother dog image"
+                      fill
+                      className="object-top object-cover"
+                    />
+                  </span>
+                )}
+                {transformedListing.motherInfo.name && (
+                  <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.motherInfo.name}</span>
+                )}
+                {(transformedListing.motherInfo.breed || 
+                  transformedListing.motherInfo.color || 
+                  transformedListing.motherInfo.weight || 
+                  transformedListing.motherInfo.temperament || 
+                  transformedListing.motherInfo.healthInfo) && (
+                  <ul className="list-disc list-inside text-xs text-[#8A8585]">
+                    {transformedListing.motherInfo.breed && (
+                      <li>Breed: {transformedListing.motherInfo.breed}</li>
+                    )}
+                    {transformedListing.motherInfo.color && (
+                      <li>Color: {transformedListing.motherInfo.color}</li>
+                    )}
+                    {transformedListing.motherInfo.weight && (
+                      <li>Weight: {transformedListing.motherInfo.weight}</li>
+                    )}
+                    {transformedListing.motherInfo.temperament && (
+                      <li>Temperament: {transformedListing.motherInfo.temperament}</li>
+                    )}
+                    {transformedListing.motherInfo.healthInfo && (
+                      <li>Health Info: {transformedListing.motherInfo.healthInfo}</li>
+                    )}
+                  </ul>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       </section>
       )}
@@ -586,15 +656,22 @@ const ExploreDetail = () => {
           <img className="absolute -left-32 top-6 max-md:w-14 max-md:-left-14" src="/images/vectors/line-12.png" />About Owner
         </span>
         <div className="flex items-center gap-4 mt-2">
-          {transformedListing.user?.imageUrl && (
-            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EFC951]">
-              <img
+          {transformedListing.user?.imageUrl ? (
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EFC951] relative">
+              <Image
                 src={transformedListing.user.imageUrl}
                 alt="Owner Profile"
-                className="w-full h-full object-cover"
-                onError={(e) => {
-                  e.currentTarget.src = "/images/vectors/profile.jpg";
-                }}
+                fill
+                className="object-cover"
+              />
+            </div>
+          ) : (
+            <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-[#EFC951] relative">
+              <Image
+                src="/images/vectors/profile.jpg"
+                alt="Owner Profile"
+                fill
+                className="object-cover"
               />
             </div>
           )}
