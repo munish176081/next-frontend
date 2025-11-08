@@ -77,10 +77,10 @@ const normalUserMenu = {
       path: Routes.private.profile,
       text: "Profile",
     },
-    {
-      path: Routes.private.accountSettings || Routes.private.profile,
-      text: "Settings",
-    },
+    // {
+    //   path: Routes.private.accountSettings || Routes.private.profile,
+    //   text: "Settings",
+    // },
     // {
     //   path: Routes.public.contact,
     //   text: "Help",
