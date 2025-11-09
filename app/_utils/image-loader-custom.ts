@@ -33,4 +33,3 @@ export default function customImageLoader({ src, width, quality }: { src: string
   // For other images, return as is (Next.js will handle optimization if needed)
   return src;
 }
-
