@@ -23,7 +23,7 @@ export default function customImageLoader({ src, width, quality }: { src: string
     // Get the base URL (works in both server and client contexts)
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
-      : (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL || 'http://localhost:3000');
+      : (process.env.NEXT_PUBLIC_API_URL || process.env.VERCEL_URL || 'http://localhost:3000');
     
     // Proxy through Next.js API route which then proxies through backend
     const apiUrl = `${baseUrl}/api/proxy-image?url=${encodeURIComponent(src)}`;
