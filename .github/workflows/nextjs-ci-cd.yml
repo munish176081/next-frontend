@@ -40,6 +40,8 @@ jobs:
       run: |
         mkdir deploy
         cp -r .next public package.json pnpm-lock.yaml next.config.js deploy/
+        mkdir -p deploy/app/_utils
+        cp app/_utils/image-loader-custom.ts deploy/app/_utils/image-loader-custom.ts
         rm -rf deploy/.next/cache
         cd deploy
         git init
@@ -47,7 +49,7 @@ jobs:
         git config user.email "actions@github.com"
         git remote add origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
         git checkout -B build
-        git add -f .next public package.json pnpm-lock.yaml next.config.js
+        git add -f .next public package.json pnpm-lock.yaml next.config.js app/_utils/image-loader-custom.ts
         git commit -m "Deploy: production build"
         git push --force origin build
 
