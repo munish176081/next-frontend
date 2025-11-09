@@ -46,7 +46,7 @@ const nextConfig = {
       },
     ],
     loader: 'custom',
-    loaderFile: './app/_utils/image-loader-custom.ts',
+    loaderFile: 'app/_utils/image-loader-custom.ts',
   },
 }
 
