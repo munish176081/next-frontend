@@ -1,4 +1,4 @@
-name: Deploy Next.js to EC2 (via build branch)
+name: Deploy Next.js to EC2 (via build branchc)
 
 on:
   push:
