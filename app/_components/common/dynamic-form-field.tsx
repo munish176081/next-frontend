@@ -390,15 +390,46 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           />
         );
 
-      case 'date':
-        return (
-          <input
-            type="date"
-            value={value || ''}
-            onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses}`}
-          />
-        );
+        case 'date':
+          return (
+            <div className="relative">
+              <input
+                type="date"
+                value={value || ''}
+                placeholder={field.placeholder || 'Select a date'}
+                onChange={handleInputChange}
+                className={`
+                  ${baseClasses}
+                  ${errorClasses}
+                  bg-white
+                  pr-12
+                  appearance-none
+                  [&::-webkit-calendar-picker-indicator]:opacity-0
+                  [&::-webkit-calendar-picker-indicator]:absolute
+                  [&::-webkit-calendar-picker-indicator]:right-0
+                  [&::-webkit-calendar-picker-indicator]:w-0
+                `}
+              />
+        
+              {/* Custom Calendar Icon */}
+              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+            </div>
+          );
+        
 
       case 'select':
         // Special handling for breed fields that don't have options (using dynamic data)
@@ -804,7 +835,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
         // Regular checkbox rendering for non-badge fields
         return (
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 max-md:gap-2 md:gap-4">
             {field.options?.map((option, index) => {
               const optionValue = typeof option === 'string' ? option : option.value;
               const optionLabel = typeof option === 'string' ? option : option.label;
@@ -818,14 +849,15 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                   className="sr-only"
                 />
                 <div className={`
-                  flex items-center justify-center px-6 py-3 rounded-lg border-2 transition-all duration-200 min-w-[140px]
+                  flex items-center justify-center px-4 py-2 max-md:px-3 max-md:py-2 md:px-6 md:py-3 rounded-lg border-2 transition-all duration-200 
+                  min-w-0 max-md:flex-1 md:min-w-[140px] max-w-full
                   ${isSelected 
                     ? 'bg-CPrimary border-CPrimary text-white shadow-md' 
                     : 'bg-white border-gray-300 text-gray-700 hover:border-CPrimary/50 hover:bg-CPrimary/5'
                   }
                   group-hover:shadow-sm
                 `}>
-                  <span className="text-sm font-medium">{optionLabel}</span>
+                  <span className="text-xs max-md:text-xs md:text-sm font-medium text-center">{optionLabel}</span>
                 </div>
               </label>
               );
@@ -861,7 +893,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         }
         // Default pill-style radios for all other radio fields
         return (
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-2 max-md:gap-2 md:gap-4">
             {field.options?.map((option, index) => {
               const optionValue = typeof option === 'string' ? option : option.value;
               const optionLabel = typeof option === 'string' ? option : option.label;
@@ -877,14 +909,15 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                   className="sr-only"
                 />
                 <div className={`
-                  flex items-center justify-center px-6 py-3 rounded-lg border-2 transition-all duration-200 min-w-[140px]
+                  flex items-center justify-center px-4 py-2 max-md:px-3 max-md:py-2 md:px-6 md:py-3 rounded-lg border-2 transition-all duration-200 
+                  min-w-0 max-md:flex-1 md:min-w-[140px] max-w-full
                   ${isSelected 
                     ? 'bg-CPrimary border-CPrimary text-white shadow-md' 
                     : 'bg-white border-gray-300 text-gray-700 hover:border-CPrimary/50 hover:bg-CPrimary/5'
                   }
                   group-hover:shadow-sm
                 `}>
-                  <span className="text-sm font-medium">{optionLabel}</span>
+                  <span className="text-xs max-md:text-xs md:text-sm font-medium text-center">{optionLabel}</span>
                 </div>
               </label>
               );
@@ -988,12 +1021,29 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                       />
                     )}
                     {config?.subFieldType === 'date' && (
-                      <input
-                        type="date"
-                        value={item}
-                        onChange={(e) => updateItem(index, field.name, e.target.value)}
-                        className={`${baseClasses} ${errorClasses}`}
-                      />
+                      <div className="relative">
+                        <input
+                          type="date"
+                          value={item}
+                          onChange={(e) => updateItem(index, field.name, e.target.value)}
+                          className={`${baseClasses} ${errorClasses} bg-white pr-12`}
+                        />
+                        <div className="absolute right-6 top-1/2 transform -translate-y-1/2 pointer-events-none max-md:right-4">
+                          <svg 
+                            className="w-5 h-5 text-gray-400 max-md:w-4 max-md:h-4" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            viewBox="0 0 24 24"
+                          >
+                            <path 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round" 
+                              strokeWidth={2} 
+                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                            />
+                          </svg>
+                        </div>
+                      </div>
                     )}
                     {config?.subFieldType === 'select' && (
                       <select
@@ -1072,7 +1122,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   const handlesOwnError = field.type === 'phone' || field.type === 'location' || isBreedSelect;
   
   return (
-    <div className={containerClasses}>
+    <div className={containerClasses} data-field-name={field.name}>
       {/* Don't render label for phone type - PhoneInput handles it internally */}
       {field.type !== 'phone' && (
         <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">

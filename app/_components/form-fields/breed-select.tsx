@@ -42,7 +42,12 @@ export const BreedSelect: React.FC<BreedSelectProps> = ({
     }
   };
 
-  const options = breeds.map(breed => ({
+  // Sort breeds alphabetically by name
+  const sortedBreeds = [...breeds].sort((a, b) => 
+    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+  );
+
+  const options = sortedBreeds.map(breed => ({
     value: breed.name,
     label: breed.name,
   }));

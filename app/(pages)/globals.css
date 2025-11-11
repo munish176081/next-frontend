@@ -215,3 +215,31 @@ body:before {
 ::-webkit-scrollbar-track {background: 0 0;background: transparent;}
 ::-webkit-scrollbar-thumb {background: rgba(0, 0, 0, 0.3);}
 ::-webkit-scrollbar-thumb:hover {background: rgba(0, 0, 0, 0.5);}
+
+/* Hide native date picker icon and show custom calendar icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+input[type="date"]::-moz-calendar-picker-indicator {
+  display: none !important;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+/* For Safari and other webkit browsers */
+input[type="date"]::-webkit-inner-spin-button,
+input[type="date"]::-webkit-clear-button {
+  display: none !important;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Ensure the input itself doesn't show native styling */
+input[type="date"] {
+  -webkit-appearance: none;
+  -moz-appearance: textfield;
+  appearance: none;
+}

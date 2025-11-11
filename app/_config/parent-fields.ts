@@ -50,11 +50,11 @@ export interface ParentFieldConfig {
 export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
   required: true,
   listingTypes: {
-    [ListingTypeEnum.SEMEN_LISTING]: { required: true },
-    [ListingTypeEnum.PUPPY_LISTING]: { required: true },
-    [ListingTypeEnum.PUPPY_LITTER_LISTING]: { required: true },
-    [ListingTypeEnum.STUD_LISTING]: { required: true },
-    [ListingTypeEnum.FUTURE_LISTING]: { required: true },
+    [ListingTypeEnum.SEMEN_LISTING]: { required: false },
+    [ListingTypeEnum.PUPPY_LISTING]: { required: false },
+    [ListingTypeEnum.PUPPY_LITTER_LISTING]: { required: false },
+    [ListingTypeEnum.STUD_LISTING]: { required: false },
+    [ListingTypeEnum.FUTURE_LISTING]: { required: false },
     [ListingTypeEnum.WANTED_LISTING]: { required: false },
     [ListingTypeEnum.OTHER_SERVICES]: { required: false },
   },

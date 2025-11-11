@@ -196,13 +196,13 @@ export default function LocationField({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label> */}
         <div className="relative">
-          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-600 max-md:text-gray-700 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4 max-md:w-5 max-md:h-5' : 'left-6 w-5 h-5 max-md:w-6 max-md:h-6 max-md:left-4'}`} />
           <input
             type="text"
             placeholder="Enter address manually"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10 max-md:pl-12' : 'pl-12 max-md:pl-14 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
         <span className="text-amber-600 text-sm mt-1">
@@ -223,12 +223,12 @@ export default function LocationField({
           {required && <span className="text-red-500 ml-1">*</span>}
         </label> */}
         <div className="relative">
-          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-600 max-md:text-gray-700 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4 max-md:w-5 max-md:h-5' : 'left-6 w-5 h-5 max-md:w-6 max-md:h-6 max-md:left-4'}`} />
           <input
             type="text"
             placeholder="Loading Australian locations..."
             disabled
-            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12'} opacity-50 cursor-not-allowed`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10 max-md:pl-12' : 'pl-12 max-md:pl-14'} opacity-50 cursor-not-allowed`}
           />
         </div>
         {error && (
@@ -243,13 +243,13 @@ export default function LocationField({
     return (
       <div className="flex flex-col w-full">
         <div className="relative">
-          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-600 max-md:text-gray-700 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4 max-md:w-5 max-md:h-5' : 'left-6 w-5 h-5 max-md:w-6 max-md:h-6 max-md:left-4'}`} />
           <input
             type="text"
             placeholder="Enter address manually"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10 max-md:pl-12' : 'pl-12 max-md:pl-14 cursor-pointer hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
         <span className="text-amber-600 text-sm mt-1">
@@ -291,13 +291,13 @@ export default function LocationField({
           }}
         >
         <div className="relative">
-          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-400 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4' : 'left-6 w-5 h-5'}`} />
+          <MapPin className={`absolute top-1/2 transform -translate-y-1/2 text-gray-600 max-md:text-gray-700 z-10 ${variant === 'form-field' ? 'left-3 w-4 h-4 max-md:w-5 max-md:h-5' : 'left-6 w-5 h-5 max-md:w-6 max-md:h-6 max-md:left-4'}`} />
           <input
             type="text"
             placeholder="Enter Australian location"
             value={inputValue}
             onChange={handleInputChange}
-            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10' : 'pl-12 cursor-text hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
+            className={`${baseClasses} ${errorClasses} ${variant === 'form-field' ? 'pl-10 max-md:pl-12' : 'pl-12 max-md:pl-14 cursor-text hover:border-gray-400 transition-colors focus:ring-2 focus:ring-CPrimary focus:ring-opacity-50 focus:border-CPrimary'}`}
           />
         </div>
       </Autocomplete>

@@ -52,6 +52,20 @@ const BLOCKED_FILE_TYPES = [
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_ATTACHMENTS = 3;
 
+// Utility function to capitalize first letter of first and last name
+const capitalizeName = (name: string): string => {
+  if (!name || name.trim() === '') return name;
+  
+  // Split by space to handle first and last names
+  return name
+    .split(' ')
+    .map(word => {
+      if (!word) return word;
+      return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    })
+    .join(' ');
+};
+
 export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   userId,
   initialConversationId,
@@ -76,6 +90,9 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
 
   // Track processed messages to prevent duplicates
   const [processedMessageIds, setProcessedMessageIds] = useState<Set<string>>(new Set());
+
+  // Track active WebSocket connections by user ID (simple online status)
+  const [onlineUserIds, setOnlineUserIds] = useState<Set<string>>(new Set());
 
   // Attachment related state
   const [attachmentPreviews, setAttachmentPreviews] = useState<AttachmentPreview[]>([]);
@@ -340,6 +357,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleWebSocketNewMessage = useCallback((data: any) => {
     console.log('🔴 DEBUG: new_message event received!', data);
 
+    // Mark sender as online (they have active WebSocket connection since they sent a message)
+    if (data.message?.sender_id && data.message.sender_id !== userId) {
+      setOnlineUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(data.message.sender_id);
+        return newSet;
+      });
+    }
+
     // Mark this message as processed to prevent duplicate handling
     const messageId = data.message.id;
 
@@ -515,39 +541,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     };
   }, [showEmojiPicker]);
 
-  // Handle user online/offline status changes
+  // Handle user online/offline status changes - Simple approach: track active WebSocket connections
   const handleUserStatusChanged = (data: { userId: string; isOnline: boolean; lastSeen: Date }) => {
     console.log('👤 User status changed:', data);
-    console.log('👤 Current conversations count:', conversations.length);
-    console.log('👤 Current conversation:', currentConversation?.id);
     
-    // Update conversations with the new online status
-    setConversations(prevConversations => {
-      console.log('👤 Updating conversations with new status for user:', data.userId);
-      const updated = prevConversations.map(conversation => ({
-        ...conversation,
-        participants: conversation.participants.map(participant => 
-          participant.user_id === data.userId 
-            ? { ...participant, isOnline: data.isOnline, lastSeen: data.lastSeen }
-            : participant
-        )
-      }));
-      console.log('👤 Updated conversations:', updated);
-      return updated;
+    // Update online user IDs set based on WebSocket connection status
+    setOnlineUserIds(prev => {
+      const newSet = new Set(prev);
+      if (data.isOnline) {
+        newSet.add(data.userId);
+        console.log('👤 User marked as online (active WebSocket):', data.userId);
+      } else {
+        newSet.delete(data.userId);
+        console.log('👤 User marked as offline (WebSocket disconnected):', data.userId);
+      }
+      return newSet;
     });
-
-    // Update current conversation if it contains the user whose status changed
-    if (currentConversation && currentConversation.participants.some(p => p.user_id === data.userId)) {
-      console.log('👤 Updating current conversation for user:', data.userId);
-      setCurrentConversation(prev => prev ? ({
-        ...prev,
-        participants: prev.participants.map(participant => 
-          participant.user_id === data.userId 
-            ? { ...participant, isOnline: data.isOnline, lastSeen: data.lastSeen }
-            : participant
-        )
-      }) : null);
-    }
   };
 
   // Simple WebSocket connection
@@ -613,7 +622,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           chatWebSocketService.on('error', handleError);
           chatWebSocketService.on('connection_status_change', handleConnectionChange);
           chatWebSocketService.on('user_status_changed', handleUserStatusChanged);
-          console.log('🔧 Registered user_status_changed event listener');
+          console.log('🔧 Registered user_status_changed event listener for tracking active WebSocket connections');
 
           // Note: Backend doesn't send conversation_created events, so we rely on
           // the new_message event and automatic conversation refresh
@@ -1075,6 +1084,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       timestamp: data.message.timestamp
     };
 
+    // Mark sender as online (they have active WebSocket connection since they sent a message)
+    if (normalizedMessage.senderId && normalizedMessage.senderId !== userId) {
+      setOnlineUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(normalizedMessage.senderId);
+        return newSet;
+      });
+    }
+
     if (normalizedMessage.senderId === userId) {
       console.log('🔄 Skipping own message from WebSocket to prevent duplication');
       return;
@@ -1282,7 +1300,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     
     // Show notification about new conversation
     const otherParticipant = newConversation.participants.find((p: any) => p.user_id !== userId);
-    const senderName = otherParticipant?.name || 'Someone';
+    const senderName = capitalizeName(otherParticipant?.name || 'Someone');
     setNewConversationInfo({ id: newConversation.id, senderName });
     setShowNewConversationNotification(true);
     
@@ -1298,6 +1316,15 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   const handleUserTyping = (data: any) => {
     const typingEventKey = `${data.conversationId}-${data.userId}-${data.isTyping}`;
     console.log('🔑 Typing event key:', typingEventKey);
+
+    // Mark user as online (they have active WebSocket connection since they're typing)
+    if (data.userId && data.userId !== userId) {
+      setOnlineUserIds(prev => {
+        const newSet = new Set(prev);
+        newSet.add(data.userId);
+        return newSet;
+      });
+    }
 
     // Handle typing for active conversation
     if (data.conversationId === currentConversationRef.current?.id) {
@@ -1547,10 +1574,34 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         });
       });
 
-      // Don't update conversations list immediately - let the WebSocket handle it
-      // This prevents the sudden reload behavior in the chat list
-      // The conversation will be updated when the WebSocket sends the new_message event
-      console.log('Skipping immediate conversation list update to prevent flickering');
+      // Update conversations list immediately so sidebar shows the latest message
+      setConversations(prev => {
+        const existingConversation = prev.find(conv => conv.id === currentConversation.id);
+        
+        if (existingConversation) {
+          // Only update if there's an actual change
+          const currentLastMessage = existingConversation.lastMessage;
+          const hasMessageChange = !currentLastMessage || 
+            currentLastMessage.id !== normalizedMessage.id ||
+            currentLastMessage.content !== normalizedMessage.content;
+          
+          if (!hasMessageChange) {
+            return prev;
+          }
+          
+          // Update existing conversation with new last message
+          return prev.map(conv =>
+            conv.id === currentConversation.id
+              ? Object.assign({}, conv, {
+                lastMessage: normalizedMessage,
+                updatedAt: new Date()
+              })
+              : conv
+          );
+        }
+        
+        return prev;
+      });
 
       console.log('Local state updated with new message');
 
@@ -2318,17 +2369,22 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
     conversation, 
     currentConversationId, 
     userId,
-    conversationTypingStates
+    conversationTypingStates,
+    onlineUserIds
   }: { 
     conversation: ChatConversation;
     currentConversationId?: string;
     userId: string;
     conversationTypingStates: Map<string, Set<string>>;
+    onlineUserIds: Set<string>;
   }) => {
     const otherParticipant = conversation.participants.find(p => p.user_id !== userId);
     const lastMessage = conversation.lastMessage;
     const isActive = currentConversationId === conversation.id;
     const isHighlighted = isActive; // Only highlight the currently selected conversation
+    
+    // Check if other participant is online based on active WebSocket connections
+    const isOtherUserOnline = otherParticipant ? onlineUserIds.has(otherParticipant.user_id) : false;
 
     // Get typing state for this conversation - use useMemo to prevent unnecessary recalculations
     const typingState = React.useMemo(() => {
@@ -2346,19 +2402,19 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         className={`flex flex-col ${isHighlighted ? "bg-[#F4F2F6] border-r-[#B699CA]" : "border-r-transparent"} pr-12 p-4 gap-1 border-r-[6px] border-b border-b-black/20 relative cursor-pointer hover:bg-gray-50`}
       >
         <div className="flex gap-2 font-medium items-center relative">
-          <span className={`size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white ${otherParticipant?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+          <span className={`size-2.5 rounded-full absolute left-[32px] bottom-[6px] border border-white ${isOtherUserOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
           {/* Unread indicator - subtle left border */}
           <span className="size-10 rounded-full overflow-hidden">
             <Avatar
               className="cursor-pointer !text-3xl w-full h-full object-cover"
-              name={otherParticipant?.name || 'Unknown User'}
+              name={capitalizeName(otherParticipant?.name || 'Unknown User')}
               src={otherParticipant?.avatar || ''}
               rounded="full"
               textSizeRatio={3}
               size="100%"
             />
           </span>
-          <span className="font-semibold">{otherParticipant?.name || 'Unknown User'}</span>
+          <span className="font-semibold">{capitalizeName(otherParticipant?.name || 'Unknown User')}</span>
           {conversation.unreadCount > 0 && !isActive && (
             <span className="size-5 rounded-full bg-[#EE5D50] flex items-center justify-center text-[8px] text-white font-bold">
               {conversation.unreadCount}
@@ -2395,12 +2451,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
           {conversation.updatedAt ? new Date(conversation.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '--'}
           <svg width="12" height="14" viewBox="0 0 12 14" fill="none" xmlns="http://www.w3.org/2000/svg">
             <path d="M1.51475 13.3597C1.55872 13.6276 1.81152 13.8091 2.0794 13.7651L6.44474 13.0486C6.71262 13.0046 6.89413 12.7518 6.85016 12.4839C6.80619 12.2161 6.55339 12.0345 6.28551 12.0785L2.40521 12.7154L1.76831 8.83511C1.72434 8.56723 1.47154 8.38572 1.20366 8.42969C0.935779 8.47366 0.754264 8.72646 0.798233 8.99434L1.51475 13.3597ZM10.6188 0.433292L1.60052 12.9934L2.39905 13.5667L11.4173 1.00665L10.6188 0.433292Z" fill={(() => {
-              // If this is the current conversation, use its online status
-              if (conversation.id === currentConversationId && currentConversation) {
-                return currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? '#74D27E' : '#CFCFCF';
-              }
-              // Otherwise use the conversation's own online status
-              return conversation.participants.find(p => p.user_id !== userId)?.isOnline ? '#74D27E' : '#CFCFCF';
+              // Use online status from active WebSocket connections
+              return isOtherUserOnline ? '#74D27E' : '#CFCFCF';
             })()} />
           </svg>
         </span>
@@ -2432,9 +2484,10 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         currentConversationId={currentConversation?.id}
         userId={userId}
         conversationTypingStates={conversationTypingStates}
+        onlineUserIds={onlineUserIds}
       />
     ));
-  }, [conversations, currentConversation?.id, userId, conversationTypingStates]); // Add conversationTypingStates for typing indicators
+  }, [conversations, currentConversation?.id, userId, conversationTypingStates, onlineUserIds]); // Add onlineUserIds for online status
 
   if (loading && conversations.length === 0) {
     return (
@@ -2525,7 +2578,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
       <div className="flex gap-6 max-md:flex-col">
         {/* Conversation List */}
         <div className={`flex flex-col border border-black/20 rounded-[20px] max-w-[400px] max-md:max-w-full w-full h-[800px] max-md:h-auto max-md:overflow-hidden ${isVisible ? 'max-md:hidden' : ''}`}>
-          <div className="flex items-center justify-between p-4">
+          <div className="flex items-center justify-between p-4 flex-shrink-0">
             <select className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 max-md:h-9 max-md:w-28 rounded-full border-[#CBCACA] border-[1px] bg-white w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium">
               <option>{conversations.filter(c => c.unreadCount > 0).length} Unread</option>
             </select>
@@ -2535,7 +2588,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
               </svg>
             </span> */}
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 overflow-y-auto min-h-0">
             {conversationList}
           </div>
         </div>
@@ -2550,11 +2603,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                   <span className="size-6 max-md:size-4 absolute max-md:left-[20px] left-[42px] -top-1">
                     <img src="/images/vectors/blueTick.png" alt="" />
                   </span>
-                  <span className={`size-4 max-md:size-2 rounded-full absolute max-md:left-[24px] left-[46px] bottom-[4px] border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                  {(() => {
+                    const otherParticipant = currentConversation.participants.find(p => p.user_id !== userId);
+                    const isOtherUserOnline = otherParticipant ? onlineUserIds.has(otherParticipant.user_id) : false;
+                    return (
+                      <span className={`size-4 max-md:size-2 rounded-full absolute max-md:left-[24px] left-[46px] bottom-[4px] border border-white ${isOtherUserOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                    );
+                  })()}
                   <span className="w-[60px] h-[60px] max-md:w-[30px] max-md:h-[30px] rounded-full overflow-hidden">
                     <Avatar
                       className="cursor-pointer !text-3xl w-full h-full object-cover"
-                      name={currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                      name={capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')}
                       src={currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
                       rounded="full"
                       textSizeRatio={3}
@@ -2562,7 +2621,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                     />
                   </span>
                   <div className="flex flex-col">
-                    <span>{currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}</span>
+                    <span>{capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')}</span>
                     {/* Typing Indicator under user name */}
                     {(() => {
                       console.log('🔍 Rendering typing indicator check:');
@@ -2673,11 +2732,17 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       <span className="size-6 absolute left-[42px] -top-1 max-md:hidden">
                         <img src="/images/vectors/blueTick.png" alt="" />
                       </span>
-                      <span className={`size-4 rounded-full absolute left-[46px] bottom-[4px] border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                      {(() => {
+                        const otherParticipant = currentConversation.participants.find(p => p.user_id !== userId);
+                        const isOtherUserOnline = otherParticipant ? onlineUserIds.has(otherParticipant.user_id) : false;
+                        return (
+                          <span className={`size-4 rounded-full absolute left-[46px] bottom-[4px] border border-white ${isOtherUserOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                        );
+                      })()}
                       <span className="w-[60px] h-[60px] min-w-[60px] rounded-full overflow-hidden">
                         <Avatar
                           className="cursor-pointer !text-3xl w-full h-full object-cover"
-                          name={currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                          name={capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')}
                           src={currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
                           rounded="full"
                           textSizeRatio={3}
@@ -2686,7 +2751,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       </span>
                     </div>
                     <span className="text-[20px] font-semibold mt-2 max-md:mt-1">
-                      {currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'} (
+                      {capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')} (
                       <text className="text-base text-[#8B8B8B] font-normal">
                         {currentConversation.participants.find(p => p.user_id !== userId)?.role === 'buyer' ? 'Buyer' :
                           currentConversation.participants.find(p => p.user_id !== userId)?.role === 'seller' ? 'Seller' : 'User'}
@@ -2711,8 +2776,16 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                       </u>
                     </span>
                     <span className="text-sm text-[#8B8B8B] font-medium flex items-center gap-1">
-                      <span className={`size-4 rounded-full border border-white ${currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
-                      {currentConversation.participants.find(p => p.user_id !== userId)?.isOnline ? 'Active' : 'Offline'}
+                      {(() => {
+                        const otherParticipant = currentConversation.participants.find(p => p.user_id !== userId);
+                        const isOtherUserOnline = otherParticipant ? onlineUserIds.has(otherParticipant.user_id) : false;
+                        return (
+                          <>
+                            <span className={`size-4 rounded-full border border-white ${isOtherUserOnline ? 'bg-[#74D27E]' : 'bg-[#CFCFCF]'}`}></span>
+                            {isOtherUserOnline ? 'Active' : 'Offline'}
+                          </>
+                        );
+                      })()}
                     </span>
                   </div>
 
@@ -2749,7 +2822,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                               <span className={`w-[60px] h-[60px] max-md:w-[30px] max-md:h-[30px] rounded-full overflow-hidden absolute ${message.senderId === userId ? 'right-0' : 'left-0'} bottom-0`}>
                                 <Avatar
                                   className="cursor-pointer !text-3xl w-full h-full object-cover"
-                                  name={message.senderId === userId ? currentConversation.participants.find(p => p.user_id === userId)?.name : currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User'}
+                                  name={message.senderId === userId ? capitalizeName(currentConversation.participants.find(p => p.user_id === userId)?.name || 'Unknown User') : capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')}
                                   src={message.senderId === userId ? currentConversation.participants.find(p => p.user_id === userId)?.avatar : currentConversation.participants.find(p => p.user_id !== userId)?.avatar || ''}
                                   rounded="full"
                                   textSizeRatio={3}
@@ -2769,7 +2842,7 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
                                   </>
                                 ) : (
                                   <>
-                                    <strong className="font-semibold">{currentConversation.participants.find(p => p.user_id !== userId)?.name}</strong>
+                                    <strong className="font-semibold">{capitalizeName(currentConversation.participants.find(p => p.user_id !== userId)?.name || 'Unknown User')}</strong>
                                     {new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     {/* Show unread indicator for incoming messages */}
                                     {!message.isRead && (

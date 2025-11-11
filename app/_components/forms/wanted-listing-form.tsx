@@ -10,6 +10,7 @@ import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import { WANTED_LISTING_FIELD_CONFIG } from "./field-configs/wanted-listing-config";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
+import { scrollToFirstError } from "@/_utils/scroll-to-error";
 
 interface WantedListingFormProps extends BaseFormProps {}
 
@@ -66,6 +67,10 @@ export default function WantedListingForm({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
       });
+      // Scroll to first error field
+      setTimeout(() => {
+        scrollToFirstError(errors);
+      }, 100);
       return;
     }
 

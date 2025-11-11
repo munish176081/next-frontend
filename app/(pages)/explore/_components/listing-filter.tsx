@@ -200,7 +200,9 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
                   label="Select breed" 
                   value={field.value || ""} 
                   setValue={(value) => field.onChange(value)} 
-                  options={breeds.map((breed) => ({
+                  options={[...breeds].sort((a, b) => 
+                    a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+                  ).map((breed) => ({
                     value: breed.name,
                     label: breed.name,
                   }))} 

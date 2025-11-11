@@ -93,6 +93,7 @@ const config: Config = {
         CPrimary: "#B699CA",
         CSecondary: "#EFC951",
         CAqua: "#89CFD6",
+        bcolor: "#d0d5db",
         gray: {
           main: "rgb(var(--gray-main) / <alpha-value>)",
           light: "rgb(var(--gray-light) / <alpha-value>)",

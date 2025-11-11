@@ -48,7 +48,7 @@ export const Footer = () => {
           <a className="w-10 h-10 bg-black flex rounded-full items-center justify-center" href="https://t.me/" target="_blank" rel="noopener noreferrer"><img src="/images/vectors/sendPlane.svg" /></a>
           <a className="w-10 h-10 bg-black flex rounded-full items-center justify-center" href="https://wa.me/" target="_blank" rel="noopener noreferrer"><img src="/images/vectors/whatsapp.svg" /></a>
         </div>
-        <div className="w-6/12 flex gap-2 text-xs font-semibold justify-center items-center text-center">1901 Thornridge Cir. Shiloh, Hawaii 81063</div>
+        <div className="w-6/12 flex gap-2 text-xs font-semibold justify-center items-center text-center">1901 Thornridge Cir. Shiloh, Hawaii 81063 - Pups4Sale</div>
         <div className="w-3/12"></div>
       </div>
     </footer>

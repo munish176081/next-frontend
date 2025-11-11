@@ -108,6 +108,13 @@ function Startlistingform() {
   const editId = searchParams.get('edit');
   const type = searchParams.get('type');
 
+  // Redirect puppy type to puppy_litter (we don't have normal puppy listing)
+  useEffect(() => {
+    if (type === 'puppy' && !editId) {
+      router.replace('/startlistingform?type=puppy_litter');
+    }
+  }, [type, editId, router]);
+
   // Fetch listing data if in edit mode
   const { data: existingListing, isLoading: isLoadingListing, error: listingError, refetch } = useGetListingById(editId);
 

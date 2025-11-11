@@ -11,6 +11,7 @@ import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import { FUTURE_LISTING_FIELD_CONFIG } from "./field-configs/future-listing-config";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
+import { scrollToFirstError } from "@/_utils/scroll-to-error";
 
 interface FutureListingFormProps extends BaseFormProps {}
 
@@ -69,6 +70,10 @@ export default function FutureListingForm({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
       });
+      // Scroll to first error field
+      setTimeout(() => {
+        scrollToFirstError(errors);
+      }, 100);
       return;
     }
 
@@ -347,66 +352,75 @@ export default function FutureListingForm({
             Parent Information
           </h2>
 
-          {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
-            <div className="space-y-6">
-              {/* Mother Information Section */}
-              <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                <div
-                  className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setShowMotherSection(!showMotherSection)}
-                  aria-expanded={showMotherSection}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-pink-50 rounded-lg">
-                      <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
-                        <circle cx="12" cy="8" r="3" />
-                        <circle cx="12" cy="18" r="1.5" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
-                      <p className="text-sm text-gray-500">Required information about the dame</p>
-                    </div>
+          <div className="space-y-6">
+            {/* Mother Information Section */}
+            <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+              <div
+                className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => setShowMotherSection(!showMotherSection)}
+                aria-expanded={showMotherSection}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-pink-50 rounded-lg">
+                    <svg className="w-5 h-5 text-pink-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                      <circle cx="12" cy="8" r="3" />
+                      <circle cx="12" cy="18" r="1.5" />
+                    </svg>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Mother's Details</h3>
+                    <p className="text-sm text-gray-500">
+                      {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) 
+                        ? "Required information about the dame" 
+                        : "Optional information about the dame"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
                         Required
                       </span>
+                    )}
+                    {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!baseForm.isParentSectionComplete('mother')
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         }`}>
                         {!baseForm.isParentSectionComplete('mother') ? 'Incomplete' : 'Complete'}
                       </span>
-                    </div>
-                    <svg
-                      className={`w-5 h-5 text-gray-400 transition-transform ${showMotherSection ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    )}
                   </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ${showMotherSection ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
+              </div>
 
-                {showMotherSection && (
-                  <div className="border-t border-gray-100 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {getParentFields('mother').map((field) => (
+              {showMotherSection && (
+                <div className="border-t border-gray-100 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {getParentFields('mother').map((field) => {
+                      const isRequired = isParentInfoRequired(selectedListingType.id as ListingTypeEnum);
+                      return (
                         <DynamicFormField
                           key={field.name}
                           field={{
                             ...field,
-                            required: field.validation.required || false,
+                            required: isRequired ? (field.validation.required || false) : false,
                             label: field.uploadConfig?.customLabel || field.label,
                             fileConfig: field.type === 'file' ? {
-                              minCount: field.validation.minCount,
+                              minCount: isRequired ? field.validation.minCount : undefined,
                               maxCount: field.validation.maxCount,
                               accept: field.uploadConfig?.accept
                             } : undefined
@@ -419,70 +433,81 @@ export default function FutureListingForm({
                           onPendingDeletionsChange={baseForm.handlePendingDeletions}
                           getDynamicLabel={baseForm.getDynamicLabel}
                         />
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
+            </div>
 
-              {/* Father Information Section */}
-              <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
-                <div
-                  className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
-                  onClick={() => setShowFatherSection(!showFatherSection)}
-                  aria-expanded={showFatherSection}
-                  role="button"
-                  tabIndex={0}
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="p-2.5 bg-blue-50 rounded-lg">
-                      <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
-                        <path d="M12 15v4m-2 0h4" />
-                        <circle cx="12" cy="8" r="3" />
-                      </svg>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium text-gray-900">Father's Details</h3>
-                      <p className="text-sm text-gray-500">Required information about the sire</p>
-                    </div>
+            {/* Father Information Section */}
+            <div className="bg-white rounded-xl shadow-xs border border-gray-100 overflow-hidden">
+              <div
+                className="flex items-center justify-between p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                onClick={() => setShowFatherSection(!showFatherSection)}
+                aria-expanded={showFatherSection}
+                role="button"
+                tabIndex={0}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="p-2.5 bg-blue-50 rounded-lg">
+                    <svg className="w-5 h-5 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <path d="M12 15c3 0 5-2 5-5v-2h-2v2c0 2-1 3-3 3s-3-1-3-3v-2H7v2c0 3 2 5 5 5z" />
+                      <path d="M12 15v4m-2 0h4" />
+                      <circle cx="12" cy="8" r="3" />
+                    </svg>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-2">
+                  <div>
+                    <h3 className="text-lg font-medium text-gray-900">Father's Details</h3>
+                    <p className="text-sm text-gray-500">
+                      {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) 
+                        ? "Required information about the sire" 
+                        : "Optional information about the sire"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
+                    {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
                       <span className="px-2.5 py-1 bg-blue-50 text-blue-700 text-xs font-medium rounded-full">
                         Required
                       </span>
+                    )}
+                    {isParentInfoRequired(selectedListingType.id as ListingTypeEnum) && (
                       <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${!baseForm.isParentSectionComplete('father')
                           ? 'bg-amber-50 text-amber-700 border border-amber-200'
                           : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                         }`}>
                         {!baseForm.isParentSectionComplete('father') ? 'Incomplete' : 'Complete'}
                       </span>
-                    </div>
-                    <svg
-                      className={`w-5 h-5 text-gray-400 transition-transform ${showFatherSection ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                      aria-hidden="true"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                    </svg>
+                    )}
                   </div>
+                  <svg
+                    className={`w-5 h-5 text-gray-400 transition-transform ${showFatherSection ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    aria-hidden="true"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
                 </div>
+              </div>
 
-                {showFatherSection && (
-                  <div className="border-t border-gray-100 p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {getParentFields('father').map((field) => (
+              {showFatherSection && (
+                <div className="border-t border-gray-100 p-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {getParentFields('father').map((field) => {
+                      const isRequired = isParentInfoRequired(selectedListingType.id as ListingTypeEnum);
+                      return (
                         <DynamicFormField
                           key={field.name}
                           field={{
                             ...field,
-                            required: field.validation.required || false,
+                            required: isRequired ? (field.validation.required || false) : false,
                             label: field.uploadConfig?.customLabel || field.label,
                             fileConfig: field.type === 'file' ? {
-                              minCount: field.validation.minCount,
+                              minCount: isRequired ? field.validation.minCount : undefined,
                               maxCount: field.validation.maxCount,
                               accept: field.uploadConfig?.accept
                             } : undefined
@@ -493,14 +518,15 @@ export default function FutureListingForm({
                           layout="double"
                           category={field.uploadConfig?.category}
                           onPendingDeletionsChange={baseForm.handlePendingDeletions}
+                          getDynamicLabel={baseForm.getDynamicLabel}
                         />
-                      ))}
-                    </div>
+                      );
+                    })}
                   </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          )}
+          </div>
         </div>
       )}
 
