@@ -77,8 +77,13 @@ export default function LocationField({
         const isInAustralia = place.address_components?.some(component => 
           component.types.includes('country') && component.short_name === 'AU'
         );
+
+        // Allow only suburb (locality) or postcode (postal_code)
+        const isSuburbOrPostcode =
+          place.types?.includes("locality") ||
+          place.types?.includes("postal_code");
         
-        if (isInAustralia) {
+        if (isInAustralia && isSuburbOrPostcode) {
           const address = place.formatted_address;
           setInputValue(address);
           onChange(address);
