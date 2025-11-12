@@ -84,7 +84,7 @@ export function LoadingProvider({ children }: LoadingProviderProps) {
           </div>
           
           {/* Loading overlay */}
-          <div className="fixed inset-0 z-40 flex items-center justify-center bg-white/60 backdrop-blur-sm">
+          <div className="hidden fixed inset-0 z-40 flex items-center justify-center bg-white/60 backdrop-blur-sm">
             <div className="flex flex-col items-center space-y-4 bg-white rounded-lg p-8 shadow-lg">
               <Loader size="xl" color="primary" />
               <p className="text-sm text-gray-600 font-medium">Loading...</p>
