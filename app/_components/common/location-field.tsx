@@ -65,8 +65,7 @@ export default function LocationField({
   }, [setAutocompleteError]);
 
   const { isLoaded, loadError } = useLoadScript({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || "AIzaSyBox2bZ0gw-sSkvS496Nc-IKOOFOr3kZLM",
-    libraries,
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,libraries
   });
 
   const handlePlaceChanged = () => {
