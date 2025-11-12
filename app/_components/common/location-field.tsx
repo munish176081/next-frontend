@@ -79,14 +79,29 @@ export default function LocationField({
         );
 
         // Allow only suburb (locality) or postcode (postal_code)
-        const isSuburbOrPostcode =
-          place.types?.includes("locality") ||
-          place.types?.includes("postal_code");
+        const isSuburbOrPostcode = place.types?.includes('locality') || place.types?.includes('postal_code');
         
         if (isInAustralia && isSuburbOrPostcode) {
-          const address = place.formatted_address;
-          setInputValue(address);
-          onChange(address);
+          // Extract only suburb, state, postcode, and country parts
+          const suburb = place.address_components.find((c) =>
+            c.types.includes('locality')
+          )?.long_name;
+          const state = place.address_components.find((c) =>
+            c.types.includes('administrative_area_level_1')
+          )?.short_name;
+          const postcode = place.address_components.find((c) =>
+            c.types.includes('postal_code')
+          )?.long_name;
+          const country = place.address_components.find((c) =>
+            c.types.includes('country')
+          )?.long_name;
+
+          // Construct clean address
+          const parts = [suburb, state, postcode, country].filter(Boolean);
+          const formattedAddress = parts.join(' ');
+
+          setInputValue(formattedAddress);
+          onChange(formattedAddress);
         } else {
           // If not in Australia, clear the input and show an error
           setInputValue('');
