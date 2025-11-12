@@ -23,10 +23,10 @@ async function searchListings(params: SearchParams): Promise<PaginatedListingsRe
   const searchParams = new URLSearchParams();
   
   // Map frontend parameters to API parameters
-  if (params.query) {
-    searchParams.append('query', params.query);
-  } else if (params.search) {
-    searchParams.append('query', params.search);
+  // The /listings endpoint expects 'search' not 'query'
+  const searchValue = params.query?.trim() || params.search?.trim();
+  if (searchValue) {
+    searchParams.append('search', searchValue);
   }
   
   if (params.type) {

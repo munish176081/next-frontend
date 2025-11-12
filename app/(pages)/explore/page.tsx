@@ -1,6 +1,7 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { ListingCard } from "@/_components/common/listing-card";
+import { ListingCardSkeleton } from "@/_components/common/listing-card-skeleton";
 import { Text } from "@/_components/ui/typegraphy";
 import { useSearchListings } from "@/_services/hooks/listings";
 import {
@@ -13,6 +14,7 @@ import { ListingTypeEnum } from "@/_types/listing";
 import { useWishlist } from "@/_contexts/wishlist-context";
 import { WishlistItem } from "@/_types/wishlist";
 import { useUser } from "@/_services/hooks/user/use-user";
+import { useDebounce } from "@/_hooks/use-debounce";
 
 const ExploreListings = () => {
   const params = useSearchParams();
@@ -26,9 +28,22 @@ const ExploreListings = () => {
   const { state, toggleFilter, loadWishlist, loadWishlistStatus } = useWishlist();
   const { data: currentUser } = useUser();
   
+  // Debounce search query to avoid API calls on every keystroke
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+  
+  // Sync searchQuery with URL params when they change externally (e.g., from search button or URL navigation)
+  useEffect(() => {
+    const urlSearch = filterData.search || "";
+    if (urlSearch !== searchQuery) {
+      setSearchQuery(urlSearch);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filterData.search]);
+  
   // Transform filter data to match the API expectations
-  const searchParams = {
-    query: searchQuery || "", // API expects 'query' not 'search'
+  // Use debounced value for API calls, but keep immediate value for input
+  const searchParams = useMemo(() => ({
+    query: debouncedSearchQuery || "", // Hook will map 'query' to 'search' for the API
     types: filterData.types as ListingTypeEnum[], // Send all selected types
     location: filterData.address || filterData.location, // Use address if available, fallback to location
     page: currentPage,
@@ -40,7 +55,7 @@ const ExploreListings = () => {
     ...(filterData.priceTypes && filterData.priceTypes.length > 0 && { 
       priceTypes: filterData.priceTypes as ('price_on_request' | 'price_range' | 'price_available')[]
     }),
-  };
+  }), [debouncedSearchQuery, filterData, currentPage]);
 
   const { data: listingsResponse, isPending } = useSearchListings(searchParams);
   
@@ -180,9 +195,13 @@ const ExploreListings = () => {
         
         <div className="w-full mt-6">
           {isPending || state.isLoading ? (
-            <span className="flex items-center gap-2 text-[#736E6E] w-full justify-center">
-              Loading <img src="/images/vectors/pawsIndigo.svg" />
-            </span>
+            <div className="grid grid-cols-3 max-md:grid-cols-1 gap-6 max-md:gap-4 items-stretch">
+              {Array.from({ length: 12 }).map((_, index) => (
+                <div key={index} className="w-full">
+                  <ListingCardSkeleton />
+                </div>
+              ))}
+            </div>
           ) : displayListings.length > 0 ? (
             <div className="grid grid-cols-3 max-md:grid-cols-1 gap-6 max-md:gap-4 items-stretch">
               {displayListings.map((listing) => (
