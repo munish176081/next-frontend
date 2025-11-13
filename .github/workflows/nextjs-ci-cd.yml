@@ -1,4 +1,4 @@
-name: Deploy Next.js to EC2 (via build branchc)
+name: Deploy Next.js to EC2 (via build branch)
 
 on:
   push:
@@ -60,6 +60,9 @@ jobs:
         username: ec2-user
         key: ${{ secrets.AWS_SSH_KEY }}
         script: |
+          set -e
+          echo "=== Starting EC2 Deployment ==="
+          
           # Install Node, pnpm, and pm2 if missing
           if ! command -v node &> /dev/null; then
             echo "Installing Node.js and pnpm..."
@@ -76,6 +79,10 @@ jobs:
 
           # Clone or update the repo
           cd ~/pups4sale/next-frontend || mkdir -p ~/pups4sale/next-frontend && cd $_
+
+          # Preserve .env before git reset
+          [ -f .env ] && cp .env ../env.bak || [ -f .env.local ] && cp .env.local ../env.bak
+
           if [ ! -d .git ]; then
             git init
             git remote add origin https://github.com/munish176081/next-frontend.git
@@ -87,6 +94,9 @@ jobs:
           git checkout -B build origin/build
           git reset --hard origin/build
 
+          # Restore .env
+          [ -f ../env.bak ] && mv ../env.bak .env
+
           # Install production deps
           pnpm install --prod
 
@@ -95,3 +105,7 @@ jobs:
 
           # Start or restart the app
           pm2 start "pnpm start" --name frontend || pm2 restart frontend --update-env
+
+          echo "=== Deployment Complete ==="
+          pm2 status
+          pm2 logs frontend --lines 10
