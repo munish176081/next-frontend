@@ -69,7 +69,7 @@ export default function LocationField({
     libraries,
   });
 
-  console.log("rvg",process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY )
+  console.log("dd",process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY )
 
   const handlePlaceChanged = () => {
     if (autocompleteRef.current) {
