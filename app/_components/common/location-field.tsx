@@ -69,6 +69,8 @@ export default function LocationField({
     libraries,
   });
 
+  console.log("IS APP LOCATED",process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY )
+
   const handlePlaceChanged = () => {
     if (autocompleteRef.current) {
       const place = autocompleteRef.current.getPlace();
@@ -83,16 +85,16 @@ export default function LocationField({
         
         if (isInAustralia && isSuburbOrPostcode) {
           // Extract only suburb, state, postcode, and country parts
-          const suburb = place.address_components.find((c) =>
+          const suburb = place.address_components?.find((c) =>
             c.types.includes('locality')
           )?.long_name;
-          const state = place.address_components.find((c) =>
+          const state = place.address_components?.find((c) =>
             c.types.includes('administrative_area_level_1')
           )?.short_name;
-          const postcode = place.address_components.find((c) =>
+          const postcode = place.address_components?.find((c) =>
             c.types.includes('postal_code')
           )?.long_name;
-          const country = place.address_components.find((c) =>
+          const country = place.address_components?.find((c) =>
             c.types.includes('country')
           )?.long_name;
 
@@ -301,7 +303,7 @@ export default function LocationField({
           onPlaceChanged={handlePlaceChanged}
           options={{
             componentRestrictions: { country: "AU" },
-            types: ["geocode"],
+            types: ["(regions)"],
             bounds: {
               north: -10.0,  // Northern Australia
               south: -44.0,  // Southern Australia
