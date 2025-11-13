@@ -322,15 +322,15 @@ export default function UserManagement() {
                                       <Crown className="mr-2 h-4 w-4 text-purple-600" />
                                       Set as Super Admin
                                     </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem 
+                                    {/* <DropdownMenuSeparator /> */}
+                                    {/* <DropdownMenuItem 
                                       onClick={() => handleDelete(user.id, user.name || user.username || 'User')}
                                       disabled={deleteUser.isPending}
                                       className="text-red-600 focus:text-red-600"
                                     >
                                       <Trash2 className="mr-2 h-4 w-4" />
                                       Delete User
-                                    </DropdownMenuItem>
+                                    </DropdownMenuItem> */}
                                   </DropdownMenuContent>
                                 </DropdownMenu>
                               </td>

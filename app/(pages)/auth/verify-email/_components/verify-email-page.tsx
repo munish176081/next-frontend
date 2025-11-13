@@ -67,6 +67,37 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
     }
   };
 
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text');
+    // Extract only digits from pasted content
+    const digits = pastedData.replace(/\D/g, '').split('').slice(0, 5);
+    
+    if (digits.length > 0) {
+      const newValues = [...values];
+      // Fill the inputs with pasted digits
+      digits.forEach((digit, index) => {
+        if (index < 5) {
+          newValues[index] = digit;
+        }
+      });
+      setValues(newValues);
+      
+      // Focus the last filled input or the verify button
+      if (digits.length === 5) {
+        const lastInput = document.getElementById(`otp-input-4`) as HTMLInputElement;
+        if (lastInput) {
+          lastInput.focus();
+        }
+      } else {
+        const nextInput = document.getElementById(`otp-input-${digits.length}`) as HTMLInputElement;
+        if (nextInput) {
+          nextInput.focus();
+        }
+      }
+    }
+  };
+
   const handleVerifyOtp = async () => {
     const otp = values.join('');
 
@@ -189,6 +220,42 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
     return verificationType === 'password-reset' ? 'Continue' : 'Verify Email';
   };
 
+  const handleOpenGmail = () => {
+    // Try to open Gmail app first, fallback to web
+    const gmailAppUrl = 'googlegmail://';
+    const gmailWebUrl = 'https://mail.google.com';
+    
+    // Try app first, then fallback to web after a short delay
+    window.location.href = gmailAppUrl;
+    setTimeout(() => {
+      window.open(gmailWebUrl, '_blank');
+    }, 500);
+  };
+
+  const handleOpenAppleMail = () => {
+    // Try to open Apple Mail app first, fallback to mailto
+    const mailAppUrl = 'message://';
+    const mailtoUrl = `mailto:${email}`;
+    
+    // Try app first, then fallback to mailto
+    window.location.href = mailAppUrl;
+    setTimeout(() => {
+      window.location.href = mailtoUrl;
+    }, 500);
+  };
+
+  const handleOpenOutlook = () => {
+    // Try to open Outlook app first, fallback to web
+    const outlookAppUrl = 'ms-outlook://';
+    const outlookWebUrl = 'https://outlook.live.com';
+    
+    // Try app first, then fallback to web after a short delay
+    window.location.href = outlookAppUrl;
+    setTimeout(() => {
+      window.open(outlookWebUrl, '_blank');
+    }, 500);
+  };
+
   return (
     <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
       <div className={`w-full rounded-max flex ${noshow ? '' : 'pl-0 bg-white  p-8 '} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
@@ -219,11 +286,42 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                   value={value}
                   onChange={(e) => handleChange(index, e)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
+                  onPaste={handlePaste}
                   className={`h-28 max-md:h-16 max-md:rounded-lg max-md:text-3xl w-full border-2 ${value ? 'border-yellow-400' : 'border-[#D8DADC]'
                     } focus:border-CSecondary focus:outline-none rounded-[27px] text-center text-[43px]`}
                   autoFocus={index === 0}
                 />
               ))}
+            </div>
+
+            <div className="flex flex-col gap-3 mt-6 w-full">
+              <button
+                onClick={handleOpenGmail}
+                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center justify-center w-8 h-8">
+                  <img src="/icons/gmail.png" alt="Gmail icon" className="w-8 h-8" />
+                </div>
+                <span className="text-base font-medium text-gray-900">Open Gmail</span>
+              </button>
+
+              <button
+                onClick={handleOpenAppleMail}
+                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                <div className="flex items-center justify-center w-8 h-8">
+                  <img src="/icons/apple.png" alt="Apple icon" className="w-8 h-8" />
+                </div>
+                <span className="text-base font-medium text-gray-900">Open Apple Mail</span>
+              </button>
+
+              <button
+                onClick={handleOpenOutlook}
+                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+              >
+                 <img src="/icons/outlook.png" alt="Outlook icon" className="w-8 h-8" />
+                <span className="text-base font-medium text-gray-900">Open Outlook</span>
+              </button>
             </div>
 
             <LoadingButton
