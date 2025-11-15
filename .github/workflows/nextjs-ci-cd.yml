@@ -87,10 +87,15 @@ jobs:
             git remote add origin https://github.com/munish176081/next-frontend.git
           fi
 
-          # Ensure clean state
+          # Ensure clean state - discard all local changes
           git fetch origin build
-          git clean -fd
-          git checkout -B build origin/build
+          # Stash or discard any local changes first
+          git stash || true
+          # Discard any local changes and untracked files
+          git reset --hard HEAD || true
+          git clean -fd || true
+          # Force checkout to build branch, discarding any conflicts
+          git checkout -f build 2>/dev/null || git checkout -f -B build origin/build
           git reset --hard origin/build
 
           # Install production deps
