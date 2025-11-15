@@ -11,6 +11,7 @@ import { LoadingButton } from "@/_components/ui/loading-button";
 import { SERVICES_LISTING_FIELD_CONFIG } from "./field-configs/services-listing-config";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
+import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
 
 interface ServicesListingFormProps extends BaseFormProps {}
 
@@ -34,6 +35,7 @@ export default function ServicesListingForm({
   const updateListingMutation = useUpdateListing();
   
   const [pendingDeletions, setPendingDeletions] = useState<Record<string, string[]>>({});
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   // Use the base form functionality
   const baseForm = BaseListingForm({
@@ -57,23 +59,38 @@ export default function ServicesListingForm({
     baseForm.handleFieldChange(name, value, breedId);
   };
 
-  const handleSubmit = async () => {
-    if (isSubmitting || isSubmitted) {
-      return;
-    }
+  // Extract listing data for payment modal
+  const getListingPreviewData = () => {
+    const commonFields = getCommonFields(selectedListingType);
+    const commonData: Record<string, any> = {};
+    commonFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        commonData[field.name] = formData[field.name];
+      }
+    });
 
-    if (!baseForm.validateForm()) {
-      toast({
-        title: 'Please fix the errors before submitting.',
-        variant: 'destructive',
-      });
-      // Scroll to first error field
-      setTimeout(() => {
-        scrollToFirstError(errors);
-      }, 100);
-      return;
-    }
+    // Get first image
+    const allImages: string[] = [];
+    const dynamicFields = getDynamicFields(selectedListingType);
+    dynamicFields.forEach(field => {
+      if (field.type === 'file' && formData[field.name]) {
+        const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+        if (field.fileConfig?.accept?.includes('image/*')) {
+          allImages.push(...files);
+        }
+      }
+    });
 
+    return {
+      title: commonData.title || '',
+      breed: commonData.breed || '',
+      location: commonData.location || '',
+      image: allImages[0] || undefined,
+    };
+  };
+
+  // Actual listing creation function (called after payment)
+  const createListingAfterPayment = async (isFeatured: boolean) => {
     setIsSubmitting(true);
 
     try {
@@ -192,7 +209,7 @@ export default function ServicesListingForm({
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
           tags: baseForm.extractTags(commonData, dynamicData),
-          isFeatured: false,
+          isFeatured: isFeatured,
           isPremium: false,
         };
 
@@ -214,6 +231,46 @@ export default function ServicesListingForm({
     } catch (error) {
       console.error('Error submitting listing:', error);
       setIsSubmitting(false);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting || isSubmitted) {
+      return;
+    }
+
+    if (!baseForm.validateForm()) {
+      toast({
+        title: 'Please fix the errors before submitting.',
+        variant: 'destructive',
+      });
+      setTimeout(() => {
+        scrollToFirstError(errors);
+      }, 100);
+      return;
+    }
+
+    // Skip payment for edit mode
+    if (editId) {
+      await createListingAfterPayment(false);
+      return;
+    }
+
+    // Show payment modal for new listings
+    console.log('Opening payment modal...');
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string }) => {
+    try {
+      await createListingAfterPayment(paymentData.isFeatured);
+    } catch (error: any) {
+      toast({
+        title: 'Error creating listing',
+        description: error.message || 'Failed to create listing after payment',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -247,6 +304,28 @@ export default function ServicesListingForm({
       >
         Submit
       </LoadingButton>
+
+      {/* Payment Modal */}
+      <ListingPaymentModal
+        open={showPaymentModal}
+        onOpenChange={(open) => {
+          console.log('Payment modal onOpenChange:', open);
+          setShowPaymentModal(open);
+        }}
+        listingType={selectedListingType.id as ListingTypeEnum}
+        listingTitle={getListingPreviewData().title}
+        listingBreed={getListingPreviewData().breed}
+        listingLocation={getListingPreviewData().location}
+        listingImage={getListingPreviewData().image}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentError={(error) => {
+          toast({
+            title: 'Payment Error',
+            description: error,
+            variant: 'destructive',
+          });
+        }}
+      />
     </div>
   );
 }

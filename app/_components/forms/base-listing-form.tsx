@@ -360,6 +360,57 @@ export default function BaseListingForm({
     selectedListingType.requiredFields.forEach((field: ListingField) => {
       if (!shouldDisplayField(field)) return;
       
+      // Skip validation for group fields - validate their child fields instead
+      if (field.type === 'group' && field.groupConfig?.fields) {
+        // Special handling for litterPuppyDetails group when using same-details option
+        // In this case, microchipNumber is handled separately with indexed fields (microchipNumber_0, microchipNumber_1, etc.)
+        const isLitterPuppyDetailsSameDetails = field.name === 'litterPuppyDetails' && 
+          formData.listLitterOption === 'same-details' && 
+          formData.listingType === 'litter';
+        
+        field.groupConfig.fields.forEach((groupField: ListingField) => {
+          // Skip microchipNumber validation when using same-details option (it's handled with indexed fields)
+          if (isLitterPuppyDetailsSameDetails && groupField.name === 'microchipNumber') {
+            return;
+          }
+          
+          const value = formData[groupField.name];
+
+          if (groupField.required) {
+            if (groupField.type === 'checkbox') {
+              if (!Array.isArray(value) || value.length === 0) {
+                newErrors[groupField.name] = `${groupField.label} is required`;
+              }
+            } else if (groupField.type === 'file') {
+              const urls = Array.isArray(value) ? value : [];
+              if (groupField.fileConfig?.minCount && urls.length < groupField.fileConfig.minCount) {
+                newErrors[groupField.name] = `Please upload at least ${groupField.fileConfig.minCount} ${groupField.fileConfig.accept?.includes('image/*') ? 'photo(s)' : 'file(s)'}`;
+              }
+            } else if (!value || value.toString().trim() === '') {
+              newErrors[groupField.name] = `${groupField.label} is required`;
+            }
+          }
+
+          if (groupField.type === 'number' && value) {
+            const numValue = parseFloat(value);
+            if (groupField.validation?.min !== undefined && numValue < groupField.validation.min) {
+              newErrors[groupField.name] = `${groupField.label} must be at least ${groupField.validation.min}`;
+            }
+            if (groupField.validation?.max !== undefined && numValue > groupField.validation.max) {
+              newErrors[groupField.name] = `${groupField.label} must be at most ${groupField.validation.max}`;
+            }
+          }
+
+          if (groupField.type === 'file' && !groupField.required && value && groupField.fileConfig?.minCount) {
+            const urls = Array.isArray(value) ? value : [];
+            if (urls.length > 0 && urls.length < groupField.fileConfig.minCount) {
+              newErrors[groupField.name] = `Please upload at least ${groupField.fileConfig.minCount} ${groupField.fileConfig.accept?.includes('image/*') ? 'photo(s)' : 'file(s)'}`;
+            }
+          }
+        });
+        return; // Skip the rest of the validation for the group field itself
+      }
+      
       const value = formData[field.name];
 
       if (field.required) {
@@ -394,6 +445,18 @@ export default function BaseListingForm({
         }
       }
     });
+
+    // Validate indexed microchip numbers for litter listings with same-details option
+    if (formData.listingType === 'litter' && formData.listLitterOption === 'same-details' && formData.litterSize) {
+      const litterSize = parseInt(formData.litterSize) || 1;
+      for (let i = 0; i < litterSize; i++) {
+        const microchipKey = `microchipNumber_${i}`;
+        const microchipValue = formData[microchipKey];
+        if (!microchipValue || microchipValue.toString().trim() === '') {
+          newErrors[microchipKey] = `Microchip number for Puppy ${i + 1} is required`;
+        }
+      }
+    }
 
     // Validate parent fields if required
     if (selectedListingType && isParentInfoRequired(selectedListingType.id as ListingTypeEnum)) {
@@ -490,6 +553,7 @@ export default function BaseListingForm({
     }
 
     if (!validateForm()) {
+      console.log("BASE LISTING FORM VALIDATION ERRORS", errors);
       toast({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',

@@ -494,7 +494,7 @@ export const LISTING_TYPES: ListingType[] = [
     id: 'FUTURE_LISTING',
     title: 'Future Listings',
     description: 'For advertising planned or upcoming litters.',
-    price: 'Free',
+    price: '$19/mo',
     image: '/images/breeds/future.png',
     category: 'puppy',
     requiredFields: [

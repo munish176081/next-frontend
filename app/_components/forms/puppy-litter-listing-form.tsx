@@ -14,6 +14,7 @@ import { PUPPY_LITTER_LISTING_FIELD_CONFIG } from "./field-configs/puppy-litter-
 import { puppyLitterListingSchema } from "@/_config/validate-schema";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
+import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
 
 interface PuppyLitterListingFormProps extends BaseFormProps {}
 
@@ -197,6 +198,7 @@ export default function PuppyLitterListingForm({
   const deletePendingFilesMutation = useDeletePendingFiles();
   
   const [pendingDeletions, setPendingDeletions] = useState<Record<string, string[]>>({});
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showMotherSection, setShowMotherSection] = useState(false);
   const [showFatherSection, setShowFatherSection] = useState(false);
 
@@ -280,11 +282,38 @@ export default function PuppyLitterListingForm({
     }));
   };
 
-  const handleSubmit = async () => {
-    if (isSubmitting || isSubmitted) {
-      return;
-    }
+  // Extract listing data for payment modal
+  const getListingPreviewData = () => {
+    const commonFields = getCommonFields(selectedListingType);
+    const commonData: Record<string, any> = {};
+    commonFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        commonData[field.name] = formData[field.name];
+      }
+    });
 
+    // Get first image
+    const allImages: string[] = [];
+    const dynamicFields = getDynamicFields(selectedListingType);
+    dynamicFields.forEach(field => {
+      if (field.type === 'file' && formData[field.name]) {
+        const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+        if (field.fileConfig?.accept?.includes('image/*')) {
+          allImages.push(...files);
+        }
+      }
+    });
+
+    return {
+      title: commonData.title || '',
+      breed: commonData.breed || '',
+      location: commonData.location || '',
+      image: allImages[0] || undefined,
+    };
+  };
+
+  // Actual listing creation function (called after payment)
+  const createListingAfterPayment = async (isFeatured: boolean, paymentId: string) => {
     setIsSubmitting(true);
 
     try {
@@ -407,8 +436,15 @@ export default function PuppyLitterListingForm({
 
       // Validate the processed data using the puppy litter schema
       try {
+        // Include all formData fields for validation, not just processed ones
+        // Also ensure required fields have default values if missing for proper validation
         const dataToValidate = {
+          listingType: formData.listingType || 'litter',
+          pricingOption: formData.pricingOption || 'fixedPrice',
+          deliveryOptions: formData.deliveryOptions || [],
+          dnaResults: formData.dnaResults || [],
           ...formData,
+          ...commonData,
           ...dynamicData
         };
         const validatedData = puppyLitterListingSchema.parse(dataToValidate);
@@ -424,11 +460,20 @@ export default function PuppyLitterListingForm({
             const fieldName = err.path.join('.');
             validationErrors[fieldName] = err.message;
           });
+        } else if (error.message) {
+          // Handle refine errors that might not have a path
+          validationErrors._form = error.message;
         }
         
         setErrors(validationErrors);
+        
+        // Show specific error messages if available
+        const errorCount = Object.keys(validationErrors).length;
+        const firstError = Object.values(validationErrors)[0];
+        console.log("PUPPY LISTING FORM VALIDATION ERRORS", errors);
         toast({
-          title: 'Please fix the errors before submitting.',
+          title: errorCount === 1 ? firstError : 'Please fix the errors before submitting.',
+          description: errorCount > 1 ? `${errorCount} field(s) need attention` : undefined,
           variant: 'destructive',
         });
         // Scroll to first error field
@@ -541,8 +586,9 @@ export default function PuppyLitterListingForm({
           documents: allDocuments.length > 0 ? allDocuments : undefined,
           metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
           tags: baseForm.extractTags(commonData, dynamicData),
-          isFeatured: false,
+          isFeatured: isFeatured,
           isPremium: false,
+          paymentId: paymentId,
         };
 
         await createListingMutation.mutateAsync(listingData);
@@ -563,6 +609,115 @@ export default function PuppyLitterListingForm({
     } catch (error) {
       console.error('Error submitting listing:', error);
       setIsSubmitting(false);
+      throw error;
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (isSubmitting || isSubmitted) {
+      return;
+    }
+
+    if (!baseForm.validateForm()) {
+      console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", errors);
+      toast({
+        title: 'Please fix the errors before submitting.',
+        variant: 'destructive',
+      });
+      setTimeout(() => {
+        scrollToFirstError(errors);
+      }, 100);
+      return;
+    }
+
+    // Additional validation for puppy litter listing
+    try {
+      const commonFields = getCommonFields(selectedListingType);
+      const dynamicFields = getDynamicFields(selectedListingType);
+      const commonData: Record<string, any> = {};
+      commonFields.forEach(field => {
+        // Include all fields, even if empty, so schema can validate them
+        if (formData[field.name] !== undefined) {
+          commonData[field.name] = formData[field.name];
+        }
+      });
+
+      const dynamicData: Record<string, any> = {};
+      dynamicFields.forEach(field => {
+        // Include all fields, even if empty, so schema can validate them
+        if (formData[field.name] !== undefined) {
+          dynamicData[field.name] = formData[field.name];
+        }
+      });
+
+      // Clean up litter-specific fields when switching to single puppy mode
+      if (formData.listingType === 'puppy') {
+        Object.keys(dynamicData).forEach(key => {
+          if (key.startsWith('microchipNumber_')) {
+            delete dynamicData[key];
+          }
+        });
+      }
+
+      // Include all formData fields for validation, not just non-empty ones
+      // Also ensure required fields have default values if missing for proper validation
+      const dataToValidate = {
+        listingType: formData.listingType || 'litter',
+        pricingOption: formData.pricingOption || 'fixedPrice',
+        deliveryOptions: formData.deliveryOptions || [],
+        dnaResults: formData.dnaResults || [],
+        ...formData,
+        ...commonData,
+        ...dynamicData
+      };
+      await puppyLitterListingSchema.parseAsync(dataToValidate);
+    } catch (error: any) {
+      const validationErrors: Record<string, string> = {};
+      if (error.errors) {
+        error.errors.forEach((err: any) => {
+          const fieldName = err.path.join('.');
+          validationErrors[fieldName] = err.message;
+        });
+      } else if (error.message) {
+        // Handle refine errors that might not have a path
+        validationErrors._form = error.message;
+      }
+      setErrors(validationErrors);
+      
+      // Show specific error messages if available
+      const errorCount = Object.keys(validationErrors).length;
+      const firstError = Object.values(validationErrors)[0];
+      toast({
+        title: errorCount === 1 ? firstError : 'Please fix the errors before submitting.',
+        description: errorCount > 1 ? `${errorCount} field(s) need attention` : undefined,
+        variant: 'destructive',
+      });
+      setTimeout(() => {
+        scrollToFirstError(validationErrors);
+      }, 100);
+      return;
+    }
+
+    // Skip payment for edit mode
+    if (editId) {
+      await createListingAfterPayment(false);
+      return;
+    }
+
+    // Show payment modal for new listings
+    console.log('Opening payment modal...');
+    setShowPaymentModal(true);
+  };
+
+  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string }) => {
+    try {
+      await createListingAfterPayment(paymentData.isFeatured, paymentData.paymentId);
+    } catch (error: any) {
+      toast({
+        title: 'Error creating listing',
+        description: error.message || 'Failed to create listing after payment',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -737,20 +892,35 @@ export default function PuppyLitterListingForm({
                                 <p className="text-sm text-gray-500">
                                   Enter microchip numbers for all {litterSize} puppy(ies)
                                 </p>
-                                {Array.from({ length: litterSize }, (_, index) => (
-                                  <div key={index} className="flex items-center gap-3">
-                                    <span className="text-sm font-medium text-gray-600 w-20">
-                                      Puppy {index + 1}:
-                                    </span>
-                                    <input
-                                      type="text"
-                                      placeholder="Enter microchip number"
-                                      value={formData[`microchipNumber_${index}`] || ''}
-                                      onChange={(e) => handleFieldChange(`microchipNumber_${index}`, e.target.value)}
-                                      className="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
-                                    />
-                                  </div>
-                                ))}
+                                {Array.from({ length: litterSize }, (_, index) => {
+                                  const microchipKey = `microchipNumber_${index}`;
+                                  const microchipError = errors[microchipKey];
+                                  return (
+                                    <div key={index} className="space-y-1">
+                                      <div className="flex items-center gap-3">
+                                        <span className="text-sm font-medium text-gray-600 w-20">
+                                          Puppy {index + 1}:
+                                        </span>
+                                        <div className="flex-1">
+                                          <input
+                                            type="text"
+                                            placeholder="Enter microchip number"
+                                            value={formData[microchipKey] || ''}
+                                            onChange={(e) => handleFieldChange(microchipKey, e.target.value)}
+                                            className={`text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border max-md:h-12 ${
+                                              microchipError 
+                                                ? 'border-red-500 focus:border-red-500' 
+                                                : 'border-[#B5B5B5] focus:border-gray-400'
+                                            }`}
+                                          />
+                                          {microchipError && (
+                                            <p className="text-sm text-red-500 mt-1 ml-6">{microchipError}</p>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  );
+                                })}
                               </div>
                             );
                           }
@@ -1062,6 +1232,28 @@ export default function PuppyLitterListingForm({
       >
         Submit
       </LoadingButton>
+
+      {/* Payment Modal */}
+      <ListingPaymentModal
+        open={showPaymentModal}
+        onOpenChange={(open) => {
+          console.log('Payment modal onOpenChange:', open);
+          setShowPaymentModal(open);
+        }}
+        listingType={selectedListingType.id as ListingTypeEnum}
+        listingTitle={getListingPreviewData().title}
+        listingBreed={getListingPreviewData().breed}
+        listingLocation={getListingPreviewData().location}
+        listingImage={getListingPreviewData().image}
+        onPaymentSuccess={handlePaymentSuccess}
+        onPaymentError={(error) => {
+          toast({
+            title: 'Payment Error',
+            description: error,
+            variant: 'destructive',
+          });
+        }}
+      />
     </div>
   );
 }

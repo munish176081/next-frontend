@@ -171,6 +171,7 @@ export interface CreateListingDto {
     keywords?: string[];
   };
   metadata?: Record<string, any>;
+  paymentId?: string;
 }
 
 export interface UpdateListingDto extends Partial<CreateListingDto> {}
@@ -246,6 +247,7 @@ export interface ListingSummaryDto {
     username: string;
     imageUrl?: string;
   };
+  paymentId?: string | null;
 }
 
 export interface PaginatedListingsResponseDto {

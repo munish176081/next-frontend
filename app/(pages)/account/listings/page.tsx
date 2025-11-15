@@ -256,6 +256,7 @@ function UserListingsPage() {
                   <th className="px-8 py-3 font-medium text-center">
                     Availability
                   </th>
+                  <th className="px-8 py-3 font-medium text-center">Payment</th>
                   <th className="px-8 py-3 font-medium text-center">Actions</th>
                 </tr>
               </thead>
@@ -363,6 +364,17 @@ function UserListingsPage() {
                             <Edit3 className="w-3 h-3" />
                           </button>
                         </div>
+                      )}
+                    </td>
+                    <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
+                      {listing.paymentId ? (
+                        <span className="min-h-6 text-[10px] rounded-full w-16 mx-auto flex items-center justify-center text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]">
+                          Paid
+                        </span>
+                      ) : (
+                        <span className="min-h-6 text-[10px] rounded-full w-16 mx-auto flex items-center justify-center text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]">
+                          Unpaid
+                        </span>
                       )}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
