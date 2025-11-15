@@ -14,6 +14,53 @@ const BASE_PRICES: Record<ListingTypeEnum, number> = {
 };
 
 /**
+ * Subscription-based listing types (monthly recurring)
+ */
+export const SUBSCRIPTION_LISTING_TYPES: ListingTypeEnum[] = [
+  ListingTypeEnum.SEMEN_LISTING, // $19/mo
+  ListingTypeEnum.STUD_LISTING, // $39/mo
+  ListingTypeEnum.FUTURE_LISTING, // $19/mo
+  ListingTypeEnum.OTHER_SERVICES, // $19/mo
+  ListingTypeEnum.PUPPY_LITTER_LISTING, // $49/mo or $128/mo with featured (always subscription)
+];
+
+/**
+ * One-time payment listing types
+ */
+export const ONE_TIME_PAYMENT_LISTING_TYPES: ListingTypeEnum[] = [
+  ListingTypeEnum.PUPPY_LISTING, // $49 one-time + optional $79/mo featured
+  // PUPPY_LITTER_LISTING is now a subscription type (always subscription)
+];
+
+/**
+ * Free listing types (no payment required)
+ */
+export const FREE_LISTING_TYPES: ListingTypeEnum[] = [
+  ListingTypeEnum.WANTED_LISTING, // Free
+];
+
+/**
+ * Check if a listing type requires a subscription
+ */
+export function isSubscriptionType(listingType: ListingTypeEnum): boolean {
+  return SUBSCRIPTION_LISTING_TYPES.includes(listingType);
+}
+
+/**
+ * Check if a listing type is a one-time payment
+ */
+export function isOneTimePaymentType(listingType: ListingTypeEnum): boolean {
+  return ONE_TIME_PAYMENT_LISTING_TYPES.includes(listingType);
+}
+
+/**
+ * Check if a listing type is free
+ */
+export function isFreeListingType(listingType: ListingTypeEnum): boolean {
+  return FREE_LISTING_TYPES.includes(listingType);
+}
+
+/**
  * Listing duration in days for each listing type
  */
 const LISTING_DURATION_DAYS: Record<ListingTypeEnum, number> = {
@@ -103,8 +150,22 @@ export function calculateTotalPrice(
 /**
  * Format price for display
  */
-export function formatPrice(amount: number): string {
-  return `$${amount.toFixed(2)}`;
+export function formatPrice(amount: number | string | undefined | null): string {
+  // Handle null, undefined, or empty values
+  if (amount === null || amount === undefined || amount === '') {
+    return '$0.00';
+  }
+  
+  // Convert string to number if needed
+  const numAmount = typeof amount === 'string' ? parseFloat(amount) : amount;
+  
+  // Check if it's a valid number
+  if (isNaN(numAmount) || !isFinite(numAmount)) {
+    console.warn('formatPrice: Invalid amount provided:', amount);
+    return '$0.00';
+  }
+  
+  return `$${numAmount.toFixed(2)}`;
 }
 
 /**
@@ -140,5 +201,15 @@ export function getPriceBreakdown(
     total,
     duration,
   };
+}
+
+/**
+ * Get subscription pricing for a listing type (monthly amount)
+ */
+export function getSubscriptionPrice(listingType: ListingTypeEnum): number {
+  if (!isSubscriptionType(listingType)) {
+    return 0;
+  }
+  return getBasePrice(listingType);
 }
 

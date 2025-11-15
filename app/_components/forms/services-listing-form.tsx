@@ -6,12 +6,15 @@ import { ListingField, getCommonFields, getContactFields, getDynamicFields } fro
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
 import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
+import { isSubscriptionType } from "@/_lib/pricing";
+import { hasStripePriceId, hasPayPalPlanId } from "@/_config/subscription-prices";
 import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import { SERVICES_LISTING_FIELD_CONFIG } from "./field-configs/services-listing-config";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
 import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
+import { checkActiveSubscription } from "@/_lib/api/subscriptions";
 
 interface ServicesListingFormProps extends BaseFormProps {}
 
@@ -90,7 +93,7 @@ export default function ServicesListingForm({
   };
 
   // Actual listing creation function (called after payment)
-  const createListingAfterPayment = async (isFeatured: boolean) => {
+  const createListingAfterPayment = async (isFeatured: boolean, paymentId?: string) => {
     setIsSubmitting(true);
 
     try {
@@ -211,9 +214,22 @@ export default function ServicesListingForm({
           tags: baseForm.extractTags(commonData, dynamicData),
           isFeatured: isFeatured,
           isPremium: false,
+          paymentId: paymentId,
         };
 
-        await createListingMutation.mutateAsync(listingData);
+        const createdListing = await createListingMutation.mutateAsync(listingData);
+        
+        // For subscription listing types, subscription is already created in payment modal
+        // We just need to link it to the listing
+        // paymentId here is actually subscriptionId for subscription types
+        if (isSubscriptionType(selectedListingType.id as ListingTypeEnum) && paymentId) {
+          console.log('🔔 [Frontend] Linking subscription to listing:', { listingId: createdListing.id, subscriptionId: paymentId });
+          await updateListingMutation.mutateAsync({
+            id: createdListing.id,
+            data: { subscriptionId: paymentId } // paymentId is actually subscriptionId
+          });
+          console.log('✅ [Frontend] Listing linked to subscription');
+        }
       }
 
       // Mark as submitted to prevent further clicks
@@ -257,14 +273,40 @@ export default function ServicesListingForm({
       return;
     }
 
-    // Show payment modal for new listings
+    // For subscription listing types, check if user already has an active subscription
+    const listingType = selectedListingType.id as ListingTypeEnum;
+    // Use price/plan ID check - more reliable than enum check
+    if (hasStripePriceId(listingType) || hasPayPalPlanId(listingType) || isSubscriptionType(listingType)) {
+      try {
+        const subscriptionCheck = await checkActiveSubscription(listingType);
+        if (subscriptionCheck.hasSubscription && subscriptionCheck.subscription) {
+          // User has active subscription, create listing directly without payment
+          console.log('✅ User has active subscription, creating listing directly:', subscriptionCheck.subscription.id);
+          await createListingAfterPayment(false, subscriptionCheck.subscription.id);
+          return;
+        }
+      } catch (error: any) {
+        console.error('Error checking subscription:', error);
+        // If check fails, proceed to payment modal
+      }
+    }
+
+    // Show payment modal for new listings (no subscription or one-time payment types)
     console.log('Opening payment modal...');
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string }) => {
+  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => {
     try {
-      await createListingAfterPayment(paymentData.isFeatured);
+      // For subscription types, use subscriptionId if provided, otherwise use paymentId (which is subscriptionId for subscriptions)
+      const subscriptionId = paymentData.subscriptionId || (isSubscriptionType(selectedListingType.id as ListingTypeEnum) ? paymentData.paymentId : undefined);
+      console.log('🔔 [Form] Payment success:', {
+        paymentId: paymentData.paymentId,
+        subscriptionId,
+        listingType: selectedListingType.id,
+        isSubscription: isSubscriptionType(selectedListingType.id as ListingTypeEnum)
+      });
+      await createListingAfterPayment(paymentData.isFeatured, subscriptionId || paymentData.paymentId);
     } catch (error: any) {
       toast({
         title: 'Error creating listing',

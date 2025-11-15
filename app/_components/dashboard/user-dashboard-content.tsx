@@ -1,41 +1,47 @@
 "use client";
 
 import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { getUserSubscriptions, Subscription } from '@/_lib/api/subscriptions';
+import { formatPrice } from '@/_lib/pricing';
 
-const rows = [
-  {
-    plan: "Premium Plan",
-    price: "$150",
-    startDate: "01 Mar 2021",
-    endDate: "01 Jun 2021",
-    status: "Active",
-    action: true
-  },
-  {
-    plan: "Basic Plan",
-    price: "$50",
-    startDate: "10 Jan 2021",
-    endDate: "10 Apr 2021",
-    status: "Active",
-    action: true
-  },
-  {
-    plan: "Standard Plan",
-    price: "$200",
-    startDate: "05 Mar 2021",
-    endDate: "05 Jun 2021",
-    status: "Pending",
-    action: true
-  },
-  {
-    plan: "Business Plan",
-    price: "$100",
-    startDate: "20 Feb 2021",
-    endDate: "20 May 2021",
-    status: "Expired",
-    action: false
+function formatDate(dateString: string): string {
+  const date = new Date(dateString);
+  return date.toLocaleDateString("en-US", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
+}
+
+function getStatusLabel(status: string): string {
+  return status
+    .split("_")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getSubscriptionType(subscription: Subscription): string {
+  if (!subscription.listingType) return "Subscription";
+  
+  const typeMap: Record<string, string> = {
+    SEMEN_LISTING: "Semen Listing",
+    PUPPY_LISTING: "Puppy Listing",
+    PUPPY_LITTER_LISTING: "Puppy Litter Listing",
+    STUD_LISTING: "Stud Listing",
+    FUTURE_LISTING: "Future Listing",
+    WANTED_LISTING: "Wanted Listing",
+    OTHER_SERVICES: "Other Services",
+  };
+  
+  let type = typeMap[subscription.listingType] || subscription.listingType.replace(/_/g, " ");
+  
+  if (subscription.includesFeatured) {
+    type += " + Featured";
   }
-];
+  
+  return type;
+}
 
 const payments = [
   {
@@ -64,10 +70,45 @@ const statusStyles: Record<string, string> = {
   Active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
   Pending: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
   Expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+  active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
+  pending: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
+  expired: "text-[#EE5D50] bg-[#EE5D5033] border border-[#EE5D50]",
+  cancelled: "text-gray-600 bg-gray-100 border border-gray-300",
+  past_due: "text-white bg-orange-500 border border-orange-500",
+  trialing: "text-blue-600 bg-blue-100 border border-blue-300",
+  incomplete: "text-yellow-600 bg-yellow-100 border border-yellow-300",
+  incomplete_expired: "text-gray-600 bg-gray-100 border border-gray-300",
+  unpaid: "text-red-600 bg-red-100 border border-red-300",
 };
 
 export const UserDashboardContent = () => {
   const router = useRouter();
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [isLoadingSubscriptions, setIsLoadingSubscriptions] = useState(true);
+
+  useEffect(() => {
+    const loadSubscriptions = async () => {
+      try {
+        setIsLoadingSubscriptions(true);
+        // Fetch from Stripe and sync with database
+        const data = await getUserSubscriptions(true);
+        setSubscriptions(data);
+      } catch (error) {
+        console.error('Failed to load subscriptions:', error);
+        // Fallback to database-only if Stripe sync fails
+        try {
+          const data = await getUserSubscriptions(false);
+          setSubscriptions(data);
+        } catch (fallbackError) {
+          console.error('Failed to load subscriptions from database:', fallbackError);
+          setSubscriptions([]);
+        }
+      } finally {
+        setIsLoadingSubscriptions(false);
+      }
+    };
+    loadSubscriptions();
+  }, []);
 
   return (
     <div className="flex flex-col w-full gap-4 max-md:flex-col">
@@ -186,22 +227,57 @@ export const UserDashboardContent = () => {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((row, index) => (
-                  <tr key={index}>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap">{row.plan}</td>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap">{row.price}</td>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap">{row.startDate}</td>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap">{row.endDate}</td>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap text-center">
-                      <span className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[row.status]}`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap text-center">
-                      {row.action ? (<img className="w-6 mx-auto" src="/images/vectors/ellipses.png" alt="action" />) : ("N/A")}
+                {isLoadingSubscriptions ? (
+                  <tr>
+                    <td colSpan={6} className="px-1 py-8 text-center text-sm text-gray-500">
+                      Loading subscriptions...
                     </td>
                   </tr>
-                ))}
+                ) : subscriptions.length === 0 ? (
+                  <tr>
+                    <td colSpan={6} className="px-1 py-8 text-center text-sm text-gray-500">
+                      No subscriptions found
+                    </td>
+                  </tr>
+                ) : (
+                  subscriptions.map((subscription) => {
+                    const status = getStatusLabel(subscription.status);
+                    const isExpiredOrCancelled = subscription.status === "expired" || subscription.status === "cancelled";
+                    return (
+                      <tr key={subscription.id}>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium">
+                          {getSubscriptionType(subscription)}
+                        </td>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium">
+                          {formatPrice(subscription.amount)}
+                        </td>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium">
+                          {formatDate(subscription.currentPeriodStart)}
+                        </td>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium">
+                          {formatDate(subscription.currentPeriodEnd)}
+                        </td>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap text-center">
+                          <span className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[subscription.status] || statusStyles.cancelled}`}>
+                            {status}
+                          </span>
+                        </td>
+                        <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap text-center">
+                          {isExpiredOrCancelled ? (
+                            "N/A"
+                          ) : (
+                            <img 
+                              className="w-6 mx-auto cursor-pointer" 
+                              src="/images/vectors/ellipses.png" 
+                              alt="action"
+                              onClick={() => router.push('/account/subscriptions')}
+                            />
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>

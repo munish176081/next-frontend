@@ -27,6 +27,11 @@ const accountSidebarItems = [
     label: "Inbox",
     path: Routes.private.inbox,
   },
+  {
+    id: 5,
+    label: "Subscriptions",
+    path: Routes.private.subscriptions,
+  },
 ];
 
 const AccountSideBar = () => {

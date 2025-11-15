@@ -18,8 +18,20 @@ import {
   isFeaturedAddonEligible,
   formatPrice,
   getListingDuration,
+  ADDON_PRICES,
+  isSubscriptionType,
 } from "@/_lib/pricing";
+import { createStripeSubscription, createPayPalSubscription } from "@/_lib/api/subscriptions";
 import { ListingTypeEnum } from "@/_types/listing";
+import { 
+  hasStripePriceId, 
+  getStripePriceId,
+  hasPayPalPlanId,
+  getPayPalPlanId,
+  isSubscriptionTypeByPriceId,
+  STRIPE_PRICE_IDS,
+  PAYPAL_PLAN_IDS
+} from "@/_config/subscription-prices";
 import { CreditCard, Mail, X } from "lucide-react";
 
 // Helper function to get listing type display name
@@ -52,18 +64,20 @@ interface ListingPaymentModalProps {
   listingBreed: string;
   listingLocation: string;
   listingImage?: string;
-  onPaymentSuccess: (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string }) => void;
+  onPaymentSuccess: (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => void;
   onPaymentError?: (error: string) => void;
 }
 
 // Stripe Payment Form Component
 function StripePaymentForm({
   clientSecret,
+  subscriptionId,
   onSuccess,
   onError,
   onProcessingChange,
 }: {
   clientSecret: string;
+  subscriptionId?: string | null;
   onSuccess: (paymentId: string) => void;
   onError: (error: string) => void;
   onProcessingChange?: (processing: boolean) => void;
@@ -106,25 +120,40 @@ function StripePaymentForm({
         onError(error.message || "Payment failed");
         setIsProcessing(false);
       } else if (paymentIntent && paymentIntent.status === "succeeded") {
-        // Get payment method ID from the payment intent
-        const paymentMethodId = typeof paymentIntent.payment_method === 'string' 
-          ? paymentIntent.payment_method 
-          : paymentIntent.payment_method?.id;
-
-        if (paymentMethodId) {
-          // Confirm payment on backend to get paymentId
-          try {
-            const result = await confirmPayment(paymentIntent.id, paymentMethodId);
-            if (result.success && result.paymentId) {
-              onSuccess(result.paymentId);
-            } else {
-              onError("Payment confirmation failed");
-            }
-          } catch (confirmError: any) {
-            onError(confirmError.message || "Failed to confirm payment");
-          }
+        // For subscriptions, check if we have subscriptionId
+        // The subscriptionId is stored when subscription is created
+        // Check if this is a subscription payment (subscriptionId passed as prop)
+        // Note: paymentIntent.metadata might not be available in all cases
+        const finalSubscriptionId = subscriptionId;
+        if (finalSubscriptionId) {
+          // This is a subscription payment - use subscriptionId
+          console.log('✅ [Payment Modal] Subscription payment confirmed:', {
+            subscriptionId: finalSubscriptionId,
+            paymentIntentId: paymentIntent.id,
+            status: paymentIntent.status
+          });
+          onSuccess(finalSubscriptionId); // Pass subscriptionId as paymentId for compatibility
         } else {
-          onError("Payment method not found");
+          // This is a one-time payment - get payment method and confirm
+          const paymentMethodId = typeof paymentIntent.payment_method === 'string' 
+            ? paymentIntent.payment_method 
+            : paymentIntent.payment_method?.id;
+
+          if (paymentMethodId) {
+            // Confirm payment on backend to get paymentId
+            try {
+              const result = await confirmPayment(paymentIntent.id, paymentMethodId);
+              if (result.success && result.paymentId) {
+                onSuccess(result.paymentId);
+              } else {
+                onError("Payment confirmation failed");
+              }
+            } catch (confirmError: any) {
+              onError(confirmError.message || "Failed to confirm payment");
+            }
+          } else {
+            onError("Payment method not found");
+          }
         }
       }
     } catch (err: any) {
@@ -152,26 +181,122 @@ function PayPalPaymentButton({
   listingType,
   onSuccess,
   onError,
+  isSubscription = false,
+  includesFeatured = false,
 }: {
   amount: number;
   listingType: ListingTypeEnum;
-  onSuccess: (paymentId: string) => void;
+  onSuccess: (paymentId: string, subscriptionId?: string) => void;
   onError: (error: string) => void;
+  isSubscription?: boolean;
+  includesFeatured?: boolean;
 }) {
   const [{ isPending }] = usePayPalScriptReducer();
 
-  const createOrder = async () => {
+  const createOrder = async (): Promise<string> => {
     try {
-      const { orderId } = await createPayPalOrder(amount, listingType);
-      return orderId;
+      // For subscriptions, create subscription instead of order
+      if (isSubscription) {
+        const { subscriptionId, approvalUrl } = await createPayPalSubscription({
+          listingType: listingType as string,
+          includesFeatured,
+        });
+        
+        // For PayPal subscriptions, open approval URL in popup window
+        if (approvalUrl) {
+          // Store subscriptionId in sessionStorage for when user returns
+          if (subscriptionId) {
+            sessionStorage.setItem('pendingPayPalSubscriptionId', subscriptionId);
+            sessionStorage.setItem('pendingPayPalApprovalUrl', approvalUrl);
+          }
+          
+          // Open PayPal approval in popup window
+          const width = 600;
+          const height = 700;
+          const left = (window.screen.width - width) / 2;
+          const top = (window.screen.height - height) / 2;
+          
+          const popup = window.open(
+            approvalUrl,
+            'PayPalSubscription',
+            `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
+          );
+          
+          if (!popup) {
+            // Popup blocked, fallback to redirect
+            window.location.href = approvalUrl;
+            return 'redirecting';
+          }
+          
+          // Listen for popup to close or redirect
+          const checkPopup = setInterval(() => {
+            if (popup.closed) {
+              clearInterval(checkPopup);
+              // Check if subscription was approved by checking sessionStorage
+              const approved = sessionStorage.getItem('paypalSubscriptionApproved');
+              if (approved === 'true') {
+                // Subscription approved, get the subscription ID
+                const approvedSubscriptionId = sessionStorage.getItem('pendingPayPalSubscriptionId');
+                if (approvedSubscriptionId) {
+                  sessionStorage.removeItem('pendingPayPalSubscriptionId');
+                  sessionStorage.removeItem('pendingPayPalApprovalUrl');
+                  sessionStorage.removeItem('paypalSubscriptionApproved');
+                  onSuccess(approvedSubscriptionId, approvedSubscriptionId);
+                }
+              }
+            }
+          }, 500);
+          
+          // Listen for messages from popup callback page
+          const messageHandler = (event: MessageEvent) => {
+            // Only accept messages from same origin (our callback page)
+            if (event.origin === window.location.origin) {
+              if (event.data.type === 'PAYPAL_SUBSCRIPTION_APPROVED') {
+                clearInterval(checkPopup);
+                window.removeEventListener('message', messageHandler);
+                if (popup && !popup.closed) {
+                  popup.close();
+                }
+                const approvedSubscriptionId = event.data.subscriptionId || sessionStorage.getItem('pendingPayPalSubscriptionId');
+                if (approvedSubscriptionId) {
+                  sessionStorage.removeItem('pendingPayPalSubscriptionId');
+                  sessionStorage.removeItem('pendingPayPalApprovalUrl');
+                  sessionStorage.removeItem('paypalSubscriptionApproved');
+                  onSuccess(approvedSubscriptionId, approvedSubscriptionId);
+                }
+              } else if (event.data.type === 'PAYPAL_SUBSCRIPTION_CANCELED') {
+                clearInterval(checkPopup);
+                window.removeEventListener('message', messageHandler);
+                if (popup && !popup.closed) {
+                  popup.close();
+                }
+                sessionStorage.removeItem('pendingPayPalSubscriptionId');
+                sessionStorage.removeItem('pendingPayPalApprovalUrl');
+                sessionStorage.removeItem('paypalSubscriptionApproved');
+                onError('Subscription approval was canceled');
+              }
+            }
+          };
+          window.addEventListener('message', messageHandler);
+          
+          // Return a dummy order ID to satisfy TypeScript (won't be used since we use popup)
+          return 'popup-opened';
+        }
+        throw new Error("No approval URL returned from PayPal subscription");
+      } else {
+        // For one-time payments, create order as before
+        const { orderId } = await createPayPalOrder(amount, listingType);
+        return orderId;
+      }
     } catch (error: any) {
-      onError(error.message || "Failed to create PayPal order");
+      onError(error.message || "Failed to create PayPal order/subscription");
       throw error;
     }
   };
 
   const onApprove = async (data: { orderID: string }) => {
     try {
+      // Only for one-time payments
       const result = await capturePayPalPayment(data.orderID);
       if (result.success && result.paymentId) {
         onSuccess(result.paymentId);
@@ -187,6 +312,8 @@ function PayPalPaymentButton({
     return <div className="text-center py-4">Loading PayPal...</div>;
   }
 
+  // For subscriptions, PayPal redirects to approval URL, so we don't need the button
+  // But we'll still show it and handle the redirect in createOrder
   return (
     <PayPalButtons
       createOrder={createOrder}
@@ -217,6 +344,7 @@ export function ListingPaymentModal({
   const [paymentMethod, setPaymentMethod] = useState<"stripe" | "paypal" | null>(null);
   const [stripeClientSecret, setStripeClientSecret] = useState<string | null>(null);
   const [paymentId, setPaymentId] = useState<string | null>(null);
+  const [subscriptionId, setSubscriptionId] = useState<string | null>(null); // For PUPPY_LITTER_LISTING subscriptions
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
@@ -226,23 +354,95 @@ export function ListingPaymentModal({
   const canAddFeatured = isFeaturedAddonEligible(listingType);
   const listingTypeName = getListingTypeDisplayName(listingType);
 
-  // Initialize Stripe payment intent when Stripe is selected
+  // Debug logging
+  useEffect(() => {
+    if (open) {
+      console.log('Payment Modal Debug:', {
+        listingType,
+        canAddFeatured,
+        isEligible: isFeaturedAddonEligible(listingType),
+        priceBreakdown,
+      });
+    }
+  }, [open, listingType, canAddFeatured]);
+
+  // Initialize Stripe payment intent when Stripe is selected or featured add-on changes
   useEffect(() => {
     if (open && paymentMethod === "stripe" && !stripeClientSecret && !isLoading) {
       initializeStripePayment();
     }
-  }, [open, paymentMethod]);
+  }, [open, paymentMethod, includeFeatured]);
 
   const initializeStripePayment = async () => {
     setIsLoading(true);
     setError(null);
     try {
-      const { clientSecret, paymentId } = await createPaymentIntent(
-        priceBreakdown.total,
-        listingType
-      );
-      setStripeClientSecret(clientSecret);
-      setPaymentId(paymentId);
+      const listingTypeValue = listingType as ListingTypeEnum | string;
+      
+      // NEW APPROACH: Check if listing type has a Stripe price ID or PayPal plan ID configured
+      // If it has either, it's a subscription type
+      const hasStripePrice = hasStripePriceId(listingTypeValue);
+      const hasPayPalPlan = hasPayPalPlanId(listingTypeValue);
+      const isSubscription = hasStripePrice || hasPayPalPlan;
+      
+      const stripePriceId = getStripePriceId(listingTypeValue, includeFeatured && canAddFeatured);
+      const paypalPlanId = getPayPalPlanId(listingTypeValue, includeFeatured && canAddFeatured);
+      
+      console.log('🔔 [Payment Modal] Payment initialization - Using Price/Plan ID Check:', {
+        listingType: listingTypeValue,
+        hasStripePrice,
+        hasPayPalPlan,
+        isSubscription,
+        stripePriceId,
+        paypalPlanId,
+        includesFeatured: includeFeatured && canAddFeatured,
+        allConfiguredStripePriceIds: STRIPE_PRICE_IDS,
+        allConfiguredPayPalPlanIds: PAYPAL_PLAN_IDS,
+      });
+      
+      // If listing type has a Stripe price ID or PayPal plan ID, it's a subscription - create subscription
+      if (isSubscription && (stripePriceId || paypalPlanId)) {
+        console.log('🔔 [Payment Modal] Creating subscription setup for:', {
+          listingType: listingTypeValue,
+          stripePriceId,
+          paypalPlanId,
+          includesFeatured: includeFeatured && canAddFeatured,
+        });
+        
+        const subscriptionResponse = await createStripeSubscription({
+          listingType: listingTypeValue as string,
+          includesFeatured: includeFeatured && canAddFeatured,
+          // No paymentMethodId - Payment Element will collect it
+        });
+        
+        if (subscriptionResponse.clientSecret) {
+          setStripeClientSecret(subscriptionResponse.clientSecret);
+          // Store subscription ID for later use - this is critical for linking to listing
+          if (subscriptionResponse.subscriptionId) {
+            setSubscriptionId(subscriptionResponse.subscriptionId);
+            console.log('✅ [Payment Modal] Subscription created and stored:', {
+              subscriptionId: subscriptionResponse.subscriptionId,
+              listingType,
+              includesFeatured: includeFeatured && canAddFeatured
+            });
+          } else {
+            console.warn('⚠️ [Payment Modal] Subscription created but no subscriptionId returned');
+          }
+        } else {
+          throw new Error('Subscription setup failed - no client secret returned');
+        }
+      } else {
+        // For one-time payment listing types, create payment intent
+        const amountToCharge = includeFeatured && canAddFeatured 
+          ? priceBreakdown.total 
+          : priceBreakdown.basePrice;
+        const { clientSecret, paymentId } = await createPaymentIntent(
+          amountToCharge,
+          listingType
+        );
+        setStripeClientSecret(clientSecret);
+        setPaymentId(paymentId);
+      }
     } catch (err: any) {
       setError(err.message || "Failed to initialize payment");
       onPaymentError?.(err.message || "Failed to initialize payment");
@@ -260,10 +460,14 @@ export function ListingPaymentModal({
   };
 
   const handleStripeSuccess = (confirmedPaymentId: string) => {
+    // For subscription types, confirmedPaymentId is actually the subscriptionId
+    // Pass both paymentId and subscriptionId for clarity
+    const isSubscription = hasStripePriceId(listingType) || hasPayPalPlanId(listingType);
     onPaymentSuccess({
       isFeatured: includeFeatured,
       paymentMethod: "stripe",
-      paymentId: confirmedPaymentId,
+      paymentId: isSubscription ? subscriptionId || confirmedPaymentId : confirmedPaymentId,
+      subscriptionId: isSubscription ? (subscriptionId || confirmedPaymentId) : undefined,
     });
     handleClose();
   };
@@ -286,6 +490,7 @@ export function ListingPaymentModal({
     setPaymentMethod(null);
     setStripeClientSecret(null);
     setPaymentId(null);
+    setSubscriptionId(null);
     setIncludeFeatured(false);
     setError(null);
     onOpenChange(false);
@@ -294,8 +499,9 @@ export function ListingPaymentModal({
   const stripePromise = getStripe();
 
   useEffect(() => {
-    console.log('Payment modal open state:', open);
-  }, [open]);
+    console.log('Payment modal open state:', open ," kjdsk");
+    console.log('listingType:', listingType);
+  }, [open, listingType]);
 
   const handlePayAndPublish = async () => {
     if (paymentMethod === "stripe") {
@@ -359,19 +565,84 @@ export function ListingPaymentModal({
                   <div className="text-sm text-gray-500 mb-3">
                     {listingLocation || "Location"}
                   </div>
-                  <div className="flex items-center justify-between pt-2 border-t border-gray-200">
-                    <div>
-                      <div className="text-xs text-gray-500 mb-0.5">{listingTypeName}</div>
-                      <div className="text-xs text-gray-600">{duration} days</div>
+                  <div className="pt-2 border-t border-gray-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div>
+                        <div className="text-xs text-gray-500 mb-0.5">{listingTypeName}</div>
+                        <div className="text-xs text-gray-600">{duration} days</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-lg font-semibold text-gray-900">{formatPrice(priceBreakdown.basePrice)}</div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <div className="text-xl sm:text-2xl font-bold text-gray-900">{formatPrice(priceBreakdown.total)}</div>
+                    {includeFeatured && canAddFeatured && (
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="text-xs text-gray-600">Featured Add-on (first month)</div>
+                        <div className="text-right">
+                          <div className="text-lg font-semibold text-gray-900">{formatPrice(priceBreakdown.addons[0]?.price || ADDON_PRICES.FEATURED_HOMEPAGE_GALLERY)}</div>
+                        </div>
+                      </div>
+                    )}
+                    <div className="flex items-center justify-between pt-2 border-t-2 border-gray-300">
+                      <div className="text-sm font-semibold text-gray-900">Total to pay now</div>
+                      <div className="text-right">
+                        <div className="text-xl sm:text-2xl font-bold text-gray-900">
+                          {formatPrice(includeFeatured && canAddFeatured ? priceBreakdown.total : priceBreakdown.basePrice)}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {hasStripePriceId(listingType) 
+                            ? "Monthly subscription" 
+                            : "One-time charge"}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
+
+          {/* Featured Add-on Option */}
+          {canAddFeatured ? (
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-lg p-4 space-y-3">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wide">Add-ons</h3>
+              </div>
+              <label className="flex items-start gap-3 cursor-pointer group hover:bg-blue-100 p-2 rounded transition-colors">
+                <input
+                  type="checkbox"
+                  checked={includeFeatured}
+                  onChange={(e) => {
+                    setIncludeFeatured(e.target.checked);
+                    // Reinitialize payment if already selected to update amount
+                    if (paymentMethod === "stripe" && stripeClientSecret) {
+                      setStripeClientSecret(null);
+                      setPaymentId(null);
+                    }
+                  }}
+                  className="mt-1 w-5 h-5 text-[#635cff] border-2 border-gray-300 rounded focus:ring-[#635cff] focus:ring-2 cursor-pointer flex-shrink-0"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold text-gray-900">
+                      Featured & Homepage Gallery
+                    </span>
+                    <span className="text-sm font-bold text-[#635cff]">
+                      +{formatPrice(priceBreakdown.addons[0]?.price || ADDON_PRICES.FEATURED_HOMEPAGE_GALLERY)}/mo
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600">
+                    Get your listing featured on the homepage and in the gallery. Recurring monthly subscription that you can cancel anytime.
+                  </p>
+                  {includeFeatured && (
+                    <div className="mt-2 p-2 bg-blue-50 border border-blue-200 rounded text-xs text-blue-700">
+                      <strong>Note:</strong> You'll pay {formatPrice(priceBreakdown.addons[0]?.price || ADDON_PRICES.FEATURED_HOMEPAGE_GALLERY)}/mo until you manually remove this add-on in your subscription settings.
+                    </div>
+                  )}
+                </div>
+              </label>
+            </div>
+          ) : null}
 
           {/* Payment Method Selection */}
           <div className="space-y-3">
@@ -462,6 +733,7 @@ export function ListingPaymentModal({
               <Elements stripe={stripePromise} options={{ clientSecret: stripeClientSecret }}>
                 <StripePaymentForm
                   clientSecret={stripeClientSecret}
+                  subscriptionId={subscriptionId}
                   onSuccess={handleStripeSuccess}
                   onError={handleError}
                   onProcessingChange={setIsProcessingPayment}
@@ -478,10 +750,18 @@ export function ListingPaymentModal({
               </div>
               <PayPalScriptProvider options={getPayPalOptions()}>
                 <PayPalPaymentButton
-                  amount={priceBreakdown.total}
+                  amount={includeFeatured && canAddFeatured ? priceBreakdown.total : priceBreakdown.basePrice}
                   listingType={listingType}
-                  onSuccess={handlePayPalSuccess}
+                  onSuccess={(paymentId, subscriptionId) => {
+                    handlePayPalSuccess(paymentId);
+                    // If subscriptionId is provided, store it
+                    if (subscriptionId) {
+                      setSubscriptionId(subscriptionId);
+                    }
+                  }}
                   onError={handleError}
+                  isSubscription={hasStripePriceId(listingType) || hasPayPalPlanId(listingType)}
+                  includesFeatured={includeFeatured && canAddFeatured}
                 />
               </PayPalScriptProvider>
             </div>

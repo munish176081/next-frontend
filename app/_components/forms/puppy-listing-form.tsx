@@ -203,7 +203,7 @@ export default function PuppyListingForm({
   };
 
   // Actual listing creation function (called after payment)
-  const createListingAfterPayment = async (isFeatured: boolean) => {
+  const createListingAfterPayment = async (isFeatured: boolean, paymentId?: string) => {
     setIsSubmitting(true);
 
     try {
@@ -349,6 +349,7 @@ export default function PuppyListingForm({
           tags: baseForm.extractTags(commonData, dynamicData),
           isFeatured: isFeatured,
           isPremium: false,
+          paymentId: paymentId,
         };
 
         await createListingMutation.mutateAsync(listingData);
@@ -402,9 +403,9 @@ export default function PuppyListingForm({
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string }) => {
+  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string }) => {
     try {
-      await createListingAfterPayment(paymentData.isFeatured);
+      await createListingAfterPayment(paymentData.isFeatured, paymentData.paymentId);
     } catch (error: any) {
       toast({
         title: 'Error creating listing',

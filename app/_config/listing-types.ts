@@ -280,15 +280,51 @@ const MEDIA_FIELDS = {
 
 export const LISTING_TYPES: ListingType[] = [
   {
-    id: 'PUPPY_LISTING',
-    title: 'Puppy Listings',
+    id: 'PUPPY_LITTER_LISTING',
+    title: 'Puppy/Litter Listings',
     description: 'For advertising individual puppies or full litters available now.',
     price: '$49 listing fee + add-ons',
     image: '/images/vectors/startListing1.jpg',
     category: 'puppy',
     requiredFields: [
+      {
+        name: 'listingType',
+        label: 'Litter or Single Puppy?',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'litter', label: 'Litter' },
+          { value: 'puppy', label: 'Puppy' }
+        ],
+        fieldCategory: 'special'
+      },
+      {
+        name: 'listLitterOption',
+        label: 'How would you like to list this litter?',
+        type: 'radio',
+        required: true,
+        options: [
+          { value: 'same-details', label: 'All puppies share the same details' },
+          { value: 'add-individually', label: 'Add details for each puppy individually' }
+        ],
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'listingType',
+          value: 'litter'
+        }
+      },
       COMMON_FIELDS.title,
+      COMMON_FIELDS.description,
       COMMON_FIELDS.breed,
+      COMMON_FIELDS.location,
+      {
+        name: 'registrationNumber',
+        label: 'ANKC / State Breeder Registration Number',
+        type: 'text',
+        required: true,
+        placeholder: 'Enter registration number',
+        fieldCategory: 'dynamic'
+      },
       {
         name: 'pricingOption',
         label: 'Pricing Option',
@@ -298,24 +334,117 @@ export const LISTING_TYPES: ListingType[] = [
           { value: 'fixedPrice', label: 'Fixed Price' },
           { value: 'displayPriceRange', label: 'Display price range' },
           { value: 'priceOnRequest', label: 'Price on Request' }
-         
         ],
         fieldCategory: 'dynamic'
       },
       {
-        name: 'puppyImages',
-        label: 'Upload Puppy Images',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: 'image/*',
-          maxSize: 5,
-          minCount: 1,
-          maxCount: 5
-        },
-        fieldCategory: 'dynamic'
+        name: 'fixedPrice',
+        label: 'Fixed Price',
+        type: 'number',
+        required: false,
+        placeholder: 'Enter fixed price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'fixedPrice'
+        }
       },
+      {
+        name: 'minPrice',
+        label: 'Minimum Price',
+        type: 'number',
+        required: false,
+        placeholder: 'Enter minimum price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
+      },
+      {
+        name: 'maxPrice',
+        label: 'Maximum Price',
+        type: 'number',
+        required: false,
+        placeholder: 'Enter maximum price',
+        validation: { min: 0 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'pricingOption',
+          value: 'displayPriceRange'
+        }
+      },
+      {
+        name: 'litterSize',
+        label: 'Litter Size',
+        type: 'number',
+        required: true,
+        placeholder: 'Enter litter size',
+        validation: { min: 1, max: 20 },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'listLitterOption',
+          value: 'same-details'
+        }
+      },
+      // Puppy Details Group - Same Details
+      {
+        name: 'litterPuppyDetails',
+        label: 'Puppy Details',
+        type: 'group',
+        required: true,
+        fieldCategory: 'dynamic',
+        groupConfig: {
+          fields: PUPPY_DETAILS_COMMON_FIELDS
+        },
+        conditional: {
+          field: 'listLitterOption',
+          value: 'same-details'
+        }
+      },
+      // Individual Puppies - Add Individually (for litter)
+      {
+        name: 'individualPuppiesLitter',
+        label: 'Individual Puppy Details',
+        type: 'repeater',
+        required: false,
+        repeaterConfig: {
+          subFieldType: 'group',
+          subFieldGroup: PUPPY_DETAILS_COMMON_FIELDS,
+          minItems: 0,
+          maxItems: 20,
+          addButtonText: 'Add Puppy',
+          removeButtonText: 'Remove Puppy'
+        },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'listLitterOption',
+          value: 'add-individually'
+        }
+      },
+      // Individual Puppies - Single Puppy
+      {
+        name: 'individualPuppies',
+        label: 'Puppy Details',
+        type: 'repeater',
+        required: true,
+        repeaterConfig: {
+          subFieldType: 'group',
+          subFieldGroup: PUPPY_DETAILS_COMMON_FIELDS,
+          minItems: 1,
+          maxItems: 1,
+          addButtonText: 'Add Puppy',
+          removeButtonText: 'Remove Puppy'
+        },
+        fieldCategory: 'dynamic',
+        conditional: {
+          field: 'listingType',
+          value: 'puppy'
+        }
+      },
+     
       {
         name: 'dnaResults',
         label: 'Upload DNA Results',
@@ -331,115 +460,19 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       {
-        name: 'dateOfBirth',
-        label: 'Date of Birth',
-        type: 'date',
-        required: true,
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'puppyGender',
-        label: 'Puppy Gender(s)',
-        type: 'select',
-        required: true,
-        options: ['Select Gender', 'Male', 'Female', 'Both Available'],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'vaccinationStatus',
-        label: 'Vaccination Status',
-        type: 'select',
-        required: true,
-        options: ['Select Status', 'Fully Vaccinated', 'Partially Vaccinated', 'Not Vaccinated'],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'fixedPrice',
-        label: 'Fixed Price',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter fixed price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'fixedPrice'
-        }
-      },
-      {
-        name: 'minPrice',
-        label: 'Minimum Price',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter minimum price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'displayPriceRange'
-        }
-      },
-      {
-        name: 'maxPrice',
-        label: 'Maximum Price',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter maximum price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'displayPriceRange'
-        }
-      },
-      {
         name: 'deliveryOptions',
         label: 'Pickup / Delivery Available (Select All That Apply)',
         type: 'checkbox',
         required: true,
         options: [
-          { value: 'Pickup', label: 'Pickup' },
-          { value: 'Road Transport', label: 'Road Transport' },
-          { value: 'Air Transport', label: 'Air Transport' }
+          { value: 'pickup', label: 'Pickup' },
+          { value: 'road-transport', label: 'Road Transport' },
+          { value: 'air-transport', label: 'Air Transport' }
         ],
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'microchipNumber',
-        label: 'Microchip Number(s)',
-        type: 'repeater',
-        required: true,
-        fieldCategory: 'dynamic',
-        layout: 'single',
-        repeaterConfig: {
-          subFieldType: 'text',
-          subFieldPlaceholder: 'Enter microchip number',
-          minItems: 1,
-          maxItems: 10,
-          addButtonText: 'Add Microchip Number',
-          removeButtonText: 'Remove'
-        }
-      },
-      // {
-      //   name: 'registrationNumber',
-      //   label: 'ANKC / State Breeder Registration Number',
-      //   type: 'text',
-      //   required: true,
-      //   placeholder: 'Enter registration number',
-      //   fieldCategory: 'dynamic'
-      // }
     ],
     optionalFields: [
-      COMMON_FIELDS.description,
-      COMMON_FIELDS.location,
-      {
-        name: 'puppyVideoUrls',
-        label: 'Puppy Video URL',
-        type: 'url',
-        required: false,
-        placeholder: 'Enter video URL',
-        fieldCategory: 'dynamic'
-      },
       {
         name: 'healthCertificates',
         label: 'Health Certificates',
@@ -447,38 +480,13 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: 'image/*,.pdf',
+          accept: '.pdf,.doc,.docx,image/*',
           maxSize: 5,
           minCount: 1,
           maxCount: 5
         },
         fieldCategory: 'dynamic'
       },
-      {
-        name: 'litterSize',
-        label: 'Litter Size',
-        type: 'number',
-        required: false,
-        placeholder: 'Enter litter size',
-        validation: { min: 1 },
-        fieldCategory: 'dynamic'
-      },
-      // {
-      //   name: 'sireName',
-      //   label: 'Sire Name',
-      //   type: 'text',
-      //   required: false,
-      //   placeholder: 'Enter sire (father) name',
-      //   fieldCategory: 'dynamic'
-      // },
-      // {
-      //   name: 'damName',
-      //   label: 'Dame Name',
-      //   type: 'text',
-      //   required: false,
-      //   placeholder: 'Enter dame (mother) name',
-      //   fieldCategory: 'dynamic'
-      // },
       {
         name: 'badges',
         label: 'Select Badges',
@@ -1154,226 +1162,8 @@ export const LISTING_TYPES: ListingType[] = [
       //   fieldCategory: 'dynamic'
       // }
     ]
-  },
-  {
-    id: 'PUPPY_LITTER_LISTING',
-    title: 'Puppy/Litter Listings',
-    description: 'For advertising individual puppies or full litters available now.',
-    price: '$49 listing fee + add-ons',
-    image: '/images/vectors/startListing1.jpg',
-    category: 'puppy',
-    requiredFields: [
-      {
-        name: 'listingType',
-        label: 'Litter or Single Puppy?',
-        type: 'radio',
-        required: true,
-        options: [
-          { value: 'litter', label: 'Litter' },
-          { value: 'puppy', label: 'Puppy' }
-        ],
-        fieldCategory: 'special'
-      },
-      {
-        name: 'listLitterOption',
-        label: 'How would you like to list this litter?',
-        type: 'radio',
-        required: true,
-        options: [
-          { value: 'same-details', label: 'All puppies share the same details' },
-          { value: 'add-individually', label: 'Add details for each puppy individually' }
-        ],
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'listingType',
-          value: 'litter'
-        }
-      },
-      COMMON_FIELDS.title,
-      COMMON_FIELDS.description,
-      COMMON_FIELDS.breed,
-      COMMON_FIELDS.location,
-      {
-        name: 'registrationNumber',
-        label: 'ANKC / State Breeder Registration Number',
-        type: 'text',
-        required: true,
-        placeholder: 'Enter registration number',
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'pricingOption',
-        label: 'Pricing Option',
-        type: 'radio',
-        required: true,
-        options: [
-          { value: 'fixedPrice', label: 'Fixed Price' },
-          { value: 'displayPriceRange', label: 'Display price range' },
-          { value: 'priceOnRequest', label: 'Price on Request' }
-        ],
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'fixedPrice',
-        label: 'Fixed Price',
-        type: 'number',
-        required: false,
-        placeholder: 'Enter fixed price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'fixedPrice'
-        }
-      },
-      {
-        name: 'minPrice',
-        label: 'Minimum Price',
-        type: 'number',
-        required: false,
-        placeholder: 'Enter minimum price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'displayPriceRange'
-        }
-      },
-      {
-        name: 'maxPrice',
-        label: 'Maximum Price',
-        type: 'number',
-        required: false,
-        placeholder: 'Enter maximum price',
-        validation: { min: 0 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'pricingOption',
-          value: 'displayPriceRange'
-        }
-      },
-      {
-        name: 'litterSize',
-        label: 'Litter Size',
-        type: 'number',
-        required: true,
-        placeholder: 'Enter litter size',
-        validation: { min: 1, max: 20 },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'listLitterOption',
-          value: 'same-details'
-        }
-      },
-      // Puppy Details Group - Same Details
-      {
-        name: 'litterPuppyDetails',
-        label: 'Puppy Details',
-        type: 'group',
-        required: true,
-        fieldCategory: 'dynamic',
-        groupConfig: {
-          fields: PUPPY_DETAILS_COMMON_FIELDS
-        },
-        conditional: {
-          field: 'listLitterOption',
-          value: 'same-details'
-        }
-      },
-      // Individual Puppies - Add Individually (for litter)
-      {
-        name: 'individualPuppiesLitter',
-        label: 'Individual Puppy Details',
-        type: 'repeater',
-        required: false,
-        repeaterConfig: {
-          subFieldType: 'group',
-          subFieldGroup: PUPPY_DETAILS_COMMON_FIELDS,
-          minItems: 0,
-          maxItems: 20,
-          addButtonText: 'Add Puppy',
-          removeButtonText: 'Remove Puppy'
-        },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'listLitterOption',
-          value: 'add-individually'
-        }
-      },
-      // Individual Puppies - Single Puppy
-      {
-        name: 'individualPuppies',
-        label: 'Puppy Details',
-        type: 'repeater',
-        required: true,
-        repeaterConfig: {
-          subFieldType: 'group',
-          subFieldGroup: PUPPY_DETAILS_COMMON_FIELDS,
-          minItems: 1,
-          maxItems: 1,
-          addButtonText: 'Add Puppy',
-          removeButtonText: 'Remove Puppy'
-        },
-        fieldCategory: 'dynamic',
-        conditional: {
-          field: 'listingType',
-          value: 'puppy'
-        }
-      },
-     
-      {
-        name: 'dnaResults',
-        label: 'Upload DNA Results',
-        type: 'file',
-        required: true,
-        fileConfig: {
-          multiple: true,
-          accept: '.pdf,.doc,.docx',
-          maxSize: 10,
-          minCount: 1,
-          maxCount: 5
-        },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'deliveryOptions',
-        label: 'Pickup / Delivery Available (Select All That Apply)',
-        type: 'checkbox',
-        required: true,
-        options: [
-          { value: 'pickup', label: 'Pickup' },
-          { value: 'road-transport', label: 'Road Transport' },
-          { value: 'air-transport', label: 'Air Transport' }
-        ],
-        fieldCategory: 'dynamic'
-      },
-    ],
-    optionalFields: [
-      {
-        name: 'healthCertificates',
-        label: 'Health Certificates',
-        type: 'file',
-        required: false,
-        fileConfig: {
-          multiple: true,
-          accept: '.pdf,.doc,.docx,image/*',
-          maxSize: 5,
-          minCount: 1,
-          maxCount: 5
-        },
-        fieldCategory: 'dynamic'
-      },
-      {
-        name: 'badges',
-        label: 'Select Badges',
-        type: 'checkbox',
-        required: false,
-        options: getBadgeFormOptions(),
-        fieldCategory: 'dynamic',
-        layout: 'single'
-      }
-    ]
   }
+ 
 ];
 
 export const getListingTypeById = (id: string): ListingType | undefined => {
@@ -1383,7 +1173,7 @@ export const getListingTypeById = (id: string): ListingType | undefined => {
 // URL shortening system for cleaner URLs
 const LISTING_TYPE_SHORT_CODES: Record<string, string> = {
   'SEMEN_LISTING': 'semen',
-  'PUPPY_LISTING': 'puppy',
+  'PUPPY_LISTING': 'puppy_litter',
   'PUPPY_LITTER_LISTING': 'puppy_litter',
   'STUD_LISTING': 'stud',
   'FUTURE_LISTING': 'future',

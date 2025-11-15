@@ -15,6 +15,10 @@ import { puppyLitterListingSchema } from "@/_config/validate-schema";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
 import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
+import { createStripeSubscription, createPayPalSubscription, checkActiveSubscription } from "@/_lib/api/subscriptions";
+import { isFeaturedAddonEligible, isSubscriptionType } from "@/_lib/pricing";
+import { hasStripePriceId, hasPayPalPlanId } from "@/_config/subscription-prices";
+import { getPaymentById } from "@/_lib/api/payments";
 
 interface PuppyLitterListingFormProps extends BaseFormProps {}
 
@@ -313,7 +317,7 @@ export default function PuppyLitterListingForm({
   };
 
   // Actual listing creation function (called after payment)
-  const createListingAfterPayment = async (isFeatured: boolean, paymentId: string) => {
+  const createListingAfterPayment = async (isFeatured: boolean, paymentId: string, paymentData?: { isFeatured: boolean; paymentMethod: string; paymentId: string }) => {
     setIsSubmitting(true);
 
     try {
@@ -591,7 +595,134 @@ export default function PuppyLitterListingForm({
           paymentId: paymentId,
         };
 
-        await createListingMutation.mutateAsync(listingData);
+        const createdListing = await createListingMutation.mutateAsync(listingData);
+        
+        // For all subscription listing types, subscription is already created in payment modal
+        // We just need to link it to the listing
+        // paymentId here is actually subscriptionId for subscription types
+        if ((hasStripePriceId(selectedListingType.id as ListingTypeEnum) || hasPayPalPlanId(selectedListingType.id as ListingTypeEnum) || isSubscriptionType(selectedListingType.id as ListingTypeEnum)) && paymentId) {
+          console.log('🔔 [Frontend] Linking subscription to listing:', { listingId: createdListing.id, subscriptionId: paymentId, listingType: selectedListingType.id });
+          await updateListingMutation.mutateAsync({
+            id: createdListing.id,
+            data: { subscriptionId: paymentId } // paymentId is actually subscriptionId
+          });
+          console.log('✅ [Frontend] Listing linked to subscription');
+        }
+        // For other listing types, if featured add-on is selected, create a subscription for it
+        else if (isFeatured && isFeaturedAddonEligible(selectedListingType.id as ListingTypeEnum)) {
+          try {
+            console.log('🔔 [Frontend] Creating featured add-on subscription for listing:', {
+              listingId: createdListing.id,
+              listingType: selectedListingType.id,
+              paymentId,
+            });
+            
+            const paymentMethod = paymentData?.paymentMethod || 'stripe';
+            console.log('🔔 [Frontend] Payment method:', paymentMethod);
+            
+            // For featured add-on, we create a subscription with the listing type and includesFeatured=true
+            // The backend will handle creating a subscription with only the featured add-on price
+            if (paymentMethod === 'paypal') {
+              console.log('🔔 [Frontend] Creating PayPal subscription...');
+              const subscriptionResponse = await createPayPalSubscription({
+                listingType: selectedListingType.id as string,
+                listingId: createdListing.id,
+                includesFeatured: true,
+              });
+              
+              console.log('✅ [Frontend] Featured add-on PayPal subscription created:', subscriptionResponse);
+              
+              // Update listing with subscription ID
+              if (subscriptionResponse.subscriptionId) {
+                console.log('🔔 [Frontend] Updating listing with subscription ID:', subscriptionResponse.subscriptionId);
+                await updateListingMutation.mutateAsync({
+                  id: createdListing.id,
+                  data: { subscriptionId: subscriptionResponse.subscriptionId }
+                });
+                console.log('✅ [Frontend] Listing updated with subscription ID');
+              }
+              
+              // Redirect to PayPal approval if needed
+              if (subscriptionResponse.approvalUrl) {
+                console.log('🔔 [Frontend] Redirecting to PayPal approval URL');
+                window.location.href = subscriptionResponse.approvalUrl;
+                return; // Don't continue with navigation
+              }
+            } else {
+              // For Stripe, fetch payment details to get payment method ID
+              try {
+                console.log('🔔 [Frontend] Fetching payment details for paymentId:', paymentId);
+                const paymentDetails = await getPaymentById(paymentId);
+                console.log('✅ [Frontend] Payment details fetched:', {
+                  paymentId: paymentDetails.id,
+                  paymentMethodId: paymentDetails.paymentMethodId,
+                  amount: paymentDetails.amount,
+                });
+                
+                if (!paymentDetails.paymentMethodId) {
+                  const error = 'Payment method ID not found in payment record';
+                  console.error('❌ [Frontend]', error, paymentDetails);
+                  throw new Error(error);
+                }
+
+                console.log('🔔 [Frontend] Creating Stripe subscription with payment method:', paymentDetails.paymentMethodId);
+                
+                const subscriptionResponse = await createStripeSubscription({
+                  listingType: selectedListingType.id as string,
+                  listingId: createdListing.id,
+                  paymentMethodId: paymentDetails.paymentMethodId,
+                  includesFeatured: true,
+                });
+                
+                console.log('✅ [Frontend] Featured add-on Stripe subscription created:', subscriptionResponse);
+                
+                // Update listing with subscription ID
+                if (subscriptionResponse.subscriptionId) {
+                  console.log('🔔 [Frontend] Updating listing with subscription ID:', subscriptionResponse.subscriptionId);
+                  await updateListingMutation.mutateAsync({
+                    id: createdListing.id,
+                    data: { subscriptionId: subscriptionResponse.subscriptionId }
+                  });
+                  console.log('✅ [Frontend] Listing updated with subscription ID');
+                }
+              } catch (stripeError: any) {
+                console.error('❌ [Frontend] Error creating Stripe subscription for featured add-on:', {
+                  error: stripeError,
+                  message: stripeError.message,
+                  stack: stripeError.stack,
+                  listingId: createdListing.id,
+                  paymentId,
+                });
+                toast({
+                  title: 'Listing created but subscription setup failed',
+                  description: stripeError.message || 'Please contact support to set up your featured subscription',
+                  variant: 'destructive',
+                });
+              }
+            }
+          } catch (subscriptionError: any) {
+            console.error('❌ [Frontend] Error creating featured add-on subscription:', {
+              error: subscriptionError,
+              message: subscriptionError.message,
+              stack: subscriptionError.stack,
+              listingId: createdListing.id,
+              isFeatured,
+              listingType: selectedListingType.id,
+            });
+            // Don't fail the listing creation if subscription creation fails
+            toast({
+              title: 'Listing created but subscription setup failed',
+              description: subscriptionError.message || 'Please contact support to set up your featured subscription',
+              variant: 'destructive',
+            });
+          }
+        } else {
+          console.log('ℹ️ [Frontend] No subscription needed:', {
+            isFeatured,
+            isEligible: isFeaturedAddonEligible(selectedListingType.id as ListingTypeEnum),
+            listingType: selectedListingType.id,
+          });
+        }
       }
 
       // Mark as submitted to prevent further clicks
@@ -704,14 +835,41 @@ export default function PuppyLitterListingForm({
       return;
     }
 
-    // Show payment modal for new listings
+    // For subscription listing types, check if user already has an active subscription
+    const listingType = selectedListingType.id as ListingTypeEnum;
+    if (isSubscriptionType(listingType)) {
+      try {
+        const subscriptionCheck = await checkActiveSubscription(listingType);
+        if (subscriptionCheck.hasSubscription && subscriptionCheck.subscription) {
+          // User has active subscription, create listing directly without payment
+          console.log('✅ User has active subscription, creating listing directly:', subscriptionCheck.subscription.id);
+          await createListingAfterPayment(false, subscriptionCheck.subscription.id);
+          return;
+        }
+      } catch (error: any) {
+        console.error('Error checking subscription:', error);
+        // If check fails, proceed to payment modal
+      }
+    }
+
+    // Show payment modal for new listings (no subscription or one-time payment types)
     console.log('Opening payment modal...');
     setShowPaymentModal(true);
   };
 
-  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string }) => {
+  const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => {
     try {
-      await createListingAfterPayment(paymentData.isFeatured, paymentData.paymentId);
+      // For subscription types, use subscriptionId if provided, otherwise use paymentId (which is subscriptionId for subscriptions)
+      const listingTypeCheck = selectedListingType.id as ListingTypeEnum;
+      const isSubscription = hasStripePriceId(listingTypeCheck) || hasPayPalPlanId(listingTypeCheck) || isSubscriptionType(listingTypeCheck);
+      const subscriptionId = paymentData.subscriptionId || (isSubscription ? paymentData.paymentId : undefined);
+      console.log('🔔 [Form] Payment success:', {
+        paymentId: paymentData.paymentId,
+        subscriptionId,
+        listingType: selectedListingType.id,
+        isSubscription
+      });
+      await createListingAfterPayment(paymentData.isFeatured, subscriptionId || paymentData.paymentId);
     } catch (error: any) {
       toast({
         title: 'Error creating listing',
@@ -1238,6 +1396,7 @@ export default function PuppyLitterListingForm({
         open={showPaymentModal}
         onOpenChange={(open) => {
           console.log('Payment modal onOpenChange:', open);
+          console.log('selectedListingType:', selectedListingType);
           setShowPaymentModal(open);
         }}
         listingType={selectedListingType.id as ListingTypeEnum}

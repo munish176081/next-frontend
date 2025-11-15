@@ -37,6 +37,7 @@ export const Routes = {
     addListing: '/add-listing',
     inbox: '/account/inbox',
     listings: '/account/listings',
+    subscriptions: '/account/subscriptions',
     startlisting: '/startlisting',
     startlistingform: '/startlistingform',
     reservations: '/account/reservations',
