@@ -82,9 +82,6 @@ jobs:
           # Clone or update the repo
           cd ~/pups4sale/next-frontend || mkdir -p ~/pups4sale/next-frontend && cd $_
 
-          # Preserve .env before git reset
-          [ -f .env ] && cp .env ../env.bak || [ -f .env.local ] && cp .env.local ../env.bak
-
           if [ ! -d .git ]; then
             git init
             git remote add origin https://github.com/munish176081/next-frontend.git
@@ -95,9 +92,6 @@ jobs:
           git clean -fd
           git checkout -B build origin/build
           git reset --hard origin/build
-
-          # Restore .env
-          [ -f ../env.bak ] && mv ../env.bak .env
 
           # Install production deps
           pnpm install --prod
