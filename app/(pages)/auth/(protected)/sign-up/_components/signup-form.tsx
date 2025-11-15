@@ -44,8 +44,8 @@ export default function SignUpForm() {
       onSuccess: () => {
         reset();
         toast({
-          title: "Welcome to pups4sale!",
-          description: "You have successfully signed up.",
+          title: "Check your email!",
+          description: "We’ve sent you a 6-digit verification code.",
         });
 
         // Redirect all users to dashboard after signup
