@@ -7,12 +7,14 @@ import { Routes } from "@/_config/routes";
 import { LoadingButton } from "@/_components/ui/loading-button";
 import { useToast } from "@/_hooks/use-toast";
 import { useRequestEmailVerifyCode } from "@/_services/hooks/auth/use-request-email-verify-code";
+import { useRequestEmailVerifyByEmail } from "@/_services/hooks/auth/use-request-email-verify-by-email";
 import { useForgotPassword } from "@/_services/hooks/auth/use-forgot-password";
 import { useVerifyOtp } from "@/_services/hooks/auth/use-verify-otp";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { useUser } from "@/_services/hooks/user/use-user";
 import { CountdownTimer } from "@/_components/ui/countdown-timer";
 import { useResendWithCountdown } from "@/_hooks/use-resend-with-countdown";
+import { useQueryClient } from "@tanstack/react-query";
 import AuthSidePanel from "@/_components/auth/AuthSidePanel";
 import GoBackButton from "@/_components/common/go-back-button";
 
@@ -25,9 +27,11 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const { mutate: requestVerifyEmailCode, isPending: isRequestPending } = useRequestEmailVerifyCode();
+  const { mutate: requestVerifyEmailByEmail, isPending: isRequestByEmailPending } = useRequestEmailVerifyByEmail();
   const { mutate: forgotPassword, isPending: isForgotPasswordPending } = useForgotPassword();
   const { mutate: verifyEmailOTP, isPending: isEmailVerificationPending } = useVerifyOtp();
   const { data: user } = useUser();
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     const emailParam = searchParams.get('email');
@@ -126,11 +130,24 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                 });
               }
             } else {
-              toast({
-                title: "Email Verified",
-                description: "Your email has been verified successfully!",
-              });
-              router.replace(Routes.auth.signIn);
+              // Registration flow - check if user was logged in automatically
+              if (data?.user || data?.id || data?.email) {
+                // User was logged in by backend, redirect to dashboard
+                toast({
+                  title: "Email Verified",
+                  description: "Your email has been verified successfully!",
+                });
+                // Invalidate user query to refresh user data
+                queryClient.invalidateQueries({ queryKey: ["current-user"] });
+                router.replace("/dashboard");
+              } else {
+                // Fallback: redirect to sign in (shouldn't happen with new flow)
+                toast({
+                  title: "Email Verified",
+                  description: "Your email has been verified successfully!",
+                });
+                router.replace(Routes.auth.signIn);
+              }
             }
           },
           onError: (error: any) => {
@@ -167,21 +184,48 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
           },
         });
       } else {
-        requestVerifyEmailCode(undefined, {
-          onSuccess: () => {
-            toast({
-              title: "Code Sent",
-              description: "A new verification code has been sent to your email",
-            });
-            resolve(true);
-          },
-          onError: (error) => {
-            reject(error);
-          },
-        });
+        // Use different endpoint based on whether user is logged in
+        if (userLoggedIn) {
+          // User is logged in, use the protected endpoint
+          requestVerifyEmailCode(undefined, {
+            onSuccess: () => {
+              toast({
+                title: "Code Sent",
+                description: "A new verification code has been sent to your email",
+              });
+              resolve(true);
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          });
+        } else {
+          // User is not logged in (registration flow), use the email-based endpoint
+          if (!email) {
+            reject(new Error('Email is required'));
+            return;
+          }
+          requestVerifyEmailByEmail(email, {
+            onSuccess: () => {
+              toast({
+                title: "Code Sent",
+                description: "A new verification code has been sent to your email",
+              });
+              resolve(true);
+            },
+            onError: (error) => {
+              reject(error);
+            },
+          });
+        }
       }
     });
-  }, [email, verificationType, forgotPassword, requestVerifyEmailCode, toast]);
+  }, [email, verificationType, userLoggedIn, forgotPassword, requestVerifyEmailCode, requestVerifyEmailByEmail, toast]);
+
+  // Generate unique storage key based on email and verification type
+  const storageKey = email 
+    ? `resend-cooldown-${verificationType}-${email}` 
+    : undefined;
 
   const {
     isPending: isResendPending,
@@ -203,7 +247,8 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
         variant: "destructive",
       });
     },
-    defaultCooldown: 60 // 1 minute default
+    defaultCooldown: 60, // 1 minute default
+    storageKey // Pass storage key for persistence
   });
 
   const getTitle = () => {

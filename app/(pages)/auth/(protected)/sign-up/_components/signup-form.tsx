@@ -41,15 +41,16 @@ export default function SignUpForm() {
     }
 
     await signup(signupBody, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
         reset();
         toast({
           title: "Check your email!",
-          description: "We’ve sent you a 6-digit verification code.",
+          description: "We've sent you a verification code. Please verify your email to continue.",
         });
 
-        // Redirect all users to dashboard after signup
-        router.push("/dashboard");
+        // Redirect to verification page with email parameter
+        const email = data?.email || signupBody.email;
+        router.push(`/auth/verify-email?email=${encodeURIComponent(email)}`);
       },
       onError: (error:any) => {
         const err = parseAxiosError(error);
