@@ -165,6 +165,12 @@ export const sidebarConfig: SidebarConfig = {
         description: "Your account overview"
       },
       {
+        name: "Profile",
+        href: "/account/profile",
+        icon: UserCheck,
+        description: "Manage your profile"
+      },
+      {
         name: "My Listings",
         href: "/account/listings",
         icon: FileText,
@@ -196,14 +202,8 @@ export const sidebarConfig: SidebarConfig = {
         description: "Payment history and billing"
       },
       {
-        name: "Profile",
-        href: "/account/profile",
-        icon: UserCheck,
-        description: "Manage your profile"
-      },
-      {
         name: "Help & Support",
-        href: "/account/support",
+        href: "/contact",
         icon: HelpCircle,
         description: "Get help and support"
       }
