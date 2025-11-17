@@ -226,7 +226,6 @@ export default function BaseListingForm({
       pricing: visibleFields.filter(field => getFieldLayout(field) === 'pricing-group')
     };
 
-    console.log(isTitleVisible, "IS")
     return (
       <div className="w-full">
        
@@ -359,6 +358,12 @@ export default function BaseListingForm({
     // Validate required fields
     selectedListingType.requiredFields.forEach((field: ListingField) => {
       if (!shouldDisplayField(field)) return;
+      
+      // Skip validation for individualPuppies repeater when listingType is 'puppy'
+      // In single puppy mode, the fields are at the top level and validated individually
+      if (field.type === 'repeater' && field.name === 'individualPuppies' && formData.listingType === 'puppy') {
+        return;
+      }
       
       // Skip validation for group fields - validate their child fields instead
       if (field.type === 'group' && field.groupConfig?.fields) {

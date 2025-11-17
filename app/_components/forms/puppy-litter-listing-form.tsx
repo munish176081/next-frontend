@@ -437,6 +437,13 @@ export default function PuppyLitterListingForm({
         // Always add the single puppy data (validation will catch if required fields are missing)
         dynamicData.individualPuppies = [singlePuppyData];
       }
+      
+      // Map individualPuppiesLitter to individualPuppies for add-individually option
+      if (formData.listingType === 'litter' && formData.listLitterOption === 'add-individually' && formData.individualPuppiesLitter) {
+        dynamicData.individualPuppies = formData.individualPuppiesLitter;
+        // Remove the original field name as schema expects individualPuppies
+        delete dynamicData.individualPuppiesLitter;
+      }
 
       // Validate the processed data using the puppy litter schema
       try {
@@ -474,7 +481,7 @@ export default function PuppyLitterListingForm({
         // Show specific error messages if available
         const errorCount = Object.keys(validationErrors).length;
         const firstError = Object.values(validationErrors)[0];
-        console.log("PUPPY LISTING FORM VALIDATION ERRORS", errors);
+        console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", validationErrors);
         toast({
           title: errorCount === 1 ? firstError : 'Please fix the errors before submitting.',
           description: errorCount > 1 ? `${errorCount} field(s) need attention` : undefined,
@@ -749,19 +756,23 @@ export default function PuppyLitterListingForm({
       return;
     }
 
-    if (!baseForm.validateForm()) {
-      console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", errors);
-      toast({
-        title: 'Please fix the errors before submitting.',
-        variant: 'destructive',
-      });
-      setTimeout(() => {
-        scrollToFirstError(errors);
-      }, 100);
-      return;
+    // For single puppy mode, skip base form validation and rely on zod schema validation
+    // which properly handles the data transformation
+    if (formData.listingType !== 'puppy') {
+      if (!baseForm.validateForm()) {
+        console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", errors);
+        toast({
+          title: 'Please fix the errors before submitting.',
+          variant: 'destructive',
+        });
+        setTimeout(() => {
+          scrollToFirstError(errors);
+        }, 100);
+        return;
+      }
     }
 
-    // Additional validation for puppy litter listing
+    // Additional validation for puppy litter listing using zod schema
     try {
       const commonFields = getCommonFields(selectedListingType);
       const dynamicFields = getDynamicFields(selectedListingType);
@@ -788,6 +799,28 @@ export default function PuppyLitterListingForm({
             delete dynamicData[key];
           }
         });
+        
+        // Transform single puppy data into individualPuppies array format for validation
+        // This matches the transformation done in createListingAfterPayment
+        dynamicData.listLitterOption = 'single-puppy';
+        
+        const singlePuppyData: any = {
+          microchipNumber: formData.microchipNumber || '',
+          puppyImages: formData.puppyImages || [],
+          puppyGender: formData.puppyGender || '',
+          puppyColour: formData.puppyColour || '',
+          puppyDateOfBirth: formData.puppyDateOfBirth || '',
+          vaccinationStatus: formData.vaccinationStatus || ''
+        };
+        
+        dynamicData.individualPuppies = [singlePuppyData];
+      }
+      
+      // Map individualPuppiesLitter to individualPuppies for add-individually option
+      if (formData.listingType === 'litter' && formData.listLitterOption === 'add-individually' && formData.individualPuppiesLitter) {
+        dynamicData.individualPuppies = formData.individualPuppiesLitter;
+        // Remove the original field name as schema expects individualPuppies
+        delete dynamicData.individualPuppiesLitter;
       }
 
       // Include all formData fields for validation, not just non-empty ones

@@ -302,25 +302,26 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   };
 
   return (
-    <section className="flex p-10 h-screen container items-center justify-center max-md:p-4 max-3xl:h-auto max-md:!h-screen">
-      <div className={`w-full rounded-max flex ${noshow ? '' : 'pl-0 bg-white  p-8 '} h-full max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full`}>
-        {!noshow && (
-          <div className="absolute left-10 top-8 max-md:top-4 max-md:left-4">
-            <GoBackButton />
-          </div>
-        )}
+    <section className="flex p-10 h-screen container items-center justify-center max-lg:p-4 max-3xl:h-auto max-md:!h-screen overflow-auto">
+      <div className={`w-full rounded-max flex ${noshow ? '' : 'pl-0 bg-white  p-8 '} h-full max-lg:p-4 max-md:p-4 max-md:rounded-40  max-h-[900px] relative max-md:!h-full overflow-hidden`}>
+       
 
-        <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2 px-10'} h-full flex flex-col items-start text-xs max-md:w-full max-md:px-0 my-auto max-md:pt-4`}>
-          <div className="flex flex-col w-full my-auto">
-            <span className="w-[70px] h-[70px] rounded-full bg-[#F3F3F3] flex items-center justify-center">
-              <img src="/images/vectors/mail.svg" alt="Email icon" />
+        <div className={`${noshow ? 'w-full mx-auto max-w-[600px]' : 'w-1/2 max-lg:w-full px-10 max-lg:px-6 max-md:px-4'} h-full flex flex-col items-start text-xs max-md:pt-12 justify-center overflow-y-auto`}>
+          {!noshow && (
+            <div className=" left-10 top-8 max-lg:top-4 max-lg:left-4 max-md:top-4 max-md:left-4 z-10 mb-4">
+              <GoBackButton />
+            </div>
+          )}
+          <div className="flex flex-col w-full max-w-full">
+            <span className="w-[70px] h-[70px] max-md:w-14 max-md:h-14 rounded-full bg-[#F3F3F3] flex items-center justify-center">
+              <img src="/images/vectors/mail.svg" alt="Email icon" className="max-md:w-8 max-md:h-8" />
             </span>
-            <span className="text-[33px] font-medium flex leading-normal mt-3">{getTitle()}</span>
-            <span className="text-[#9C9C9C] text-sm mt-2">
+            <span className="text-[33px] max-lg:text-2xl max-md:text-xl max-sm:text-lg font-medium flex leading-normal mt-3">{getTitle()}</span>
+            <span className="text-[#9C9C9C] text-sm max-md:text-xs max-sm:text-[11px] mt-2 break-words pr-2">
               {getDescription()}
             </span>
 
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-4 max-lg:gap-3 max-md:gap-2 max-sm:gap-1.5 mt-6 max-md:mt-4 w-full">
               {values.map((value, index) => (
                 <input
                   key={index}
@@ -332,55 +333,55 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                   onChange={(e) => handleChange(index, e)}
                   onKeyDown={(e) => handleKeyDown(index, e)}
                   onPaste={handlePaste}
-                  className={`h-28 max-md:h-16 max-md:rounded-lg max-md:text-3xl w-full border-2 ${value ? 'border-yellow-400' : 'border-[#D8DADC]'
-                    } focus:border-CSecondary focus:outline-none rounded-[27px] text-center text-[43px]`}
+                  className={`h-28 max-lg:h-20 max-md:h-16 max-sm:h-14 max-md:rounded-lg max-lg:text-4xl max-md:text-3xl max-sm:text-2xl w-full border-2 ${value ? 'border-yellow-400' : 'border-[#D8DADC]'
+                    } focus:border-CSecondary focus:outline-none rounded-[27px] max-md:rounded-lg text-center text-[43px] max-lg:text-4xl max-md:text-3xl`}
                   autoFocus={index === 0}
                 />
               ))}
             </div>
 
-            <div className="flex flex-col gap-3 mt-6 w-full">
+            <div className="flex flex-col gap-3 max-md:gap-2 mt-6 max-md:mt-4 w-full">
               <button
                 onClick={handleOpenGmail}
-                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 max-md:gap-2 px-4 py-3 max-md:px-3 max-md:py-2 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center justify-center w-8 h-8">
-                  <img src="/icons/gmail.png" alt="Gmail icon" className="w-8 h-8" />
+                <div className="flex items-center justify-center w-8 h-8 max-md:w-6 max-md:h-6">
+                  <img src="/icons/gmail.png" alt="Gmail icon" className="w-8 h-8 max-md:w-6 max-md:h-6" />
                 </div>
-                <span className="text-base font-medium text-gray-900">Open Gmail</span>
+                <span className="text-base max-md:text-sm font-medium text-gray-900">Open Gmail</span>
               </button>
 
               <button
                 onClick={handleOpenAppleMail}
-                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 max-md:gap-2 px-4 py-3 max-md:px-3 max-md:py-2 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
               >
-                <div className="flex items-center justify-center w-8 h-8">
-                  <img src="/icons/apple.png" alt="Apple icon" className="w-8 h-8" />
+                <div className="flex items-center justify-center w-8 h-8 max-md:w-6 max-md:h-6">
+                  <img src="/icons/apple.png" alt="Apple icon" className="w-8 h-8 max-md:w-6 max-md:h-6" />
                 </div>
-                <span className="text-base font-medium text-gray-900">Open Apple Mail</span>
+                <span className="text-base max-md:text-sm font-medium text-gray-900">Open Apple Mail</span>
               </button>
 
               <button
                 onClick={handleOpenOutlook}
-                className="flex items-center gap-3 px-4 py-3 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-3 max-md:gap-2 px-4 py-3 max-md:px-3 max-md:py-2 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
               >
-                 <img src="/icons/outlook.png" alt="Outlook icon" className="w-8 h-8" />
-                <span className="text-base font-medium text-gray-900">Open Outlook</span>
+                 <img src="/icons/outlook.png" alt="Outlook icon" className="w-8 h-8 max-md:w-6 max-md:h-6" />
+                <span className="text-base max-md:text-sm font-medium text-gray-900">Open Outlook</span>
               </button>
             </div>
 
             <LoadingButton
               onClick={handleVerifyOtp}
               loading={isEmailVerificationPending || isForgotPasswordPending}
-              className="w-full h-16 bg-black text-white text-lg rounded-full mt-7 max-md:h-12 max-md:text-base"
+              className="w-full h-16 max-lg:h-14 max-md:h-12 bg-black text-white text-lg max-md:text-base rounded-full mt-7 max-md:mt-4"
             >
               {getButtonText()}
             </LoadingButton>
 
-            <span className="text-gray-500 text-lg font-medium flex items-center justify-center text-center mt-4 space-x-1">
+            <span className="text-gray-500 text-lg max-md:text-sm font-medium flex items-center justify-center text-center mt-4 max-md:mt-3 space-x-1 flex-wrap">
             
             {cooldownSeconds >0 ? (
-              <span className="text-gray-600 ml-1">
+              <span className="text-gray-600 ml-1 max-md:text-xs">
                 (Resend available in <CountdownTimer 
                   seconds={cooldownSeconds} 
                   onComplete={resetCooldown}
@@ -388,12 +389,12 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                 />)
               </span>
             ) : (
-              <span>
+              <span className="max-md:text-xs">
                 I didn't receive a code
               <button
                 onClick={handleResend}
                 disabled={!canResend || isResendPending}
-                className={`ml-1 text-gray-800 font-semibold underline decoration-2 underline-offset-2 hover:text-gray-900 transition-colors ${
+                className={`ml-1 text-gray-800 font-semibold underline decoration-2 underline-offset-2 hover:text-gray-900 transition-colors max-md:text-xs ${
                   (!canResend || isResendPending) ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -408,20 +409,21 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                 {resendError}
               </span>
             )} */}
-          </div>
-
-          {!noshow && (
-            <div className="flex h-7 gap-4 w-1/2 items-center justify-center absolute bottom-8 left-0 max-md:w-full max-md:bottom-4">
+             {!noshow && (
+            <div className="flex h-7 gap-4 w-full max-lg:w-full items-center justify-center mt-4  bottom-8 max-lg:bottom-4 left-0 max-md:relative max-md:bottom-0 max-md:mt-6 max-md:mb-4">
               <span className="w-3.5 h-3.5 bg-black rounded-full"></span>
               <span className="w-3.5 h-3.5 bg-[#878484] rounded-full"></span>
               <span className="w-3.5 h-3.5 bg-black rounded-full"></span>
               <span className="w-3.5 h-3.5 bg-black rounded-full"></span>
             </div>
           )}
+          </div>
+
+         
         </div>
 
         {!noshow && (
-          <div className="w-1/2 min-h-full bg-[#F5F5F5] rounded-40 flex flex-col items-center py-8 min-h-[810px] max-md:hidden">
+          <div className="w-1/2 max-lg:hidden min-h-full bg-[#F5F5F5] rounded-40 flex flex-col items-center py-8 min-h-[810px] overflow-hidden">
             <span className="w-44 flex"><LogoIcon width="100%" height="100%" /></span>
             <span className="text-[45px] mt-8 relative">
               <img alt="Paws decoration" className="absolute -left-14 -top-7 w-[68px] h-[63px]" src="/images/home/paws-indigo.svg" />
