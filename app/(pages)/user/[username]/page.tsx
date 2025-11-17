@@ -419,10 +419,10 @@ export default function UserProfile() {
                     </div>
                   )}
 
-                  <div className="flex items-center gap-4">
+                  {/* <div className="flex items-center gap-4">
                     <Clock className="w-5 h-5 text-CPrimary" />
                     <span className="text-lg">Business Hours: Mon-Sat 9am-5pm</span>
-                  </div>
+                  </div>*/}
                   
                   <div className="flex items-center gap-4">
                     <MapPin className="w-5 h-5 text-CPrimary" />
