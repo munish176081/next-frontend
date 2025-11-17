@@ -283,7 +283,7 @@ export const LISTING_TYPES: ListingType[] = [
     id: 'PUPPY_LITTER_LISTING',
     title: 'Puppy/Litter Listings',
     description: 'For advertising individual puppies or full litters available now.',
-    price: '$49 listing fee + add-ons',
+    price: '$49 listing fee + add-on $79',
     image: '/images/vectors/startListing1.jpg',
     category: 'puppy',
     requiredFields: [
