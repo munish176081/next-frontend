@@ -7,6 +7,8 @@ let stripePromise: Promise<Stripe | null> | null = null;
  * Initialize Stripe with publishable key
  */
 export function getStripe(): Promise<Stripe | null> {
+  console.log("getStripe", process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+  console.log("paypal", process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID);
   if (!stripePromise) {
     const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
     if (!publishableKey) {
