@@ -10,7 +10,7 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
     fileConfig: {
       multiple: true,
       accept: 'image/*',
-      maxSize: 5,
+      maxSize: 30,
       minCount: 1,
       maxCount: 10
     },
@@ -234,7 +234,7 @@ const MEDIA_FIELDS = {
     fileConfig: {
       multiple: true,
       accept: 'image/*',
-      maxSize: 15,
+      maxSize: 30,
       minCount: 1,
       maxCount: 5
     },
@@ -262,7 +262,7 @@ const MEDIA_FIELDS = {
     fileConfig: {
       multiple: true,
       accept: '.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.rtf',
-      maxSize: 25,
+      maxSize: 30,
       minCount: 1,
       maxCount: 5
     },
@@ -453,7 +453,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -481,7 +481,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx,image/*',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -538,7 +538,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -638,7 +638,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -737,7 +737,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,video/*',
-          maxSize: 10,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -752,7 +752,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -769,7 +769,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -874,7 +874,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -888,7 +888,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -902,7 +902,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*,.pdf',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -928,7 +928,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
-          maxSize: 10,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },
@@ -1121,7 +1121,7 @@ export const LISTING_TYPES: ListingType[] = [
         fileConfig: {
           multiple: true,
           accept: 'image/*',
-          maxSize: 5,
+          maxSize: 30,
           minCount: 1,
           maxCount: 5
         },

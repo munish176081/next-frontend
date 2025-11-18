@@ -10,7 +10,7 @@ import {
 } from "@/_lib/api/subscriptions";
 import { toast } from "@/_hooks/use-toast";
 import { formatPrice } from "@/_lib/pricing";
-import { AlertCircle, CreditCard, Loader2 } from "lucide-react";
+import { AlertCircle, CreditCard, Loader2, History } from "lucide-react";
 import { Button } from "@/_components/ui/button";
 import {
   Dialog,
@@ -19,6 +19,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/_components/ui/dialog";
+import { PaymentHistoryModal } from "./_components/payment-history-modal";
 
 const statusStyles: Record<string, string> = {
   active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
@@ -55,6 +56,7 @@ export default function SubscriptionsPage() {
   const [selectedSubscription, setSelectedSubscription] = useState<Subscription | null>(null);
   const [isCancelling, setIsCancelling] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [paymentHistoryOpen, setPaymentHistoryOpen] = useState(false);
 
   useEffect(() => {
     loadSubscriptions();
@@ -216,6 +218,24 @@ export default function SubscriptionsPage() {
     return type;
   };
 
+  // Filter out incomplete subscriptions from the main list
+  const activeSubscriptions = subscriptions.filter(
+    (sub) =>
+      sub.status !== "incomplete" &&
+      sub.status !== "incomplete_expired" &&
+      sub.status !== "cancelled" &&
+      sub.status !== "expired"
+  );
+
+  // Check if subscription can be managed (has actionable status)
+  const canManageSubscription = (subscription: Subscription): boolean => {
+    return (
+      subscription.status === "active" ||
+      subscription.status === "trialing" ||
+      subscription.status === "past_due"
+    );
+  };
+
   return (
     <DashboardLayout>
       <div className="p-6 space-y-6">
@@ -226,12 +246,20 @@ export default function SubscriptionsPage() {
               Manage your active subscriptions and payment methods
             </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => setPaymentHistoryOpen(true)}
+            className="flex items-center gap-2"
+          >
+            <History className="w-4 h-4" />
+            Payment History
+          </Button>
         </div>
 
-        {subscriptions.length === 0 ? (
+        {activeSubscriptions.length === 0 ? (
           <div className="bg-white border border-gray-200 rounded-lg p-12 text-center">
             <CreditCard className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Active Subscriptions</h3>
             <p className="text-sm text-gray-600">
               You don't have any active subscriptions yet.
             </p>
@@ -263,7 +291,7 @@ export default function SubscriptionsPage() {
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
-                  {subscriptions.map((subscription) => (
+                  {activeSubscriptions.map((subscription) => (
                     <tr key={subscription.id} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm font-medium text-gray-900">
@@ -295,9 +323,7 @@ export default function SubscriptionsPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        {subscription.status === "expired" || subscription.status === "cancelled" ? (
-                          <span className="text-gray-400">N/A</span>
-                        ) : (
+                        {canManageSubscription(subscription) ? (
                           <div className="flex items-center gap-2">
                             {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
                               <>
@@ -376,16 +402,9 @@ export default function SubscriptionsPage() {
                                 )}
                               </Button>
                             )}
-                            <button
-                              type="button"
-                              className="text-gray-400 hover:text-gray-600"
-                              onClick={() => handleCancelClick(subscription)}
-                            >
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-                              </svg>
-                            </button>
                           </div>
+                        ) : (
+                          <span className="text-gray-400">N/A</span>
                         )}
                       </td>
                     </tr>
@@ -457,6 +476,12 @@ export default function SubscriptionsPage() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Payment History Modal */}
+        <PaymentHistoryModal
+          open={paymentHistoryOpen}
+          onOpenChange={setPaymentHistoryOpen}
+        />
       </div>
     </DashboardLayout>
   );

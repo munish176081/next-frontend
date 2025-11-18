@@ -196,10 +196,10 @@ export const sidebarConfig: SidebarConfig = {
         description: "Your saved items"
       },
       {
-        name: "Payments",
-        href: "/account/payments",
+        name: "Subscriptions",
+        href: "/account/subscriptions",
         icon: CreditCard,
-        description: "Payment history and billing"
+        description: "Manage subscriptions and payment history"
       },
       {
         name: "Help & Support",

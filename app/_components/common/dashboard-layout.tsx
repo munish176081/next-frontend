@@ -47,7 +47,7 @@ export const DashboardLayout = ({
       case '/account/favorites':
       case '/admin/analytics':
         return '/images/vectors/menu1.png';
-      case '/account/payments':
+      case '/account/subscriptions':
       case '/admin/logs':
         return '/images/vectors/menu2.png';
       case '/account/profile':

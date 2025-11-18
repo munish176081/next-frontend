@@ -14,7 +14,7 @@ export interface FileValidationResult {
 
 export class FileValidator {
   private static readonly DEFAULT_CONFIG: FileValidationConfig = {
-    maxSize: 10,
+    maxSize: 30,
     allowedTypes: [],
     blockedTypes: [
       'application/x-executable', 'application/x-msdownload', 'application/x-msi',
@@ -143,7 +143,7 @@ export class FileValidator {
     switch (type) {
       case 'image':
         return {
-          maxSize: 15,
+          maxSize: 30,
           allowedTypes: [
             'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp',
             'image/bmp', 'image/tiff', 'image/svg+xml'
@@ -165,7 +165,7 @@ export class FileValidator {
         };
       case 'document':
         return {
-          maxSize: 25,
+          maxSize: 30,
           allowedTypes: [
             'application/pdf',
             'application/msword',

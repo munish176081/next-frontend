@@ -27,7 +27,7 @@ export function EnhancedImageUpload({
   error,
   minCount = 3,
   maxCount = 10,
-  maxSize = 5,
+  maxSize = 30,
   accept = 'image/*',
   className = '',
 }: EnhancedImageUploadProps) {
