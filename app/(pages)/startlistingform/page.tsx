@@ -330,9 +330,26 @@ function Startlistingform() {
 
           // Special handling for puppy litter listings - load individual puppy data
           if (selectedListingType?.id === 'PUPPY_LITTER_LISTING' && existingListing.fields) {
+            // Ensure listLitterOption is set
+            if (existingListing.fields.listLitterOption) {
+              initialData.listLitterOption = existingListing.fields.listLitterOption;
+            }
+            
+            // Ensure listingType is set (default to 'litter' if not set)
+            if (!initialData.listingType) {
+              initialData.listingType = existingListing.fields.listLitterOption === 'single-puppy' ? 'puppy' : 'litter';
+            }
+
             // Load individual puppies data
             if (existingListing.fields.individualPuppies && Array.isArray(existingListing.fields.individualPuppies)) {
-              initialData.individualPuppies = existingListing.fields.individualPuppies;
+              // For 'add-individually' option, map individualPuppies to individualPuppiesLitter
+              if (existingListing.fields.listLitterOption === 'add-individually') {
+                initialData.individualPuppiesLitter = existingListing.fields.individualPuppies;
+                console.log('📱 Loaded individualPuppiesLitter for add-individually option:', initialData.individualPuppiesLitter);
+              } else {
+                // For other options, keep as individualPuppies
+                initialData.individualPuppies = existingListing.fields.individualPuppies;
+              }
             }
 
             // Load microchip numbers for same-details option

@@ -104,15 +104,126 @@ const ExploreDetail = () => {
     description: listing.description || "No description available",
     listingType: formatListingType(listing.type),
     images: (() => {
-      if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
-        return listing.metadata.images;
+      // For puppy/litter listings, extract images from individualPuppies
+      if (listing.type === ListingTypeEnum.PUPPY_LITTER_LISTING && listing.fields?.individualPuppies && Array.isArray(listing.fields.individualPuppies)) {
+        const allPuppyImages: string[] = [];
+        listing.fields.individualPuppies.forEach((puppy: any) => {
+          if (puppy.puppyImages && Array.isArray(puppy.puppyImages)) {
+            allPuppyImages.push(...puppy.puppyImages);
+          }
+        });
+        // Remove duplicates and filter out non-image files (like PDFs)
+        const uniqueImages = [...new Set(allPuppyImages)].filter(img => {
+          const lowerImg = img.toLowerCase();
+          return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+        });
+        if (uniqueImages.length > 0) {
+          return uniqueImages;
+        }
       }
+      
+      // For Other Services listings, prioritize serviceImages from fields
+      if (listing.type === ListingTypeEnum.OTHER_SERVICES && listing.fields?.serviceImages) {
+        let serviceImgs: string[] = [];
+        
+        // Handle different formats: array, string, or comma-separated string
+        if (Array.isArray(listing.fields.serviceImages)) {
+          serviceImgs = listing.fields.serviceImages;
+        } else if (typeof listing.fields.serviceImages === 'string') {
+          // Check if it's a comma-separated string
+          if (listing.fields.serviceImages.includes(',')) {
+            serviceImgs = listing.fields.serviceImages.split(',').map((img: string) => img.trim()).filter(Boolean);
+          } else {
+            serviceImgs = [listing.fields.serviceImages.trim()];
+          }
+        }
+        
+        const validServiceImages = serviceImgs
+          .map((img: string) => {
+            if (!img) return null;
+            // Remove trailing commas and whitespace
+            const cleaned = img.trim().replace(/,$/, '').trim();
+            return cleaned || null;
+          })
+          .filter((img: string | null): img is string => {
+            if (!img) return false;
+            const lowerImg = img.toLowerCase();
+            return !!lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+          });
+        if (validServiceImages.length > 0) {
+          return validServiceImages;
+        }
+      }
+      
+      // For other listings or if no puppy images found, check metadata.images
+      // Filter out non-image files (like PDFs)
+      if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
+        const validImages = listing.metadata.images.filter((img: string) => {
+          const lowerImg = img.toLowerCase();
+          return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+        });
+        if (validImages.length > 0) {
+          return validImages;
+        }
+      }
+      
       // Fallback to default images if no images are provided
       return ["/images/vectors/detailSlide1.png", "/images/vectors/detailSlide2.png", "/images/vectors/detailSlide3.png"];
     })(),
     motherImages: listing.metadata?.motherImages || [],
     fatherImages: listing.metadata?.fatherImages || [],
-    featuredImage: listing.metadata?.featuredImage ? listing.metadata.featuredImage : listing.metadata?.images?.[0],
+    motherVideos: listing.metadata?.motherVideos || [],
+    fatherVideos: listing.metadata?.fatherVideos || [],
+    serviceImages: (() => {
+      // For Other Services listings, get service images from fields
+      if (listing.type === ListingTypeEnum.OTHER_SERVICES && listing.fields?.serviceImages) {
+        let serviceImgs: string[] = [];
+        
+        // Handle different formats: array, string, or comma-separated string
+        if (Array.isArray(listing.fields.serviceImages)) {
+          serviceImgs = listing.fields.serviceImages;
+        } else if (typeof listing.fields.serviceImages === 'string') {
+          // Check if it's a comma-separated string
+          if (listing.fields.serviceImages.includes(',')) {
+            serviceImgs = listing.fields.serviceImages.split(',').map((img: string) => img.trim()).filter(Boolean);
+          } else {
+            serviceImgs = [listing.fields.serviceImages.trim()];
+          }
+        }
+        
+        // Filter out non-image files and clean URLs
+        return serviceImgs
+          .map((img: string) => {
+            if (!img) return null;
+            // Remove trailing commas and whitespace
+            const cleaned = img.trim().replace(/,$/, '').trim();
+            return cleaned || null;
+          })
+          .filter((img: string | null): img is string => {
+            if (!img) return false;
+            const lowerImg = img.toLowerCase();
+            return !!lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+          });
+      }
+      return [];
+    })(),
+    featuredImage: listing.featuredImage || listing.metadata?.featuredImage || (() => {
+      // For puppy/litter listings, get first image from individualPuppies
+      if (listing.type === ListingTypeEnum.PUPPY_LITTER_LISTING && listing.fields?.individualPuppies && Array.isArray(listing.fields.individualPuppies)) {
+        for (const puppy of listing.fields.individualPuppies) {
+          if (puppy.puppyImages && Array.isArray(puppy.puppyImages) && puppy.puppyImages.length > 0) {
+            const firstImage = puppy.puppyImages.find((img: string) => img.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/));
+            if (firstImage) return firstImage;
+          }
+        }
+      }
+      // Fallback to metadata images
+      if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
+        const firstImage = listing.metadata.images.find((img: string) => img.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/));
+        if (firstImage) return firstImage;
+      }
+      return null;
+    })(),
     availability: listing.availability || 'available',
     user: listing.user,
     fields: listing.fields || {},
@@ -158,19 +269,165 @@ const ExploreDetail = () => {
     }
   };
 
-  // Generate dog details from API data
-  const dogDetails = transformedListing ? [
-    { label: "Attribute", value: "Details", title: 'true' },
-    { label: "Dog Name", value: transformedListing.fields?.dogName || transformedListing.title },
-    { label: "Breed", value: transformedListing.breed },
-    { label: "Age", value: transformedListing.fields?.age || "Age not specified" },
-    { label: "Semen type", value: transformedListing.fields?.semenType || "Chilled(Static)" },
-    { label: "Shipping Availability", value: transformedListing.fields?.shippingAvailable ? "Yes(Static)" : "No(Static)" },
-    { label: "Collection Date", value: transformedListing.fields?.collectionDate || "1978-05-27(Static)" },
-    { label: "ANKC Breeder Register", value: transformedListing.fields?.ankcBreederRegister || "Ex lorem dolorem aut(Static)" },
-    { label: "Stud Fee", value: transformedListing.fields?.studFee || "3(Static)" },
-    { label: "Location", value: transformedListing.location },
-  ] : [];
+  // Generate dog details dynamically from API data
+  const dogDetails = transformedListing ? (() => {
+    const details: Array<{ label: string; value: string; title?: boolean }> = [];
+    
+    // Add header
+    details.push({ label: "Attribute", value: "Details", title: true });
+    
+    // Helper function to format field values
+    const formatValue = (value: any): string => {
+      if (value === null || value === undefined || value === '') {
+        return '';
+      }
+      
+      // Handle arrays
+      if (Array.isArray(value)) {
+        if (value.length === 0) return '';
+        return value.join(', ');
+      }
+      
+      // Handle booleans
+      if (typeof value === 'boolean') {
+        return value ? 'Yes' : 'No';
+      }
+      
+      // Handle dates
+      if (typeof value === 'string' && /^\d{4}-\d{2}-\d{2}/.test(value)) {
+        try {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          }
+        } catch (e) {
+          // If date parsing fails, return as is
+        }
+      }
+      
+      // Handle numbers
+      if (typeof value === 'number') {
+        return value.toString();
+      }
+      
+      return String(value);
+    };
+    
+    // Helper function to format field labels (convert camelCase to Title Case)
+    const formatLabel = (key: string): string => {
+      return key
+        .replace(/([A-Z])/g, ' $1')
+        .replace(/^./, str => str.toUpperCase())
+        .trim();
+    };
+    
+    // Always include these core fields if they exist
+    const coreFields: Record<string, () => string> = {
+      'Dog Name': () => transformedListing.fields?.dogName || transformedListing.title || '',
+      'Breed': () => transformedListing.breed || '',
+      'Location': () => transformedListing.location || '',
+      'Age': () => formatValue(transformedListing.fields?.age),
+      'Listing Type': () => transformedListing.listingType || '',
+    };
+    
+    // Add core fields
+    Object.entries(coreFields).forEach(([label, getValue]) => {
+      const value = getValue();
+      if (value) {
+        details.push({ label, value });
+      }
+    });
+    
+    // Add all other fields from listing.fields
+    if (transformedListing.fields && typeof transformedListing.fields === 'object') {
+      const fieldKeys = Object.keys(transformedListing.fields);
+      
+      // Fields to exclude (already handled or not needed)
+      const excludeFields = [
+        'dogName', // Already handled
+        'age', // Already handled
+        'badges', // Displayed separately
+        'dnaResults', // Displayed separately
+        'individualPuppies', // Complex nested data
+        'puppyImages', // Part of individualPuppies
+        'healthCertificates', // Could be displayed separately
+        'images', // Displayed in gallery
+        'videos', // Displayed in gallery
+        'serviceImages', // Displayed in main image gallery
+        'registrationNumber', // Handled separately
+        'litterSize', // Handled separately
+        'deliveryOptions', // Handled separately
+        'minPrice', // Part of pricing
+        'maxPrice', // Part of pricing
+        'pricingOption', // Internal field
+        'listLitterOption', // Internal field
+      ];
+      
+      // Special handling for specific fields
+      const specialFieldLabels: Record<string, string> = {
+        'semenType': 'Semen Type',
+        'shippingAvailable': 'Shipping Available',
+        'collectionDate': 'Collection Date',
+        'ankcBreederRegister': 'ANKC Breeder Register',
+        'studFee': 'Stud Fee',
+        'microchipNumber': 'Microchip Number',
+        'vaccinationStatus': 'Vaccination Status',
+        'puppyDateOfBirth': 'Date of Birth',
+        'puppyGender': 'Gender',
+        'puppyColour': 'Color',
+      };
+      
+      fieldKeys.forEach(key => {
+        if (excludeFields.includes(key)) return;
+        
+        const value = transformedListing.fields[key];
+        const formattedValue = formatValue(value);
+        
+        // Only add if value exists and is not empty
+        if (formattedValue) {
+          // Use special label if available, otherwise format the key
+          const label = specialFieldLabels[key] || formatLabel(key);
+          // Check if this field is not already added
+          if (!details.some(d => d.label === label)) {
+            details.push({ label, value: formattedValue });
+          }
+        }
+      });
+    }
+    
+    // Add pricing information if available
+    if (transformedListing.pricingInfo) {
+      const pricing = transformedListing.pricingInfo;
+      if (pricing.minPrice && pricing.maxPrice) {
+        details.push({ label: 'Price Range', value: `$${pricing.minPrice} - $${pricing.maxPrice}` });
+      } else if (pricing.price) {
+        details.push({ label: 'Price', value: `$${pricing.price}` });
+      }
+    }
+    
+    // Add registration number if available
+    if (transformedListing.fields?.registrationNumber) {
+      details.push({ label: 'Registration Number', value: String(transformedListing.fields.registrationNumber) });
+    }
+    
+    // Add litter size if available
+    if (transformedListing.fields?.litterSize) {
+      details.push({ label: 'Litter Size', value: String(transformedListing.fields.litterSize) });
+    }
+    
+    // Add delivery options if available
+    if (transformedListing.fields?.deliveryOptions && Array.isArray(transformedListing.fields.deliveryOptions)) {
+      const deliveryOptions = transformedListing.fields.deliveryOptions
+        .filter((opt: string) => opt && opt.trim())
+        .map((opt: string) => formatLabel(opt))
+        .join(', ');
+      if (deliveryOptions) {
+        details.push({ label: 'Delivery Options', value: deliveryOptions });
+      }
+    }
+    
+    return details;
+  })() : [];
 
   const testimonials = [
     {
@@ -550,16 +807,87 @@ const ExploreDetail = () => {
             <div className="overflow-hidden flex flex-col gap-2 w-full">
               <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
               <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-                {transformedListing.fatherImages && transformedListing.fatherImages[0] && (
-                  <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden relative">
-                    <Image 
-                      src={transformedListing.fatherImages[0]} 
-                      alt="Father dog image"
-                      fill
-                      className="object-cover"
-                    />
-                  </span>
-                )}
+                {(() => {
+                  // Combine images and videos
+                  const fatherMedia = [
+                    ...(transformedListing.fatherImages || []).map((url: string) => ({ url, type: 'image' as const })),
+                    ...(transformedListing.fatherVideos || []).map((url: string) => ({ url, type: 'video' as const }))
+                  ];
+                  
+                  if (fatherMedia.length === 0) return null;
+                  
+                  return (
+                    <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
+                      {fatherMedia.length > 1 ? (
+                        <>
+                          <Swiper 
+                            className="w-full h-full" 
+                            loop={false} 
+                            modules={[Navigation]} 
+                            slidesPerView={1} 
+                            spaceBetween={0}
+                            navigation={{ 
+                              nextEl: `.fatherNextBtn-${listingId}`, 
+                              prevEl: `.fatherPrevBtn-${listingId}` 
+                            }}
+                          >
+                            {fatherMedia.map((media, index: number) => (
+                              <SwiperSlide key={index} className="relative w-full h-full">
+                                {media.type === 'video' ? (
+                                  <video 
+                                    src={media.url} 
+                                    controls
+                                    className="w-full h-full object-cover"
+                                    playsInline
+                                  />
+                                ) : (
+                                  <Image 
+                                    src={media.url} 
+                                    alt={`Father dog ${media.type} ${index + 1}`}
+                                    fill
+                                    className="object-cover"
+                                  />
+                                )}
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                          <ActionIcon 
+                            rounded="full" 
+                            className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 left-2 fatherPrevBtn-${listingId}`}
+                          >
+                            <img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                          </ActionIcon>
+                          <ActionIcon 
+                            rounded="full" 
+                            className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 right-2 fatherNextBtn-${listingId}`}
+                          >
+                            <img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                          </ActionIcon>
+                        </>
+                      ) : (
+                        <>
+                          {fatherMedia[0].type === 'video' ? (
+                            <video 
+                              src={fatherMedia[0].url} 
+                              controls
+                              className="w-full h-full object-cover rounded-2xl"
+                              playsInline
+                            />
+                          ) : (
+                            <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
+                              <Image 
+                                src={fatherMedia[0].url} 
+                                alt="Father dog image"
+                                fill
+                                className="object-cover"
+                              />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
                 {transformedListing.fatherInfo.name && (
                   <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.fatherInfo.name}</span>
                 )}
@@ -593,16 +921,87 @@ const ExploreDetail = () => {
             <div className="overflow-hidden flex flex-col gap-2 w-full">
               <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
               <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-                {transformedListing.motherImages && transformedListing.motherImages[0] && (
-                  <span className="w-full h-[350px] max-md:h-[170px] flex rounded-2xl overflow-hidden relative">
-                    <Image 
-                      src={transformedListing.motherImages[0]} 
-                      alt="Mother dog image"
-                      fill
-                      className="object-top object-cover"
-                    />
-                  </span>
-                )}
+                {(() => {
+                  // Combine images and videos
+                  const motherMedia = [
+                    ...(transformedListing.motherImages || []).map((url: string) => ({ url, type: 'image' as const })),
+                    ...(transformedListing.motherVideos || []).map((url: string) => ({ url, type: 'video' as const }))
+                  ];
+                  
+                  if (motherMedia.length === 0) return null;
+                  
+                  return (
+                    <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
+                      {motherMedia.length > 1 ? (
+                        <>
+                          <Swiper 
+                            className="w-full h-full" 
+                            loop={false} 
+                            modules={[Navigation]} 
+                            slidesPerView={1} 
+                            spaceBetween={0}
+                            navigation={{ 
+                              nextEl: `.motherNextBtn-${listingId}`, 
+                              prevEl: `.motherPrevBtn-${listingId}` 
+                            }}
+                          >
+                            {motherMedia.map((media, index: number) => (
+                              <SwiperSlide key={index} className="relative w-full h-full">
+                                {media.type === 'video' ? (
+                                  <video 
+                                    src={media.url} 
+                                    controls
+                                    className="w-full h-full object-cover object-top"
+                                    playsInline
+                                  />
+                                ) : (
+                                  <Image 
+                                    src={media.url} 
+                                    alt={`Mother dog ${media.type} ${index + 1}`}
+                                    fill
+                                    className="object-top object-cover"
+                                  />
+                                )}
+                              </SwiperSlide>
+                            ))}
+                          </Swiper>
+                          <ActionIcon 
+                            rounded="full" 
+                            className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 left-2 motherPrevBtn-${listingId}`}
+                          >
+                            <img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                          </ActionIcon>
+                          <ActionIcon 
+                            rounded="full" 
+                            className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 right-2 motherNextBtn-${listingId}`}
+                          >
+                            <img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                          </ActionIcon>
+                        </>
+                      ) : (
+                        <>
+                          {motherMedia[0].type === 'video' ? (
+                            <video 
+                              src={motherMedia[0].url} 
+                              controls
+                              className="w-full h-full object-cover object-top rounded-2xl"
+                              playsInline
+                            />
+                          ) : (
+                            <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
+                              <Image 
+                                src={motherMedia[0].url} 
+                                alt="Mother dog image"
+                                fill
+                                className="object-top object-cover"
+                              />
+                            </span>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  );
+                })()}
                 {transformedListing.motherInfo.name && (
                   <span className="text-[22px] font-medium max-md:text-[18px]">Name: {transformedListing.motherInfo.name}</span>
                 )}
