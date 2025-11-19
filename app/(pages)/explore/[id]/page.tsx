@@ -606,9 +606,9 @@ const ExploreDetail = () => {
                 transformedListing.availability === 'reserved' ? 'Reserved' :
                   transformedListing.availability === 'sold_out' ? 'Sold Out' : 'Draft'}
             </span>
-            <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-black/20 px-4 rounded-full flex items-center gap-2 max-md:gap-1">
+            {/* <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-black/20 px-4 rounded-full flex items-center gap-2 max-md:gap-1">
               <img className='max-md:w-4' src="/images/vectors/verified.png" />Pups4Sale Breeder Conditions Verified
-            </span>
+            </span> */}
           </div>
           <span className="flex items-baseline gap-2">
             {(() => {
