@@ -23,6 +23,7 @@ import { PaymentHistoryModal } from "./_components/payment-history-modal";
 
 const statusStyles: Record<string, string> = {
   active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
+  cancelling: "text-orange-600 bg-orange-100 border border-orange-300",
   cancelled: "text-gray-600 bg-gray-100 border border-gray-300",
   expired: "text-white bg-[#EE5D50] border border-[#EE5D50]",
   past_due: "text-white bg-orange-500 border border-orange-500",
@@ -41,11 +42,21 @@ function formatDate(dateString: string): string {
   });
 }
 
-function getStatusLabel(status: string): string {
+function getStatusLabel(status: string, cancelAtPeriodEnd?: boolean): string {
+  if (cancelAtPeriodEnd && status === "active") {
+    return "Cancelling";
+  }
   return status
     .split("_")
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function getStatusStyle(status: string, cancelAtPeriodEnd?: boolean): string {
+  if (cancelAtPeriodEnd && status === "active") {
+    return statusStyles.cancelling;
+  }
+  return statusStyles[status] || statusStyles.cancelled;
 }
 
 export default function SubscriptionsPage() {
@@ -218,13 +229,18 @@ export default function SubscriptionsPage() {
     return type;
   };
 
-  // Filter out incomplete subscriptions from the main list
+  // Filter subscriptions into active and cancelled
   const activeSubscriptions = subscriptions.filter(
     (sub) =>
       sub.status !== "incomplete" &&
       sub.status !== "incomplete_expired" &&
       sub.status !== "cancelled" &&
       sub.status !== "expired"
+  );
+
+  // Separate cancelled subscriptions
+  const cancelledSubscriptions = subscriptions.filter(
+    (sub) => sub.status === "cancelled" || sub.status === "expired"
   );
 
   // Check if subscription can be managed (has actionable status)
@@ -316,10 +332,10 @@ export default function SubscriptionsPage() {
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span
                           className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                            statusStyles[subscription.status] || statusStyles.cancelled
+                            getStatusStyle(subscription.status, subscription.cancelAtPeriodEnd)
                           }`}
                         >
-                          {getStatusLabel(subscription.status)}
+                          {getStatusLabel(subscription.status, subscription.cancelAtPeriodEnd)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -411,6 +427,88 @@ export default function SubscriptionsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          </div>
+        )}
+
+        {/* Cancelled Subscriptions Section */}
+        {cancelledSubscriptions.length > 0 && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-xl font-bold text-gray-900">Cancelled Subscriptions</h2>
+              <p className="text-sm text-gray-600 mt-1">
+                Your cancelled and expired subscriptions
+              </p>
+            </div>
+            <div className="bg-white border border-gray-200 rounded-lg overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        TYPE
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        AMOUNT
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        START DATE
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        END DATE
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        CANCELLED AT
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                        STATUS
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="bg-white divide-y divide-gray-200">
+                    {cancelledSubscriptions.map((subscription) => (
+                      <tr key={subscription.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">
+                            {getSubscriptionType(subscription)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-900">
+                            {formatPrice(subscription.amount)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {formatDate(subscription.currentPeriodStart)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {formatDate(subscription.currentPeriodEnd)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm text-gray-600">
+                            {subscription.canceledAt
+                              ? formatDate(subscription.canceledAt)
+                              : "N/A"}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span
+                            className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              getStatusStyle(subscription.status, subscription.cancelAtPeriodEnd)
+                            }`}
+                          >
+                            {getStatusLabel(subscription.status, subscription.cancelAtPeriodEnd)}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}

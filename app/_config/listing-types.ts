@@ -134,7 +134,7 @@ const COMMON_FIELDS = {
     name: 'description',
     label: 'Description',
     type: 'textarea' as const,
-    required: false,
+    required: true,
     placeholder: 'Enter description',
     fieldCategory: 'common' as const
   },
@@ -159,7 +159,7 @@ const COMMON_FIELDS = {
     name: 'location',
     label: 'Location',
     type: 'location' as const,
-    required: false,
+    required: true,
     placeholder: 'Enter Australian location',
     fieldCategory: 'common' as const
   },
@@ -942,7 +942,7 @@ export const LISTING_TYPES: ListingType[] = [
         name: 'price',
         label: 'Price Per Straw/Dose',
         type: 'number' as const,
-        required: false,
+        required: true,
         placeholder: 'Price Per Straw/Dose',
         validation: { min: 0 },
         fieldCategory: 'common' as const
@@ -1056,7 +1056,7 @@ export const LISTING_TYPES: ListingType[] = [
         name: 'messageToBreeders',
         label: 'Message to Breeders',
         type: 'textarea',
-        required: false,
+        required: true,
         placeholder: 'Enter message to breeders',
         fieldCategory: 'dynamic'
       }
@@ -1105,7 +1105,7 @@ export const LISTING_TYPES: ListingType[] = [
         label: 'Price Details and Add-Ons',
         type: 'textarea-v2',
         required: true,
-        placeholder: 'Enter price details and add-ons',
+        placeholder: 'Enter full breakdown of pricing, included services, and optional add-ons.',
         fieldCategory: 'common'
       },
       COMMON_FIELDS.location,

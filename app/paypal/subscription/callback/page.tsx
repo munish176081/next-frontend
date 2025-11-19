@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { syncPayPalSubscription } from '@/_lib/api/subscriptions';
 
 export default function PayPalSubscriptionCallback() {
   const searchParams = useSearchParams();
@@ -17,10 +18,16 @@ export default function PayPalSubscriptionCallback() {
     if (isPopup) {
       // We're in a popup - communicate with parent window
       if (success === 'true') {
-        // Subscription approved
+        // Subscription approved - sync status from PayPal
         const pendingSubscriptionId = sessionStorage.getItem('pendingPayPalSubscriptionId');
         if (pendingSubscriptionId) {
           sessionStorage.setItem('paypalSubscriptionApproved', 'true');
+          
+          // Sync subscription status from PayPal
+          syncPayPalSubscription(pendingSubscriptionId).catch((error) => {
+            console.error('Failed to sync PayPal subscription status:', error);
+          });
+          
           // Try to send message to parent
           try {
             window.opener?.postMessage(
@@ -51,9 +58,22 @@ export default function PayPalSubscriptionCallback() {
         }, 1000);
       }
     } else {
-      // Not in popup - redirect to subscriptions page
+      // Not in popup - sync and redirect to subscriptions page
       if (success === 'true') {
-        window.location.href = '/account/subscriptions?success=true';
+        // If we have a subscription ID, sync it
+        const dbSubscriptionId = sessionStorage.getItem('pendingPayPalSubscriptionId');
+        if (dbSubscriptionId) {
+          syncPayPalSubscription(dbSubscriptionId)
+            .then(() => {
+              window.location.href = '/account/subscriptions?success=true';
+            })
+            .catch((error) => {
+              console.error('Failed to sync PayPal subscription status:', error);
+              window.location.href = '/account/subscriptions?success=true';
+            });
+        } else {
+          window.location.href = '/account/subscriptions?success=true';
+        }
       } else if (canceled === 'true') {
         window.location.href = '/account/subscriptions?canceled=true';
       } else {
@@ -80,6 +100,7 @@ export default function PayPalSubscriptionCallback() {
     </div>
   );
 }
+
 
 
 

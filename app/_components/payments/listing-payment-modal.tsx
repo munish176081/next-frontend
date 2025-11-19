@@ -21,7 +21,7 @@ import {
   ADDON_PRICES,
   isSubscriptionType,
 } from "@/_lib/pricing";
-import { createStripeSubscription, createPayPalSubscription } from "@/_lib/api/subscriptions";
+import { createStripeSubscription, createPayPalSubscription, syncPayPalSubscription } from "@/_lib/api/subscriptions";
 import { ListingTypeEnum } from "@/_types/listing";
 import { 
   hasStripePriceId, 
@@ -259,10 +259,22 @@ function PayPalPaymentButton({
                 }
                 const approvedSubscriptionId = event.data.subscriptionId || sessionStorage.getItem('pendingPayPalSubscriptionId');
                 if (approvedSubscriptionId) {
-                  sessionStorage.removeItem('pendingPayPalSubscriptionId');
-                  sessionStorage.removeItem('pendingPayPalApprovalUrl');
-                  sessionStorage.removeItem('paypalSubscriptionApproved');
-                  onSuccess(approvedSubscriptionId, approvedSubscriptionId);
+                  // Sync subscription status from PayPal
+                  syncPayPalSubscription(approvedSubscriptionId)
+                    .then(() => {
+                      sessionStorage.removeItem('pendingPayPalSubscriptionId');
+                      sessionStorage.removeItem('pendingPayPalApprovalUrl');
+                      sessionStorage.removeItem('paypalSubscriptionApproved');
+                      onSuccess(approvedSubscriptionId, approvedSubscriptionId);
+                    })
+                    .catch((error) => {
+                      console.error('Failed to sync PayPal subscription status:', error);
+                      // Still call onSuccess even if sync fails
+                      sessionStorage.removeItem('pendingPayPalSubscriptionId');
+                      sessionStorage.removeItem('pendingPayPalApprovalUrl');
+                      sessionStorage.removeItem('paypalSubscriptionApproved');
+                      onSuccess(approvedSubscriptionId, approvedSubscriptionId);
+                    });
                 }
               } else if (event.data.type === 'PAYPAL_SUBSCRIPTION_CANCELED') {
                 clearInterval(checkPopup);

@@ -257,3 +257,23 @@ export async function checkActiveSubscription(listingType: string): Promise<{
   return response.json();
 }
 
+/**
+ * Sync PayPal subscription status from PayPal API
+ */
+export async function syncPayPalSubscription(subscriptionId: string): Promise<Subscription> {
+  const response = await fetch(`${API_BASE_URL}/subscriptions/${subscriptionId}/sync-paypal`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to sync PayPal subscription');
+  }
+
+  return response.json();
+}
+
