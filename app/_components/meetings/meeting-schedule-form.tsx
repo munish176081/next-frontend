@@ -10,6 +10,7 @@ import { CreateMeetingDto } from '@/_types/meeting';
 import { useMeetingsWithCalendar } from '@/_services/hooks/meetings/use-meetings-with-calendar';
 import { useCalendar } from '@/_contexts/calendar-context';
 import { CalendarAuthorizationCompact } from '../calendar/calendar-authorization-compact';
+import { DatePicker } from '@/_components/ui/date-picker';
 
 const meetingSchema = z.object({
   date: z.string().min(1, 'Date is required'),
@@ -169,18 +170,24 @@ const MeetingScheduleForm: React.FC<MeetingScheduleFormProps> = ({
           <label className="block text-sm font-medium text-gray-700 mb-2">
             Select Date *
           </label>
-          <input
-            type="date"
-            {...register('date')}
-            min={getMinDate()}
-            max={getMaxDate()}
-            className={`w-full px-4 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.date ? 'border-red-500' : 'border-gray-300'
-            }`}
+          <DatePicker
+            date={watchedDate ? new Date(watchedDate) : undefined}
+            setDate={(date) => {
+              if (date) {
+                const year = date.getFullYear();
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const day = String(date.getDate()).padStart(2, '0');
+                setValue('date', `${year}-${month}-${day}`, { shouldValidate: true });
+              } else {
+                setValue('date', '', { shouldValidate: true });
+              }
+            }}
+            min={new Date(getMinDate())}
+            max={new Date(getMaxDate())}
+            error={errors.date?.message}
+            placeholder="Select a date"
+            className={errors.date ? 'border-red-500' : ''}
           />
-          {errors.date && (
-            <p className="mt-1 text-sm text-red-600">{errors.date.message}</p>
-          )}
         </div>
 
         {/* Time Selection */}

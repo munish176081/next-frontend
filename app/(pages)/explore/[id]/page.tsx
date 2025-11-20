@@ -24,6 +24,7 @@ import { toast } from '@/_hooks/use-toast';
 import MeetingScheduleForm from "@/_components/meetings/meeting-schedule-form";
 import { getPricingInfo, getPricingDisplayProps, getListingPricingDisplay } from "@/_utils/pricing";
 import { useWishlist } from "@/_contexts/wishlist-context";
+import { DatePicker } from "@/_components/ui/date-picker";
 
 const ExploreDetail = () => {
   const params = useParams();
@@ -35,6 +36,7 @@ const ExploreDetail = () => {
   
   // Meeting scheduling state
   const [showMeetingForm, setShowMeetingForm] = useState(false);
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   
   // Wishlist functionality
   const { isWishlisted, toggleWishlist } = useWishlist();
@@ -64,12 +66,19 @@ const ExploreDetail = () => {
     id: listing.id,
     title: listing.title,
     location: listing.location,
-    description: `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`, // Generate description from available data
+    description: listing.description || `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`,
     price: listing.price,
     rating: 4.5, // Default rating since it's not in the API
     reviews: Math.floor(Math.random() * 50) + 10, // Random reviews for now
     listingType: formatListingType(listing.type),
+    type: listing.type, // Add type field for listing type detection
     image: listing.featuredImage || "/images/breed-by-type/1.png", // Use featured image or fallback
+    userId: listing.user?.id, // Add userId for own listing check
+    fields: listing.fields || {}, // Add fields for pricing options, images, etc.
+    metadata: listing.metadata || {}, // Add metadata for Other Services images
+    breed: listing.breed, // Add breed field
+    availability: listing.availability, // Add availability field
+    individualPuppies: listing.fields?.individualPuppies || [], // Add individualPuppies for puppy listings
   })) || [];
 
   // Transform seller listings data to match the expected format
@@ -77,12 +86,19 @@ const ExploreDetail = () => {
     id: listing.id,
     title: listing.title,
     location: listing.location,
-    description: `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`, // Generate description from available data
+    description: listing.description || `Beautiful ${listing.breed} - ${formatListingType(listing.type)}`,
     price: listing.price,
     rating: 4.5, // Default rating since it's not in the API
     reviews: Math.floor(Math.random() * 50) + 10, // Random reviews for now
     listingType: formatListingType(listing.type),
+    type: listing.type, // Add type field for listing type detection
     image: listing.featuredImage || "/images/breed-by-type/1.png", // Use featured image or fallback
+    userId: listing.user?.id, // Add userId for own listing check
+    fields: listing.fields || {}, // Add fields for pricing options, images, etc.
+    metadata: listing.metadata || {}, // Add metadata for Other Services images
+    breed: listing.breed, // Add breed field
+    availability: listing.availability, // Add availability field
+    individualPuppies: listing.fields?.individualPuppies || [], // Add individualPuppies for puppy listings
   })) || [];
 
   // Transform API data to match the design expectations
@@ -113,7 +129,7 @@ const ExploreDetail = () => {
           }
         });
         // Remove duplicates and filter out non-image files (like PDFs)
-        const uniqueImages = [...new Set(allPuppyImages)].filter(img => {
+        const uniqueImages = Array.from(new Set(allPuppyImages)).filter(img => {
           const lowerImg = img.toLowerCase();
           return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
         });
@@ -677,27 +693,37 @@ const ExploreDetail = () => {
             ) : (
               <>
                 <div className="flex gap-4 w-full max-md:gap-2 max-md:grid max-md:grid-cols-2">
-                  <div className="flex w-full relative">
-                    <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
-                      <img className="max-md:w-4" src="/images/vectors/selectDate.png" />
-                    </span>
-                    <input
-                      className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
-                      type="date"
+                  <div className="flex w-full relative group">
+                    <DatePicker
+                      variant="rounded-full"
+                      date={selectedDate}
+                      setDate={setSelectedDate}
                       placeholder="Select Date"
-                      defaultValue={new Date().toISOString().split('T')[0]}
+                      className="border border-black text-[#4B4A4A] hover:border-black/40 focus:border-black focus:ring-2 focus:ring-black/10"
                     />
                   </div>
-                  <div className="flex w-full relative">
-                    <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0">
-                      <img className="max-md:w-4" src="/images/vectors/selectTime.png" />
+                  <div className="flex w-full relative group">
+                    <span className="absolute h-16 max-md:h-10 w-14 max-md:w-10 flex items-center justify-center top-0 left-0 z-10 pointer-events-none">
+                      <img className="max-md:w-4 transition-opacity group-hover:opacity-80" src="/images/vectors/selectTime.png" alt="Time icon" />
                     </span>
                     <input
-                      className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12"
+                      className="border relative max-md:text-xs z-10 max-md:pl-8 max-md:pr-2 bg-transparent border-black text-[#4B4A4A] rounded-full h-16 max-md:h-10 w-full px-6 pl-12 pr-4 transition-all duration-200 hover:border-black/40 focus:border-black focus:ring-2 focus:ring-black/10 cursor-pointer
+                      [&::-webkit-calendar-picker-indicator]:opacity-0
+                      [&::-webkit-calendar-picker-indicator]:absolute
+                      [&::-webkit-calendar-picker-indicator]:right-4
+                      [&::-webkit-calendar-picker-indicator]:w-6
+                      [&::-webkit-calendar-picker-indicator]:h-6
+                      [&::-webkit-calendar-picker-indicator]:cursor-pointer
+                      [&::-webkit-calendar-picker-indicator]:z-20"
                       type="time"
                       placeholder="Select Time"
                       defaultValue={new Date().toTimeString().slice(0, 5)}
                     />
+                    <span className="absolute right-4 top-1/2 -translate-y-1/2 z-10 pointer-events-none max-md:hidden">
+                      <svg className="w-5 h-5 text-[#4B4A4A] opacity-60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </span>
                   </div>
                 </div>
                 <button 
@@ -1034,6 +1060,123 @@ const ExploreDetail = () => {
         </div>
       </section>
       )}
+      
+      {/* Individual Puppies Section */}
+      {listing?.fields?.individualPuppies && 
+       Array.isArray(listing.fields.individualPuppies) && 
+       listing.fields.individualPuppies.length > 0 && (
+      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
+        <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
+        <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
+        <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Individual Puppies</span>
+        <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:grid-cols-1 max-md:gap-4 max-md:mt-4">
+          {listing.fields.individualPuppies.map((puppy: any, index: number) => {
+            // Filter out non-image files from puppyImages
+            const puppyImages = Array.isArray(puppy.puppyImages) 
+              ? puppy.puppyImages.filter((img: string) => {
+                  if (!img) return false;
+                  const lowerImg = img.toLowerCase();
+                  return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+                })
+              : [];
+            
+            if (puppyImages.length === 0) return null;
+            
+            return (
+              <div key={index} className="overflow-hidden flex flex-col gap-2 w-full">
+                <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Puppy {index + 1}</span>
+                <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
+                  <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
+                    {puppyImages.length > 1 ? (
+                      <>
+                        <Swiper 
+                          className="w-full h-full" 
+                          loop={false} 
+                          modules={[Navigation]} 
+                          slidesPerView={1} 
+                          spaceBetween={0}
+                          navigation={{ 
+                            nextEl: `.puppy${index}NextBtn-${listingId}`, 
+                            prevEl: `.puppy${index}PrevBtn-${listingId}` 
+                          }}
+                        >
+                          {puppyImages.map((image: string, imgIndex: number) => (
+                            <SwiperSlide key={imgIndex} className="relative w-full h-full">
+                              <Image 
+                                src={image} 
+                                alt={`Puppy ${index + 1} image ${imgIndex + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
+                        <ActionIcon 
+                          rounded="full" 
+                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 left-2 puppy${index}PrevBtn-${listingId}`}
+                        >
+                          <img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                        </ActionIcon>
+                        <ActionIcon 
+                          rounded="full" 
+                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 right-2 puppy${index}NextBtn-${listingId}`}
+                        >
+                          <img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                        </ActionIcon>
+                      </>
+                    ) : (
+                      <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
+                        <Image 
+                          src={puppyImages[0]} 
+                          alt={`Puppy ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </span>
+                    )}
+                  </div>
+                  
+                  {(puppy.microchipNumber || 
+                    puppy.puppyGender || 
+                    puppy.puppyColour || 
+                    puppy.puppyDateOfBirth || 
+                    puppy.vaccinationStatus) && (
+                    <ul className="list-disc list-inside text-xs text-[#8A8585]">
+                      {puppy.microchipNumber && (
+                        <li>Microchip Number: {puppy.microchipNumber}</li>
+                      )}
+                      {puppy.puppyGender && (
+                        <li>Gender: {puppy.puppyGender === 'male' ? 'Male' : puppy.puppyGender === 'female' ? 'Female' : puppy.puppyGender}</li>
+                      )}
+                      {puppy.puppyColour && (
+                        <li>Color: {puppy.puppyColour}</li>
+                      )}
+                      {puppy.puppyDateOfBirth && (
+                        <li>Date of Birth: {(() => {
+                          try {
+                            const date = new Date(puppy.puppyDateOfBirth);
+                            if (!isNaN(date.getTime())) {
+                              return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            }
+                            return puppy.puppyDateOfBirth;
+                          } catch (e) {
+                            return puppy.puppyDateOfBirth;
+                          }
+                        })()}</li>
+                      )}
+                      {puppy.vaccinationStatus && (
+                        <li>Vaccination Status: {puppy.vaccinationStatus}</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      )}
+      
       <section className="relative">
         <img className="mix-blend-multiply absolute bottom-0 max-md:max-w-52 max-md:top-0 max-md:my-auto max-md:-ml-4" src="/images/vectors/gradientLeft.png" />
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
@@ -1131,14 +1274,20 @@ const ExploreDetail = () => {
        {sellerListingsData && sellerListings.length > 0 && (
         <section className="flex flex-col gap-6 container">
           <span className="text-[40px] font-medium max-md:text-[32px]">{transformedListing.user?.name}'s Previous Listings</span>
-          <div className="flex gap-6 max-md:flex-col">
-            {sellerListings.map((listing) => (
-              <ListingCard 
-                key={listing.id} 
-                listing={{ ...listing, favourite: true }} 
-                currentUserId={currentUser?.id}
-              />
-            ))}
+          <div className="flex gap-6 items-start max-md:flex-col max-md:gap-4">
+            {/* Spacer to match explore page sidebar width */}
+            <div className="flex-1 min-w-0">
+              <div className="grid grid-cols-4 max-md:grid-cols-1 gap-6 max-md:gap-4 items-stretch">
+                {sellerListings.map((listing) => (
+                  <div key={listing.id} className="w-full">
+                    <ListingCard 
+                      listing={{ ...listing, favourite: true }} 
+                      currentUserId={currentUser?.id}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
         </section>
       )}
@@ -1213,28 +1362,34 @@ const ExploreDetail = () => {
      
       <section className="flex flex-col gap-6 container">
         <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
-        <div className="flex gap-6 max-md:flex-col">
-          {similarListingsData ? (
-            similarListings.length > 0 ? (
-              similarListings.map((listing) => (
-                <ListingCard 
-                  key={listing.id} 
-                  listing={{ ...listing, favourite: true }} 
-                  currentUserId={currentUser?.id}
-                />
-              ))
-            ) : (
-              <div className="w-full text-center py-8 text-gray-500">
-                No similar listings found at the moment.
+          <div className="flex gap-6 items-start max-md:flex-col max-md:gap-4">
+            {/* Spacer to match explore page sidebar width */}
+            <div className="flex-1 min-w-0">
+              <div className="grid grid-cols-4 max-md:grid-cols-1 gap-6 max-md:gap-4 items-stretch">
+                {similarListingsData ? (
+                  similarListings.length > 0 ? (
+                    similarListings.map((listing) => (
+                      <div key={listing.id} className="w-full">
+                        <ListingCard 
+                          listing={{ ...listing, favourite: true }} 
+                          currentUserId={currentUser?.id}
+                        />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-full text-center py-8 text-gray-500">
+                      No similar listings found at the moment.
+                    </div>
+                  )
+                ) : (
+                  <div className="w-full text-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
+                    Loading similar listings...
+                  </div>
+                )}
               </div>
-            )
-          ) : (
-            <div className="w-full text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mx-auto mb-4"></div>
-              Loading similar listings...
             </div>
-          )}
-        </div>
+          </div>
       </section>
       <CtaBlock />
     </>

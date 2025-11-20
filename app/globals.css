@@ -5,6 +5,23 @@
 body {
   @apply font-inter;
 }
+.daypicker {
+  @apply relative;
+}
+
+/* Completely disable react-day-picker default styling */
+.rdp {
+  --rdp-cell-size: auto;
+  --rdp-accent-color: inherit;
+  --rdp-accent-background-color: inherit;
+  --rdp-outline: none;
+}
+
+.rdp * {
+  all: unset;
+  display: revert;
+}
+
 
 /* Hide scrollbars but keep functionality */
 .scrollbar-hide {

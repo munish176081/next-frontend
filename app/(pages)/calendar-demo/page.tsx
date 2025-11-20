@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../..
 import { Input } from '../../_components/ui/form-fields/input';
 import Textarea from '../../_components/ui/form-fields/textarea';
 import { Calendar, Clock, Users, Video, CheckCircle, AlertCircle } from 'lucide-react';
+import { DatePicker } from '../../_components/ui/date-picker';
 
 function CalendarDemoContent() {
   const { 
@@ -155,11 +156,19 @@ function CalendarDemoContent() {
           <div className="grid gap-4 md:grid-cols-2">
             <div className="flex flex-col">
               <label className="text-sm font-medium mb-1.5">Date</label>
-              <input
-                type="date"
-                value={testMeetingData.date}
-                onChange={(e) => handleInputChange('date', e.target.value)}
-                className="px-4 py-2 text-sm h-10 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              <DatePicker
+                date={testMeetingData.date ? new Date(testMeetingData.date) : undefined}
+                setDate={(date) => {
+                  if (date) {
+                    const year = date.getFullYear();
+                    const month = String(date.getMonth() + 1).padStart(2, '0');
+                    const day = String(date.getDate()).padStart(2, '0');
+                    handleInputChange('date', `${year}-${month}-${day}`);
+                  } else {
+                    handleInputChange('date', '');
+                  }
+                }}
+                placeholder="Select a date"
               />
             </div>
             

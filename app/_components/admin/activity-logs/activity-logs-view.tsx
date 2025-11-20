@@ -8,6 +8,7 @@ import { Badge } from "@/_components/ui/badge";
 import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/_components/ui/select";
+import { DatePicker } from "@/_components/ui/date-picker";
 import { 
   Search, 
   Filter, 
@@ -142,10 +143,19 @@ export const ActivityLogsView = () => {
                          {/* Date Range */}
              <div>
                <label className="text-sm font-medium mb-2 block">Start Date</label>
-               <Input
-                 type="date"
-                 value={filters.startDate || ""}
-                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange("startDate", e.target.value)}
+               <DatePicker
+                 date={filters.startDate ? new Date(filters.startDate) : undefined}
+                 setDate={(date) => {
+                   if (date) {
+                     const year = date.getFullYear();
+                     const month = String(date.getMonth() + 1).padStart(2, '0');
+                     const day = String(date.getDate()).padStart(2, '0');
+                     handleFilterChange("startDate", `${year}-${month}-${day}`);
+                   } else {
+                     handleFilterChange("startDate", "");
+                   }
+                 }}
+                 placeholder="Select start date"
                  className="w-full"
                />
              </div>
@@ -155,10 +165,19 @@ export const ActivityLogsView = () => {
              {/* End Date */}
              <div>
                <label className="text-sm font-medium mb-2 block">End Date</label>
-               <Input
-                 type="date"
-                 value={filters.endDate || ""}
-                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleFilterChange("endDate", e.target.value)}
+               <DatePicker
+                 date={filters.endDate ? new Date(filters.endDate) : undefined}
+                 setDate={(date) => {
+                   if (date) {
+                     const year = date.getFullYear();
+                     const month = String(date.getMonth() + 1).padStart(2, '0');
+                     const day = String(date.getDate()).padStart(2, '0');
+                     handleFilterChange("endDate", `${year}-${month}-${day}`);
+                   } else {
+                     handleFilterChange("endDate", "");
+                   }
+                 }}
+                 placeholder="Select end date"
                  className="w-full"
                />
              </div>

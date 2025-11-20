@@ -10,6 +10,7 @@ import { toast } from '@/_hooks/use-toast';
 import { BreedSelect } from '@/_components/form-fields/breed-select';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { PhoneInput } from '@/_components/ui/form-fields';
+import { DatePicker } from '@/_components/ui/date-picker';
 
 // Lazy load BadgeSelector to avoid SSR issues
 const BadgeSelector = lazy(() => import('@/_components/ui/badge/badge-selector'));
@@ -391,43 +392,34 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         );
 
         case 'date':
+          // Convert string value to Date for DatePicker
+          const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : undefined;
+          const minDate = field.validation?.min ? new Date(field.validation.min) : undefined;
+          const maxDate = field.validation?.max ? new Date(field.validation.max) : undefined;
+          
           return (
-            <div className="relative">
-              <input
-                type="date"
-                value={value || ''}
-                placeholder={field.placeholder || 'Select a date'}
-                onChange={handleInputChange}
-                className={`
-                  ${baseClasses}
-                  ${errorClasses}
-                  bg-white
-                  pr-12
-                  appearance-none
-                  [&::-webkit-calendar-picker-indicator]:opacity-0
-                  [&::-webkit-calendar-picker-indicator]:absolute
-                  [&::-webkit-calendar-picker-indicator]:right-0
-                  [&::-webkit-calendar-picker-indicator]:w-0
-                `}
-              />
-        
-              {/* Custom Calendar Icon */}
-              <div className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                  />
-                </svg>
-              </div>
-            </div>
+            <DatePicker
+              variant="rounded-full"
+              date={dateValue}
+              setDate={(date) => {
+                // Convert Date back to string format (YYYY-MM-DD) for form compatibility
+                if (date) {
+                  const year = date.getFullYear();
+                  const month = String(date.getMonth() + 1).padStart(2, '0');
+                  const day = String(date.getDate()).padStart(2, '0');
+                  onChange(field.name, `${year}-${month}-${day}`);
+                } else {
+                  onChange(field.name, '');
+                }
+              }}
+              value={value || ''}
+              onChange={(val) => onChange(field.name, val)}
+              placeholder={field.placeholder || 'Select a date'}
+              error={error}
+              min={minDate}
+              max={maxDate}
+              className={errorClasses}
+            />
           );
         
 
@@ -1021,29 +1013,24 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                       />
                     )}
                     {config?.subFieldType === 'date' && (
-                      <div className="relative">
-                        <input
-                          type="date"
-                          value={item}
-                          onChange={(e) => updateItem(index, field.name, e.target.value)}
-                          className={`${baseClasses} ${errorClasses} bg-white pr-12`}
-                        />
-                        <div className="absolute right-6 top-1/2 transform -translate-y-1/2 pointer-events-none max-md:right-4">
-                          <svg 
-                            className="w-5 h-5 text-gray-400 max-md:w-4 max-md:h-4" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            viewBox="0 0 24 24"
-                          >
-                            <path 
-                              strokeLinecap="round" 
-                              strokeLinejoin="round" 
-                              strokeWidth={2} 
-                              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
-                            />
-                          </svg>
-                        </div>
-                      </div>
+                      <DatePicker
+                        variant="rounded-full"
+                        date={item ? (typeof item === 'string' ? new Date(item) : item) : undefined}
+                        setDate={(date) => {
+                          if (date) {
+                            const year = date.getFullYear();
+                            const month = String(date.getMonth() + 1).padStart(2, '0');
+                            const day = String(date.getDate()).padStart(2, '0');
+                            updateItem(index, field.name, `${year}-${month}-${day}`);
+                          } else {
+                            updateItem(index, field.name, '');
+                          }
+                        }}
+                        value={item || ''}
+                        onChange={(val) => updateItem(index, field.name, val)}
+                        placeholder="Select a date"
+                        className={errorClasses}
+                      />
                     )}
                     {config?.subFieldType === 'select' && (
                       <select

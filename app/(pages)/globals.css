@@ -5,6 +5,10 @@
 body {
   @apply font-inter;
 }
+/* boost tailwind utility specificity */
+.daypicker {
+  @apply relative;
+}
 @layer base {
   /* default theme */
   :root {
@@ -263,4 +267,50 @@ input[type="date"] {
   );
   background-size: 200% 100%;
   animation: shimmer 2s infinite;
+}
+
+/* Calendar/Date Picker Overrides */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #000000;
+  --rdp-background-color: #f3f4f6;
+  --rdp-accent-color-dark: #000000;
+  --rdp-background-color-dark: #f3f4f6;
+  --rdp-outline: 2px solid var(--rdp-accent-color);
+  --rdp-outline-selected: 2px solid var(--rdp-accent-color);
+}
+
+/* Hide duplicate caption label when using dropdowns */
+.rdp-caption_label {
+  display: none !important;
+}
+
+/* Override blue colors with black/gray */
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+.rdp-button_reset.rdp-button.rdp-nav_button,
+.rdp-button_reset.rdp-button.rdp-nav_button:hover,
+.rdp-button_reset.rdp-button.rdp-nav_button:focus {
+  color: #111827 !important;
+}
+
+.rdp-button_reset.rdp-button.rdp-nav_button svg {
+  color: #111827 !important;
+  fill: #111827 !important;
+}
+
+/* Style dropdowns */
+.rdp-dropdown {
+  color: #111827 !important;
+}
+
+.rdp-dropdown:focus {
+  border-color: #000000 !important;
+  outline: 2px solid rgba(0, 0, 0, 0.1) !important;
+  outline-offset: 2px;
 }
