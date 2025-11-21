@@ -51,7 +51,7 @@ export const DashboardLayout = ({
       case '/admin/logs':
         return '/images/vectors/menu2.png';
       case '/account/profile':
-        return '/images/vectors/profile.png';
+        return '/images/vectors/user-profile.png';
       case '/admin/alerts':
         return '/images/vectors/menu3.png';
       default:
