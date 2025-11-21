@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
-import { ListingField, getCommonFields, getContactFields, getDynamicFields } from "@/_config/listing-types";
+import { ListingField, getCommonFields, getContactFields, getDynamicFields, getAllFields } from "@/_config/listing-types";
 import { isParentInfoRequired, getParentFields } from "@/_config/parent-fields";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
@@ -133,9 +133,35 @@ export default function FutureListingForm({
       // Extract dynamic fields (go to fields JSON)
       const dynamicData: Record<string, any> = {};
       dynamicFields.forEach(field => {
-        if (formData[field.name] !== undefined && formData[field.name] !== '') {
-          dynamicData[field.name] = formData[field.name];
+        // Always include the field if it exists in formData (even if empty string)
+        const fieldValue = formData[field.name];
+        if (fieldValue !== undefined) {
+          dynamicData[field.name] = fieldValue;
         }
+      });
+      
+      // Explicitly ensure registrationNumber is always included (required field)
+      // This handles cases where the field might not be initialized in formData
+      // Check all fields (including studDynamic) for registrationNumber
+      const allFields = getAllFields(selectedListingType);
+      const registrationField = allFields.find(f => f.name === 'registrationNumber');
+      if (registrationField) {
+        // Always include registrationNumber in dynamicData, even if it's not in formData
+        // Use formData value if it exists, otherwise default to empty string
+        dynamicData.registrationNumber = formData.registrationNumber !== undefined 
+          ? formData.registrationNumber 
+          : '';
+      }
+      
+      // Debug: Log registrationNumber specifically
+      console.log('🔍 Dynamic fields extraction:', {
+        registrationNumberInFormData: formData.registrationNumber,
+        registrationNumberInDynamicData: dynamicData.registrationNumber,
+        registrationFieldExists: !!registrationField,
+        registrationFieldRequired: registrationField?.required,
+        allDynamicFields: dynamicFields.map(f => f.name),
+        dynamicDataKeys: Object.keys(dynamicData),
+        formDataKeys: Object.keys(formData)
       });
 
       // Extract parent information

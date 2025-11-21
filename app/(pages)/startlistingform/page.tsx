@@ -217,6 +217,8 @@ function Startlistingform() {
         // If editing, populate with existing data
         if (existingListing) {
           console.log('Loading existing listing data:', existingListing);
+          console.log('Fields object:', existingListing.fields);
+          console.log('Registration number in fields:', existingListing.fields?.registrationNumber);
 
           // Populate common fields from dedicated DB columns
           if (existingListing.title) initialData.title = existingListing.title;
@@ -326,6 +328,12 @@ function Startlistingform() {
                 initialData[key] = value;
               }
             });
+            
+            // Explicitly handle registrationNumber field (in case it's stored differently)
+            if (existingListing.fields.registrationNumber !== undefined && existingListing.fields.registrationNumber !== null) {
+              initialData.registrationNumber = existingListing.fields.registrationNumber;
+              console.log('📝 Loaded registrationNumber from fields:', existingListing.fields.registrationNumber);
+            }
           }
 
           // Special handling for puppy litter listings - load individual puppy data

@@ -385,6 +385,13 @@ export default function DynamicFormField({ field, value, onChange, error, layout
             placeholder={field.placeholder}
             value={value || ''}
             onChange={handleInputChange}
+            onWheel={(e) => {
+              console.log('Wheel event:', e);
+              // Prevent scroll from changing the number input value
+              if (document.activeElement === e.currentTarget) {
+                e.currentTarget.blur();
+              }
+            }}
             min={field.validation?.min}
             max={field.validation?.max}
             className={`${baseClasses} ${errorClasses}`}

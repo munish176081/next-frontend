@@ -31,7 +31,8 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
     required: true,
     options: [
       { value: 'male', label: 'Male' },
-      { value: 'female', label: 'Female' }
+      { value: 'female', label: 'Female' },
+      { value: 'both', label: 'Both' }
     ],
     fieldCategory: 'dynamic'
   },

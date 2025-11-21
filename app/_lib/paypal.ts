@@ -1,5 +1,5 @@
 import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { API_BASE_URL } from "@/_config/constants";
+import { API_BASE_URL, PAYMENT_CURRENCY } from "@/_config/constants";
 
 /**
  * Get PayPal client ID from environment
@@ -14,7 +14,7 @@ export function getPayPalClientId(): string {
 export function getPayPalOptions() {
   return {
     clientId: getPayPalClientId(),
-    currency: "USD",
+    currency: PAYMENT_CURRENCY,
     intent: "capture" as const,
   };
 }

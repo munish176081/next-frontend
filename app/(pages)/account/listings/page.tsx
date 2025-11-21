@@ -308,7 +308,9 @@ function UserListingsPage() {
                       })()}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap">
-                      {toTitleCaseFromId(listing.type)}
+                      {listing.type === 'PUPPY_LITTER_LISTING'
+                        ? "Litter Listing"
+                        : toTitleCaseFromId(listing.type)}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
                       <span

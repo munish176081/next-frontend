@@ -614,7 +614,7 @@ const ExploreDetail = () => {
         </div>
         <div className="flex flex-col gap-3 max-md:gap-2">
           <span className="text-5xl font-medium max-md:text-3xl">{transformedListing.title}</span>
-          <span className="text-[22px] text-[#9B9B9B] mt-3 max-md:text-base max-md:mt-1">({transformedListing.breed}-{new Date(transformedListing.createdAt).getFullYear()}-{String(transformedListing.viewCount).padStart(3, '0')})</span>
+          <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">{transformedListing.breed}</span>
           <span className='max-md:text-xs'>{transformedListing.location}</span>
           <div className="flex gap-2 max-md:gap-1">
             <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-[#87D78E4D] bg-[#87D78E4D]/30 px-4 rounded-full flex items-center">
