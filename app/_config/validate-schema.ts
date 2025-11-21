@@ -228,7 +228,7 @@ export const puppyLitterListingSchema = z.object({
   individualPuppies: z.array(z.object({
     puppyImages: z.array(z.string()).min(1, "At least one puppy image is required"),
     microchipNumber: z.string().min(1, "Microchip number is required"),
-    puppyGender: z.enum(['male', 'female'], { required_error: "Puppy gender is required" }),
+    puppyGender: z.enum(['male', 'female', 'both'], { required_error: "Puppy gender is required" }),
     puppyColour: z.string().optional(),
     puppyDateOfBirth: z.string().min(1, "Date of birth is required"),
     vaccinationStatus: z.enum(['Up to Date', 'Partial', 'Not Started'], {
