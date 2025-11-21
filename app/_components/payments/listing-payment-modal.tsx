@@ -581,7 +581,7 @@ export function ListingPaymentModal({
                     <div className="flex items-center justify-between mb-2">
                       <div>
                         <div className="text-xs text-gray-500 mb-0.5">{listingTypeName}</div>
-                        <div className="text-xs text-gray-600">{duration} days</div>
+                        <div className="text-xs text-gray-600">30 days</div>
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-semibold text-gray-900">{formatPrice(priceBreakdown.basePrice)}</div>

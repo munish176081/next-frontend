@@ -10,6 +10,7 @@ import { useDeletePendingFiles } from "@/_services/hooks/upload/use-delete-pendi
 import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
 import { toast } from "@/_hooks/use-toast";
 import { LoadingButton } from "@/_components/ui/loading-button";
+import { scrollToFirstError } from "@/_utils/scroll-to-error";
 
 export interface BaseFormProps {
   selectedListingType: ListingType;
@@ -350,8 +351,8 @@ export default function BaseListingForm({
     });
   };
 
-  const validateForm = (): boolean => {
-    if (!selectedListingType) return false;
+  const validateForm = (): { isValid: boolean; errors: Record<string, string> } => {
+    if (!selectedListingType) return { isValid: false, errors: {} };
 
     const newErrors: Record<string, string> = {};
 
@@ -518,7 +519,7 @@ export default function BaseListingForm({
     }
 
     setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    return { isValid: Object.keys(newErrors).length === 0, errors: newErrors };
   };
 
   const getCategoryFromType = (type: ListingTypeEnum): ListingCategoryEnum => {
@@ -557,11 +558,18 @@ export default function BaseListingForm({
       return;
     }
 
-    if (!validateForm()) {
-      console.log("BASE LISTING FORM VALIDATION ERRORS", errors);
+    const validationResult = validateForm();
+    if (!validationResult.isValid) {
+      console.log("BASE LISTING FORM VALIDATION ERRORS", validationResult.errors);
       toast({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
+      });
+      // Use requestAnimationFrame to ensure DOM is updated with error states
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToFirstError(validationResult.errors);
+        }, 50);
       });
       return;
     }

@@ -487,10 +487,12 @@ export default function PuppyLitterListingForm({
           description: errorCount > 1 ? `${errorCount} field(s) need attention` : undefined,
           variant: 'destructive',
         });
-        // Scroll to first error field
-        setTimeout(() => {
-          scrollToFirstError(validationErrors);
-        }, 100);
+        // Use requestAnimationFrame to ensure DOM is updated with error states
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            scrollToFirstError(validationErrors);
+          }, 50);
+        });
         setIsSubmitting(false);
         return;
       }
@@ -759,15 +761,19 @@ export default function PuppyLitterListingForm({
     // For single puppy mode, skip base form validation and rely on zod schema validation
     // which properly handles the data transformation
     if (formData.listingType !== 'puppy') {
-      if (!baseForm.validateForm()) {
-        console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", errors);
+      const validationResult = baseForm.validateForm();
+      if (!validationResult.isValid) {
+        console.log("PUPPY LITTER LISTING FORM VALIDATION ERRORS", validationResult.errors);
         toast({
           title: 'Please fix the errors before submitting.',
           variant: 'destructive',
         });
-        setTimeout(() => {
-          scrollToFirstError(errors);
-        }, 100);
+        // Use requestAnimationFrame to ensure DOM is updated with error states
+        requestAnimationFrame(() => {
+          setTimeout(() => {
+            scrollToFirstError(validationResult.errors);
+          }, 50);
+        });
         return;
       }
     }
@@ -856,9 +862,12 @@ export default function PuppyLitterListingForm({
         description: errorCount > 1 ? `${errorCount} field(s) need attention` : undefined,
         variant: 'destructive',
       });
-      setTimeout(() => {
-        scrollToFirstError(validationErrors);
-      }, 100);
+      // Use requestAnimationFrame to ensure DOM is updated with error states
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToFirstError(validationErrors);
+        }, 50);
+      });
       return;
     }
 

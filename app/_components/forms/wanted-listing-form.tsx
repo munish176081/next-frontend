@@ -62,15 +62,18 @@ export default function WantedListingForm({
       return;
     }
 
-    if (!baseForm.validateForm()) {
+    const validationResult = baseForm.validateForm();
+    if (!validationResult.isValid) {
       toast({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
       });
-      // Scroll to first error field
-      setTimeout(() => {
-        scrollToFirstError(errors);
-      }, 100);
+      // Use requestAnimationFrame to ensure DOM is updated with error states
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToFirstError(validationResult.errors);
+        }, 50);
+      });
       return;
     }
 

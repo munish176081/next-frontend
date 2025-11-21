@@ -1109,10 +1109,13 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   const handlesOwnError = field.type === 'phone' || field.type === 'location' || isBreedSelect;
   
   return (
-    <div className={containerClasses} data-field-name={field.name}>
+    <div 
+      className={containerClasses} 
+      data-field-name={field.name}
+    >
       {/* Don't render label for phone type - PhoneInput handles it internally */}
       {field.type !== 'phone' && (
-        <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+        <label className={`mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm ${error ? 'text-red-600' : ''}`}>
           {getDynamicLabel ? getDynamicLabel(field.name, field.label) : field.label}
           {field.required && <span className="text-red-500 ml-1">*</span>}
         </label>
@@ -1120,7 +1123,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       {renderField()}
       {/* Components that handle errors internally: phone, location, breed selects */}
       {error && !handlesOwnError && (
-        <span className="text-red-500 text-sm mt-1">{error}</span>
+        <span className="text-red-500 text-sm mt-1 font-medium">{error}</span>
       )}
     </div>
   );

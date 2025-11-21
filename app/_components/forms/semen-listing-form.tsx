@@ -269,14 +269,18 @@ export default function SemenListingForm({
       return;
     }
 
-    if (!baseForm.validateForm()) {
+    const validationResult = baseForm.validateForm();
+    if (!validationResult.isValid) {
       toast({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
       });
-      setTimeout(() => {
-        scrollToFirstError(errors);
-      }, 100);
+      // Use requestAnimationFrame to ensure DOM is updated with error states
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          scrollToFirstError(validationResult.errors);
+        }, 50);
+      });
       return;
     }
 

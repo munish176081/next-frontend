@@ -6,7 +6,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from '@/_hooks/use-toast';
 import { meetingApiService } from '@/_services/meetings/meetingApiService';
-import { CreateMeetingDto } from '@/_types/meeting';
 import { useMeetingsWithCalendar } from '@/_services/hooks/meetings/use-meetings-with-calendar';
 import { useCalendar } from '@/_contexts/calendar-context';
 import { CalendarAuthorizationCompact } from '../calendar/calendar-authorization-compact';
