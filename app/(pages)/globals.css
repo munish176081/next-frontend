@@ -314,3 +314,19 @@ input[type="date"] {
   outline: 2px solid rgba(0, 0, 0, 0.1) !important;
   outline-offset: 2px;
 }
+
+
+/* Fix duplicate dropdowns in caption - ensure only one month and one year dropdown */
+.rdp-caption_dropdowns {
+  display: flex !important;
+  justify-content: center !important;
+  gap: 0.5rem !important;
+  align-items: center !important;
+  position: relative !important;
+}
+
+/* Hide duplicate dropdowns - keep only the first month and first year dropdown */
+.rdp-caption_dropdowns .rdp-dropdown_month ~ .rdp-dropdown_month,
+.rdp-caption_dropdowns .rdp-dropdown_year ~ .rdp-dropdown_year {
+  display: none !important;
+}

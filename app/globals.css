@@ -22,6 +22,19 @@ body {
   display: revert;
 }
 
+span.hidden {
+  display: none !important;
+}
+.rdp-chevron {
+  display: inline-block;
+  fill: #000000 !important;
+}
+nav.space-x-1.flex.items-center {
+  max-width: fit-content !important;
+  position: absolute !important;
+  right: 0 !important;
+  top: 20px !important;
+}
 
 /* Hide scrollbars but keep functionality */
 .scrollbar-hide {
