@@ -59,6 +59,16 @@ export const validateField = (field: ListingField, value: any): string | null =>
       if (value && !isValidDate(value)) {
         return `${field.label} must be a valid date`;
       }
+      // For dateOfBirth fields (non-stud listings), prevent future dates
+      // Note: Stud listings now use 'age' field (number) instead of 'dateOfBirth'
+      if (value && field.name === 'dateOfBirth') {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999); // Set to end of today
+        if (selectedDate > today) {
+          return `${field.label} cannot be in the future`;
+        }
+      }
       break;
   }
 

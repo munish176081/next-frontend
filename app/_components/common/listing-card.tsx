@@ -337,7 +337,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             </>
           ) : isStudListing && studInfo ? (
             <>
-              <Heading tag="h4" className="text-2xl font-semibold">{studInfo.dogName}</Heading>
+              <Heading tag="h4" className="text-2xl font-semibold">{title || studInfo.dogName}</Heading>
               <div className={availabilityBadgeClasses}>
                 {studInfo.gender}
                 <span className="text-gray-500">•</span>

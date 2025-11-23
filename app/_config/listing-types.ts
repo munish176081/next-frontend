@@ -450,7 +450,7 @@ export const LISTING_TYPES: ListingType[] = [
         name: 'dnaResults',
         label: 'Upload DNA Results',
         type: 'file',
-        required: true,
+        required: false,
         fileConfig: {
           multiple: true,
           accept: '.pdf,.doc,.docx',
@@ -713,10 +713,14 @@ export const LISTING_TYPES: ListingType[] = [
         fieldCategory: 'dynamic'
       },
       {
-        name: 'dateOfBirth',
-        label: 'Date of Birth or Age',
-        type: 'date',
+        name: 'age',
+        label: 'Age',
+        type: 'number',
         required: true,
+        placeholder: 'Enter age in years',
+        validation: {
+          min: 0
+        },
         fieldCategory: 'dynamic'
       },
       COMMON_FIELDS.location,
@@ -948,13 +952,13 @@ export const LISTING_TYPES: ListingType[] = [
         validation: { min: 0 },
         fieldCategory: 'common' as const
       },  
-      {
-        name: 'shippingDate',
-        label: 'Shipping Availability Date',
-        type: 'date',
-        required: false,
-        fieldCategory: 'dynamic'
-      },
+      // {
+      //   name: 'shippingDate',
+      //   label: 'Shipping Availability Date',
+      //   type: 'date',
+      //   required: false,
+      //   fieldCategory: 'dynamic'
+      // },
       // {
       //   name: 'healthCertificateText',
       //   label: 'Health Certificate (text)',

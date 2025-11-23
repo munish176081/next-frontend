@@ -291,6 +291,25 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       return;
     }
 
+    // Check file count limit BEFORE uploading
+    const activeFiles = uploadedUrls.filter(url => !pendingDeletions.includes(url));
+    const totalFilesAfterUpload = activeFiles.length + files.length;
+    
+    if (field.fileConfig?.maxCount && totalFilesAfterUpload > field.fileConfig.maxCount) {
+      const errorMessage = `Maximum ${field.fileConfig.maxCount} file(s) are allowed. You already have ${activeFiles.length} file(s) uploaded.`;
+      setFileValidationErrors([errorMessage]);
+      toast({
+        title: "File Upload Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      // Clear the input value
+      if (e.target) {
+        e.target.value = '';
+      }
+      return;
+    }
+
     // Clear validation errors for immediate issues
     setFileValidationErrors([]);
 
@@ -402,7 +421,15 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           // Convert string value to Date for DatePicker
           const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : undefined;
           const minDate = field.validation?.min ? new Date(field.validation.min) : undefined;
-          const maxDate = field.validation?.max ? new Date(field.validation.max) : undefined;
+          
+          // For dateOfBirth fields (non-stud listings), prevent future dates by default
+          // Note: Stud listings now use 'age' field (number) instead of 'dateOfBirth'
+          let maxDate = field.validation?.max ? new Date(field.validation.max) : undefined;
+          if (field.name === 'dateOfBirth' && !field.validation?.max) {
+            // Set max date to today to prevent future dates
+            maxDate = new Date();
+            maxDate.setHours(23, 59, 59, 999); // Set to end of today
+          }
           
           return (
             <DatePicker
@@ -554,7 +581,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                 <div className="flex justify-between items-center mb-3">
                   <div className="flex items-center space-x-2">
                     <p className="text-sm font-medium text-gray-700">
-                      Uploaded files ({getActiveFiles().length}/{uploadedUrls.length})
+                      Uploaded files ({getActiveFiles().length}{field.fileConfig?.maxCount ? `/${field.fileConfig.maxCount}` : uploadedUrls.length > 0 ? `/${uploadedUrls.length}` : ''})
                     </p>
                     {pendingDeletions.length > 0 && (
                       <span className="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">

@@ -29,7 +29,7 @@ export const STUD_LISTING_FIELD_CONFIG: FieldConfig = {
     
     // Required Information fields
     required: [
-      'dogName', 'dateOfBirth', 'price', 'fee', 'registrationNumber', 'dogImages', 'dnaResults'
+      'dogName', 'age', 'price', 'fee', 'registrationNumber', 'dogImages', 'dnaResults'
     ],
     
     // Additional Information fields
@@ -53,7 +53,7 @@ export const STUD_LISTING_FIELD_CONFIG: FieldConfig = {
   groups: {
     identification: ['registrationNumber', 'badges'],
     health: ['healthInfo', 'dnaResults'],
-    studDetails: ['dogName', 'dateOfBirth', 'price', 'fee'],
+    studDetails: ['dogName', 'age', 'price', 'fee'],
     optional: ['provenLitters', 'videoUrls', 'sireName', 'damName', 'healthCertificates']
   }
 };
