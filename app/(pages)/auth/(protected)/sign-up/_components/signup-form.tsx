@@ -12,13 +12,20 @@ import { useSignup } from "@/_services/hooks/auth/use-signup";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { signUpSchema, SignUpType } from "@/_config/validate-schema";
 import SocialLogin from "@/_components/auth/social-login";
+import ReCAPTCHA from "react-google-recaptcha";
+import { useRef } from "react";
 
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+console.log("RECAPTCHA_SITE_KEY", RECAPTCHA_SITE_KEY);
 export default function SignUpForm() {
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const {
     register,
     handleSubmit,
     reset,
     formState: { errors },
+    setValue,
+    watch,
   } = useForm<SignUpType>({
     resolver: zodResolver(signUpSchema),
     mode: "onTouched",
@@ -29,7 +36,7 @@ export default function SignUpForm() {
   const { mutate: signup, isPending } = useSignup();
 
   async function handleFormSubmit(data: SignUpType) {
-    const { acceptPolicy, ...signupBody } = data;
+    const { acceptPolicy, recaptchaToken, ...signupBody } = data;
 
     if (!acceptPolicy) {
       toast({
@@ -40,9 +47,20 @@ export default function SignUpForm() {
       return;
     }
 
-    await signup(signupBody, {
+    // Only require reCAPTCHA if site key is configured
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      toast({
+        title: "Error",
+        description: "Please complete the reCAPTCHA verification.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    await signup({ ...signupBody, ...(recaptchaToken && { recaptchaToken }) }, {
       onSuccess: (data: any) => {
         reset();
+        recaptchaRef.current?.reset();
         toast({
           title: "Check your email!",
           description: "We've sent you a verification code. Please verify your email to continue.",
@@ -134,6 +152,26 @@ export default function SignUpForm() {
           error={errors?.acceptPolicy?.message}
           {...register("acceptPolicy")}
         />
+        {RECAPTCHA_SITE_KEY && (
+          <div className="mt-4 mb-4">
+            <ReCAPTCHA
+              ref={recaptchaRef}
+              sitekey={RECAPTCHA_SITE_KEY}
+              onChange={(token) => {
+                setValue("recaptchaToken", token || "", { shouldValidate: true });
+              }}
+              onExpired={() => {
+                setValue("recaptchaToken", "", { shouldValidate: true });
+              }}
+              onError={() => {
+                setValue("recaptchaToken", "", { shouldValidate: true });
+              }}
+            />
+            {errors?.recaptchaToken && (
+              <p className="text-sm text-red-500 mt-1">{errors.recaptchaToken.message}</p>
+            )}
+          </div>
+        )}
         <LoadingButton
           type="submit"
           loading={isPending}

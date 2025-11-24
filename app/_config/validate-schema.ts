@@ -38,10 +38,25 @@ export const signUpSchema = z
     acceptPolicy: z.boolean().refine((data) => data === true, {
       message: "You must accept the terms of service and privacy policy.",
     }),
+    recaptchaToken: z
+      .string()
+      .min(1, { message: "Please complete the reCAPTCHA verification." })
+      .optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match.",
     path: ["confirmPassword"],
+  })
+  .refine((data) => {
+    // Only require reCAPTCHA if the site key is configured
+    const recaptchaSiteKey = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
+    if (recaptchaSiteKey && !data.recaptchaToken) {
+      return false;
+    }
+    return true;
+  }, {
+    message: "Please complete the reCAPTCHA verification.",
+    path: ["recaptchaToken"],
   });
 
 export const loginInfoSchema = z.object({
