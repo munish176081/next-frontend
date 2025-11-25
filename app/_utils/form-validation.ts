@@ -33,8 +33,12 @@ export const validateField = (field: ListingField, value: any): string | null =>
 
     case 'file':
       if (field.fileConfig?.minCount) {
-        const files = Array.isArray(value) ? value : [];
-        if (files.length < field.fileConfig.minCount) {
+        // For optional fields, only validate minCount if files are actually provided
+        const files = Array.isArray(value) ? value : (typeof value === 'string' && value.trim() !== '' ? [value] : []);
+        // Only validate minCount if field is required OR if files are provided
+        if (field.required && files.length < field.fileConfig.minCount) {
+          return `Please upload at least ${field.fileConfig.minCount} file(s)`;
+        } else if (!field.required && files.length > 0 && files.length < field.fileConfig.minCount) {
           return `Please upload at least ${field.fileConfig.minCount} file(s)`;
         }
       }

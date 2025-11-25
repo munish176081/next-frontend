@@ -233,8 +233,12 @@ export const puppyLitterListingSchema = z.object({
   // Delivery options
   deliveryOptions: z.array(z.string()).min(1, "Please select at least one delivery option"),
   
-  // DNA Results
-  dnaResults: z.array(z.string()).min(1, "DNA results are required"),
+  // DNA Results (optional)
+  dnaResults: z.union([z.array(z.string()), z.string()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return [];
+    if (typeof val === "string") return [];
+    return Array.isArray(val) ? val : [];
+  }).optional(),
   
   // Microchip numbers for same-details option
   microchipNumbers: z.array(z.string().min(1, "Microchip number is required")).optional(),

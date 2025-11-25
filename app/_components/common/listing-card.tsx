@@ -395,7 +395,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
                   <Text className="text-2xl font-normal text-gray-900">
-                    ${studInfo.studFee?.toLocaleString()}
+                    ${studInfo.studFee ? parseInt(studInfo.studFee.toString()) : 0}
                   </Text>
                 </div>
                 <Text className="text-sm text-gray-500 font-medium">Stud fee</Text>

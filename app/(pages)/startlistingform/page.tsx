@@ -505,6 +505,12 @@ function Startlistingform() {
     }
   }, [breedId, existingListing, selectedListingType]);
 
+  useEffect(() => {
+    if (selectedListingType) {
+      setErrors({});
+    }
+  }, [selectedListingType?.id]);
+  
   const handleFieldChange = (name: string, value: any, breedId?: string) => {
     console.log('handleFieldChange - name:', name, 'value:', value);
     if (name === 'gender') {

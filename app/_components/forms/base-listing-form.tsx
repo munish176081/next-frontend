@@ -408,7 +408,8 @@ export default function BaseListingForm({
           }
 
           if (groupField.type === 'file' && !groupField.required && value && groupField.fileConfig?.minCount) {
-            const urls = Array.isArray(value) ? value : [];
+            // For optional fields, only validate minCount if files are actually provided
+            const urls = Array.isArray(value) ? value : (typeof value === 'string' && value.trim() !== '' ? [value] : []);
             if (urls.length > 0 && urls.length < groupField.fileConfig.minCount) {
               newErrors[groupField.name] = `Please upload at least ${groupField.fileConfig.minCount} ${groupField.fileConfig.accept?.includes('image/*') ? 'photo(s)' : 'file(s)'}`;
             }
@@ -445,7 +446,8 @@ export default function BaseListingForm({
       }
 
       if (field.type === 'file' && !field.required && value && field.fileConfig?.minCount) {
-        const urls = Array.isArray(value) ? value : [];
+        // For optional fields, only validate minCount if files are actually provided
+        const urls = Array.isArray(value) ? value : (typeof value === 'string' && value.trim() !== '' ? [value] : []);
         if (urls.length > 0 && urls.length < field.fileConfig.minCount) {
           newErrors[field.name] = `Please upload at least ${field.fileConfig.minCount} ${field.fileConfig.accept?.includes('image/*') ? 'photo(s)' : 'file(s)'}`;
         }
