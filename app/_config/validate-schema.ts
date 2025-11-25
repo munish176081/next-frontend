@@ -256,7 +256,11 @@ export const puppyLitterListingSchema = z.object({
   })).optional(),
   
   // Optional fields
-  healthCertificates: z.array(z.string()).optional(),
+  healthCertificates: z.union([z.array(z.string()), z.string()]).transform((val) => {
+    if (val === "" || val === null || val === undefined) return [];
+    if (typeof val === "string") return [];
+    return Array.isArray(val) ? val : [];
+  }).optional(),
   badges: z.array(z.string()).optional(),
   
   // Pricing details

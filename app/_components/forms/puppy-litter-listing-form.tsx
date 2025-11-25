@@ -459,11 +459,22 @@ export default function PuppyLitterListingForm({
               ? [] 
               : [];
         
+        // Handle healthCertificates: convert string to array or ensure it's an array
+        const healthCertificatesValue = formData.healthCertificates;
+        const healthCertificatesArray = healthCertificatesValue === undefined || healthCertificatesValue === null || healthCertificatesValue === '' 
+          ? [] 
+          : Array.isArray(healthCertificatesValue) 
+            ? healthCertificatesValue 
+            : typeof healthCertificatesValue === 'string' 
+              ? [] 
+              : [];
+        
         const dataToValidate = {
           listingType: formData.listingType || 'litter',
           pricingOption: formData.pricingOption || 'fixedPrice',
           deliveryOptions: formData.deliveryOptions || [],
           dnaResults: dnaResultsArray,
+          healthCertificates: healthCertificatesArray,
           ...formData,
           ...commonData,
           ...dynamicData
