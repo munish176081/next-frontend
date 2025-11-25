@@ -15,7 +15,7 @@ import SocialLogin from "@/_components/auth/social-login";
 import ReCAPTCHA from "react-google-recaptcha";
 import { useRef } from "react";
 
-const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "";
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY || "6LfvixYsAAAAAA1ogvWIzyBY72mW0S1IFqGY5v0Q";
 console.log("RECAPTCHA_SITE_KEY", RECAPTCHA_SITE_KEY);
 export default function SignUpForm() {
   const recaptchaRef = useRef<ReCAPTCHA>(null);
