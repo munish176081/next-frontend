@@ -3,12 +3,13 @@ import Link from "next/link";
 import { LogoIcon } from "../icons";
 
 const infoItems = [
-  { label: "Privacy", path: "#" },
+  { label: "Privacy", path: "/content/privacy-policy.html" },
+  { label: "Terms & Conditions", path: "/content/terms-conditions-of-use.html" },
   { label: "FAQ", path: "#" },
   { label: "Shipping and payment", path: "#" },
   { label: "Partners", path: "#" },
   { label: "Blog", path: "#" },
-  { label: "Contacts", path: "#" },
+  { label: "Contact Us", path: "/contact" },
 ];
 
 const menuItems = [
