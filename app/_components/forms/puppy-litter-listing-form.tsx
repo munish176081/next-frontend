@@ -449,11 +449,32 @@ export default function PuppyLitterListingForm({
       try {
         // Include all formData fields for validation, not just processed ones
         // Also ensure required fields have default values if missing for proper validation
+        // Handle dnaResults: convert string to array or ensure it's an array
+        const dnaResultsValue = formData.dnaResults;
+        const dnaResultsArray = dnaResultsValue === undefined || dnaResultsValue === null || dnaResultsValue === '' 
+          ? [] 
+          : Array.isArray(dnaResultsValue) 
+            ? dnaResultsValue 
+            : typeof dnaResultsValue === 'string' 
+              ? [] 
+              : [];
+        
+        // Handle healthCertificates: convert string to array or ensure it's an array
+        const healthCertificatesValue = formData.healthCertificates;
+        const healthCertificatesArray = healthCertificatesValue === undefined || healthCertificatesValue === null || healthCertificatesValue === '' 
+          ? [] 
+          : Array.isArray(healthCertificatesValue) 
+            ? healthCertificatesValue 
+            : typeof healthCertificatesValue === 'string' 
+              ? [] 
+              : [];
+        
         const dataToValidate = {
           listingType: formData.listingType || 'litter',
           pricingOption: formData.pricingOption || 'fixedPrice',
           deliveryOptions: formData.deliveryOptions || [],
-          dnaResults: formData.dnaResults || [],
+          dnaResults: dnaResultsArray,
+          healthCertificates: healthCertificatesArray,
           ...formData,
           ...commonData,
           ...dynamicData

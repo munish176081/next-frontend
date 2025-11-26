@@ -676,6 +676,39 @@ const ExploreDetail = () => {
                 );
               }
             })()}
+            
+            {/* Dynamic Health Certificates Button */}
+            {(() => {
+              const healthCertificates = transformedListing?.fields?.healthCertificates;
+              console.log('Rendering Health Certificates section with:', healthCertificates);
+
+              if (healthCertificates && Array.isArray(healthCertificates) && healthCertificates.length > 0) {
+                return (
+                  <button 
+                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11" 
+                    onClick={() => {
+                      // Open each health certificate file in a new tab
+                      healthCertificates.forEach((fileUrl, index) => {
+                        setTimeout(() => {
+                          window.open(fileUrl, '_blank', 'noopener,noreferrer');
+                        }, index * 100); // Small delay to prevent browser blocking
+                      });
+                    }}
+                  >
+                    <img className='max-md:w-4' src="/images/vectors/badges/vet-checked.svg" alt="Health Certificate" />
+                    View Health Certificates ({healthCertificates.length} file{healthCertificates.length !== 1 ? 's' : ''})
+                  </button>
+                );
+              } else {
+                return (
+                  <button className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11 opacity-50 cursor-not-allowed">
+                    <img className='max-md:w-4' src="/images/vectors/badges/vet-checked.svg" alt="Health Certificate" />
+                    Health Certificates Not Available
+                  </button>
+                );
+              }
+            })()}
+            
             <span className="text-[34px] font-medium mt-3 max-md:text-xl">Schedule Meeting</span>
             
             {showMeetingForm ? (
@@ -1186,11 +1219,16 @@ const ExploreDetail = () => {
           <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">Puppy Details</span>
           {dogDetails.map((item, index) => (
             <>
+            {
+            item.label !== "Dog Images" && (
+              <>
               <div key={index} className={`flex justify-center py-3 text-[32px] ${item.title ? 'font-semibold' : ''}`}>
                 <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
                 <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-right ${item.title ? 'max-md:text-xl' : ''}`}>{item.value}</span>
               </div>
               <hr className="border-0 h-0.5 bg-gradient-to-r from-white/0 via-[#EFC951] to-white/0" />
+              </>
+              )}
             </>
           ))}
         </div>

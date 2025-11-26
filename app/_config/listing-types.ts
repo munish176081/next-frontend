@@ -455,7 +455,6 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: '.pdf,.doc,.docx',
           maxSize: 30,
-          minCount: 1,
           maxCount: 5
         },
         fieldCategory: 'dynamic'
@@ -678,7 +677,6 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: '.pdf,.doc,.docx',
           maxSize: 10,
-          minCount: 1,
           maxCount: 5
         },
         fieldCategory: 'dynamic'

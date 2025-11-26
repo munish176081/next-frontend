@@ -141,9 +141,18 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         
         // Validate count requirements AFTER upload is complete (using active files)
         const activeFiles = newUrls.filter(url => !pendingDeletions.includes(url));
-        if (field.fileConfig?.minCount && activeFiles.length < field.fileConfig.minCount) {
-          const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
-          setFileValidationErrors([errorMessage]);
+        // For optional fields, only validate minCount if files are actually provided
+        if (field.fileConfig?.minCount) {
+          if (field.required && activeFiles.length < field.fileConfig.minCount) {
+            const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+            setFileValidationErrors([errorMessage]);
+          } else if (!field.required && activeFiles.length > 0 && activeFiles.length < field.fileConfig.minCount) {
+            const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+            setFileValidationErrors([errorMessage]);
+          } else {
+            // Clear validation errors if count is now valid
+            setFileValidationErrors([]);
+          }
         } else if (field.fileConfig?.maxCount && activeFiles.length > field.fileConfig.maxCount) {
           const errorMessage = `Maximum ${field.fileConfig.maxCount} file(s) are allowed`;
           setFileValidationErrors([errorMessage]);
@@ -567,7 +576,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                     Uploading...
                   </small>
                 )}
-                {field.fileConfig?.minCount && uploadedUrls.length < field.fileConfig.minCount && (
+                {field.fileConfig?.minCount && (field.required || uploadedUrls.length > 0) && uploadedUrls.length < field.fileConfig.minCount && (
                   <small className="text-sm font-normal text-orange-600 mt-1">
                     {field.fileConfig.minCount - uploadedUrls.length} more file{field.fileConfig.minCount - uploadedUrls.length > 1 ? 's' : ''} needed
                   </small>
