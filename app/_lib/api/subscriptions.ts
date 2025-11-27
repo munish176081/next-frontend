@@ -139,6 +139,27 @@ export async function getSubscriptionById(subscriptionId: string): Promise<Subsc
 }
 
 /**
+ * Confirm subscription payment and sync status from Stripe
+ * Call this after payment is confirmed on the frontend
+ */
+export async function confirmSubscriptionPayment(subscriptionId: string): Promise<Subscription> {
+  const response = await fetch(`${API_BASE_URL}/subscriptions/${subscriptionId}/confirm-payment`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Failed to confirm subscription payment');
+  }
+
+  return response.json();
+}
+
+/**
  * Cancel a subscription
  */
 export async function cancelSubscription(

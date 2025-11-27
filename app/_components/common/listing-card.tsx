@@ -198,6 +198,9 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       const litterPups = fields?.individualPuppiesLitter || [];
       puppyBirthDates = [...individualPups, ...litterPups];
     }
+  } else if (type === 'PUPPY_LISTING') {
+    // For PUPPY_LISTING, use individualPuppies from fields or prop
+    puppyBirthDates = fields?.individualPuppies || individualPuppies || [];
   } else {
     // For other listing types, use the individualPuppies prop
     puppyBirthDates = individualPuppies || [];
@@ -370,7 +373,10 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
             </>
           )}
          
-         {(listing.type == ListingTypeEnum.FUTURE_LISTING || listing.type == ListingTypeEnum.PUPPY_LITTER_LISTING) && (
+         {(listing.type == ListingTypeEnum.FUTURE_LISTING || 
+           listing.type == ListingTypeEnum.PUPPY_LITTER_LISTING || 
+           listing.type == ListingTypeEnum.PUPPY_LISTING) && 
+           availabilityInfo.readyDateFormatted && (
             <div className="flex justify-start mt-2">
               <span className={availabilityBadgeClasses}>
                 {availabilityBadgeText}

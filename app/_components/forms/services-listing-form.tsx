@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
 import { ListingField, getCommonFields, getContactFields, getDynamicFields } from "@/_config/listing-types";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
@@ -14,7 +14,6 @@ import { SERVICES_LISTING_FIELD_CONFIG } from "./field-configs/services-listing-
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
 import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
-import { checkActiveSubscription } from "@/_lib/api/subscriptions";
 
 interface ServicesListingFormProps extends BaseFormProps {}
 
@@ -34,11 +33,13 @@ export default function ServicesListingForm({
   setBreedId
 }: ServicesListingFormProps) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
   
   const [pendingDeletions, setPendingDeletions] = useState<Record<string, string[]>>({});
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [draftListingId, setDraftListingId] = useState<string | null>(null);
 
   // Use the base form functionality
   const baseForm = BaseListingForm({
@@ -92,7 +93,115 @@ export default function ServicesListingForm({
     };
   };
 
-  // Actual listing creation function (called after payment)
+  // Extract form data into structured format
+  const extractFormData = () => {
+    const commonFields = getCommonFields(selectedListingType);
+    const contactFields = getContactFields(selectedListingType);
+    const mediaFields = getDynamicFields(selectedListingType).filter(field => field.type === 'file');
+    const dynamicFields = getDynamicFields(selectedListingType);
+
+    // Extract common fields
+    const commonData: Record<string, any> = {};
+    commonFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        commonData[field.name] = formData[field.name];
+      }
+    });
+
+    // Extract contact info
+    const contactInfo: Record<string, any> = {};
+    contactFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        contactInfo[field.name.replace('contact', '').toLowerCase()] = formData[field.name];
+      }
+    });
+
+    // Extract media files
+    const allImages: string[] = [];
+    const allVideos: string[] = [];
+    const allDocuments: string[] = [];
+    mediaFields.forEach(field => {
+      if (formData[field.name] && Array.isArray(formData[field.name])) {
+        const files = formData[field.name];
+        if (field.fileConfig?.accept?.includes('image/*')) {
+          allImages.push(...files);
+        } else if (field.fileConfig?.accept?.includes('video/*')) {
+          allVideos.push(...files);
+        } else {
+          allDocuments.push(...files);
+        }
+      }
+    });
+
+    // Extract dynamic fields
+    const dynamicData: Record<string, any> = {};
+    dynamicFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        dynamicData[field.name] = formData[field.name];
+      }
+    });
+
+    // Special handling for service listings
+    if (selectedListingType.id === 'OTHER_SERVICES' && commonData.serviceCategory) {
+      dynamicData.serviceCategory = commonData.serviceCategory;
+      delete commonData.serviceCategory;
+    }
+
+    return {
+      commonData,
+      contactInfo,
+      dynamicData,
+      allImages,
+      allVideos,
+      allDocuments,
+    };
+  };
+
+  // Create draft listing before payment
+  const createDraftListing = async (isFeatured: boolean): Promise<string> => {
+    const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments } = extractFormData();
+
+    const listingData: CreateListingDto = {
+      title: commonData.title,
+      description: commonData.description,
+      type: selectedListingType.id as ListingTypeEnum,
+      category: baseForm.getCategoryFromType(selectedListingType.id as ListingTypeEnum),
+      breed: commonData.breed,
+      breedId: breedId,
+      location: commonData.location,
+      fields: dynamicData,
+      contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+      images: allImages.length > 0 ? allImages : undefined,
+      videos: allVideos.length > 0 ? allVideos : undefined,
+      documents: allDocuments.length > 0 ? allDocuments : undefined,
+      tags: baseForm.extractTags(commonData, dynamicData),
+      isFeatured: isFeatured,
+      isPremium: false,
+      status: 'draft' as any, // Create as DRAFT, will be activated after payment
+    };
+
+    const createdListing = await createListingMutation.mutateAsync(listingData);
+    return createdListing.id;
+  };
+
+  // Activate listing after payment success
+  const activateListing = async (listingId: string, subscriptionId?: string) => {
+    const updateData: UpdateListingDto = {
+      status: 'active' as any,
+      isActive: true,
+    };
+
+    if (subscriptionId) {
+      updateData.subscriptionId = subscriptionId;
+    }
+
+    await updateListingMutation.mutateAsync({
+      id: listingId,
+      data: updateData,
+    });
+  };
+
+  // Actual listing creation function (called after payment) - DEPRECATED, kept for compatibility
   const createListingAfterPayment = async (isFeatured: boolean, paymentId?: string) => {
     setIsSubmitting(true);
 
@@ -198,6 +307,11 @@ export default function ServicesListingForm({
         });
       } else {
         // Create new listing
+        // For subscription types, paymentId is actually subscriptionId
+        const isSubscription = isSubscriptionType(selectedListingType.id as ListingTypeEnum);
+        const subscriptionId = isSubscription && paymentId ? paymentId : undefined;
+        const actualPaymentId = !isSubscription ? paymentId : undefined;
+
         const listingData: CreateListingDto = {
           title: commonData.title,
           description: commonData.description,
@@ -214,7 +328,8 @@ export default function ServicesListingForm({
           tags: baseForm.extractTags(commonData, dynamicData),
           isFeatured: isFeatured,
           isPremium: false,
-          paymentId: paymentId,
+          paymentId: actualPaymentId,
+          subscriptionId: subscriptionId,
         };
 
         const createdListing = await createListingMutation.mutateAsync(listingData);
@@ -262,7 +377,6 @@ export default function ServicesListingForm({
         title: 'Please fix the errors before submitting.',
         variant: 'destructive',
       });
-      // Use requestAnimationFrame to ensure DOM is updated with error states
       requestAnimationFrame(() => {
         setTimeout(() => {
           scrollToFirstError(validationResult.errors);
@@ -273,48 +387,88 @@ export default function ServicesListingForm({
 
     // Skip payment for edit mode
     if (editId) {
-      await createListingAfterPayment(false);
+      setIsSubmitting(true);
+      try {
+        const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments, metadata } = extractFormData();
+        const updateData: UpdateListingDto = {
+          title: commonData.title,
+          description: commonData.description,
+          price: commonData.price ? parseFloat(commonData.price) : undefined,
+          breed: commonData.breed,
+          breedId: breedId,
+          location: commonData.location,
+          fields: dynamicData,
+          contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          images: allImages.length > 0 ? allImages : undefined,
+          videos: allVideos.length > 0 ? allVideos : undefined,
+          documents: allDocuments.length > 0 ? allDocuments : undefined,
+          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+          tags: baseForm.extractTags(commonData, dynamicData),
+        };
+        await updateListingMutation.mutateAsync({ id: editId, data: updateData });
+        setIsSubmitted(true);
+        router.push('/account/listings');
+      } catch (error) {
+        console.error('Error updating listing:', error);
+        setIsSubmitting(false);
+      }
       return;
     }
 
-    // For subscription listing types, check if user already has an active subscription
-    const listingType = selectedListingType.id as ListingTypeEnum;
-    // Use price/plan ID check - more reliable than enum check
-    if (hasStripePriceId(listingType) || hasPayPalPlanId(listingType) || isSubscriptionType(listingType)) {
-      try {
-        const subscriptionCheck = await checkActiveSubscription(listingType);
-        if (subscriptionCheck.hasSubscription && subscriptionCheck.subscription) {
-          // User has active subscription, create listing directly without payment
-          console.log('✅ User has active subscription, creating listing directly:', subscriptionCheck.subscription.id);
-          await createListingAfterPayment(false, subscriptionCheck.subscription.id);
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error checking subscription:', error);
-        // If check fails, proceed to payment modal
-      }
+    // For new listings: Create draft listing first, then open payment modal
+    setIsSubmitting(true);
+    try {
+      const listingId = await createDraftListing(false); // We'll update featured status after payment
+      setDraftListingId(listingId);
+      setIsSubmitting(false);
+      setShowPaymentModal(true);
+    } catch (error: any) {
+      console.error('Error creating draft listing:', error);
+      toast({
+        title: 'Error creating listing',
+        description: error.message || 'Failed to create listing. Please try again.',
+        variant: 'destructive',
+      });
+      setIsSubmitting(false);
     }
-
-    // Show payment modal for new listings (no subscription or one-time payment types)
-    console.log('Opening payment modal...');
-    setShowPaymentModal(true);
   };
 
   const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => {
+    if (!draftListingId) {
+      console.error('No draft listing ID found');
+      return;
+    }
+
     try {
-      // For subscription types, use subscriptionId if provided, otherwise use paymentId (which is subscriptionId for subscriptions)
-      const subscriptionId = paymentData.subscriptionId || (isSubscriptionType(selectedListingType.id as ListingTypeEnum) ? paymentData.paymentId : undefined);
-      console.log('🔔 [Form] Payment success:', {
-        paymentId: paymentData.paymentId,
-        subscriptionId,
-        listingType: selectedListingType.id,
-        isSubscription: isSubscriptionType(selectedListingType.id as ListingTypeEnum)
-      });
-      await createListingAfterPayment(paymentData.isFeatured, subscriptionId || paymentData.paymentId);
+      const isSubscription = isSubscriptionType(selectedListingType.id as ListingTypeEnum);
+      const subscriptionId = paymentData.subscriptionId || (isSubscription ? paymentData.paymentId : undefined);
+      
+      // Activate the draft listing and link subscription
+      await activateListing(draftListingId, subscriptionId);
+      
+      // Update featured status if needed
+      if (paymentData.isFeatured) {
+        await updateListingMutation.mutateAsync({
+          id: draftListingId,
+          data: { isFeatured: true },
+        });
+      }
+
+      setIsSubmitted(true);
+      
+      // Delete pending files
+      const deleteResult = await baseForm.deleteAllPendingFiles();
+      if (!deleteResult.success) {
+        console.warn('Some pending files could not be deleted:', deleteResult.message);
+      }
+
+      // Navigate to listings page
+      router.push('/account/listings');
     } catch (error: any) {
+      console.error('Error activating listing:', error);
       toast({
-        title: 'Error creating listing',
-        description: error.message || 'Failed to create listing after payment',
+        title: 'Error activating listing',
+        description: error.message || 'Payment succeeded but failed to activate listing. Please contact support.',
         variant: 'destructive',
       });
     }
@@ -363,6 +517,7 @@ export default function ServicesListingForm({
         listingBreed={getListingPreviewData().breed}
         listingLocation={getListingPreviewData().location}
         listingImage={getListingPreviewData().image}
+        listingId={draftListingId || editId}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentError={(error) => {
           toast({

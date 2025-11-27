@@ -249,6 +249,8 @@ export interface ListingSummaryDto {
     imageUrl?: string;
   };
   paymentId?: string | null;
+  expiresAt?: Date;
+  isActive?: boolean;
 }
 
 export interface PaginatedListingsResponseDto {

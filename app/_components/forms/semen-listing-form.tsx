@@ -15,7 +15,6 @@ import { SEMEN_LISTING_FIELD_CONFIG } from "./field-configs/semen-listing-config
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
 import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
-import { checkActiveSubscription } from "@/_lib/api/subscriptions";
 
 interface SemenListingFormProps extends BaseFormProps {}
 
@@ -290,25 +289,7 @@ export default function SemenListingForm({
       return;
     }
 
-    // For subscription listing types, check if user already has an active subscription
-    const listingType = selectedListingType.id as ListingTypeEnum;
-    // Use price/plan ID check - more reliable than enum check
-    if (hasStripePriceId(listingType) || hasPayPalPlanId(listingType) || isSubscriptionType(listingType)) {
-      try {
-        const subscriptionCheck = await checkActiveSubscription(listingType);
-        if (subscriptionCheck.hasSubscription && subscriptionCheck.subscription) {
-          // User has active subscription, create listing directly without payment
-          console.log('✅ User has active subscription, creating listing directly:', subscriptionCheck.subscription.id);
-          await createListingAfterPayment(false, subscriptionCheck.subscription.id);
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error checking subscription:', error);
-        // If check fails, proceed to payment modal
-      }
-    }
-
-    // Show payment modal for new listings (no subscription or one-time payment types)
+    // Show payment modal for new listings (each listing requires its own subscription)
     console.log('Opening payment modal...');
     setShowPaymentModal(true);
   };

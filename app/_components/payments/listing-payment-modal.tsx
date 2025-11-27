@@ -21,7 +21,7 @@ import {
   ADDON_PRICES,
   isSubscriptionType,
 } from "@/_lib/pricing";
-import { createStripeSubscription, createPayPalSubscription, syncPayPalSubscription } from "@/_lib/api/subscriptions";
+import { createStripeSubscription, createPayPalSubscription, syncPayPalSubscription, confirmSubscriptionPayment } from "@/_lib/api/subscriptions";
 import { ListingTypeEnum } from "@/_types/listing";
 import { 
   hasStripePriceId, 
@@ -64,6 +64,7 @@ interface ListingPaymentModalProps {
   listingBreed: string;
   listingLocation: string;
   listingImage?: string;
+  listingId?: string; // For reactivation
   onPaymentSuccess: (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => void;
   onPaymentError?: (error: string) => void;
 }
@@ -126,12 +127,22 @@ function StripePaymentForm({
         // Note: paymentIntent.metadata might not be available in all cases
         const finalSubscriptionId = subscriptionId;
         if (finalSubscriptionId) {
-          // This is a subscription payment - use subscriptionId
-          console.log('✅ [Payment Modal] Subscription payment confirmed:', {
+          // This is a subscription payment - confirm it on backend to sync status
+          console.log('✅ [Payment Modal] Subscription payment confirmed, syncing with backend:', {
             subscriptionId: finalSubscriptionId,
             paymentIntentId: paymentIntent.id,
             status: paymentIntent.status
           });
+          
+          try {
+            // Confirm subscription payment to sync status from Stripe
+            await confirmSubscriptionPayment(finalSubscriptionId);
+            console.log('✅ [Payment Modal] Subscription status synced successfully');
+          } catch (confirmError: any) {
+            console.error('⚠️ [Payment Modal] Failed to confirm subscription payment:', confirmError);
+            // Continue anyway - webhook will handle it
+          }
+          
           onSuccess(finalSubscriptionId); // Pass subscriptionId as paymentId for compatibility
         } else {
           // This is a one-time payment - get payment method and confirm
@@ -183,6 +194,7 @@ function PayPalPaymentButton({
   onError,
   isSubscription = false,
   includesFeatured = false,
+  listingId,
 }: {
   amount: number;
   listingType: ListingTypeEnum;
@@ -190,6 +202,7 @@ function PayPalPaymentButton({
   onError: (error: string) => void;
   isSubscription?: boolean;
   includesFeatured?: boolean;
+  listingId?: string;
 }) {
   const [{ isPending }] = usePayPalScriptReducer();
 
@@ -200,6 +213,7 @@ function PayPalPaymentButton({
         const { subscriptionId, approvalUrl } = await createPayPalSubscription({
           listingType: listingType as string,
           includesFeatured,
+          listingId: listingId, // Pass listingId for reactivation
         });
         
         // For PayPal subscriptions, open approval URL in popup window
@@ -222,8 +236,13 @@ function PayPalPaymentButton({
             `width=${width},height=${height},left=${left},top=${top},toolbar=no,location=no,status=no,menubar=no,scrollbars=yes,resizable=yes`
           );
           
+          // Store listingId for redirect flow (PayPal opens in same window)
+          if (listingId) {
+            sessionStorage.setItem('pendingListingId', listingId);
+          }
+          
           if (!popup) {
-            // Popup blocked, fallback to redirect
+            // Popup blocked, fallback to redirect (PayPal opens in same window)
             window.location.href = approvalUrl;
             return 'redirecting';
           }
@@ -297,7 +316,7 @@ function PayPalPaymentButton({
         throw new Error("No approval URL returned from PayPal subscription");
       } else {
         // For one-time payments, create order as before
-        const { orderId } = await createPayPalOrder(amount, listingType);
+        const { orderId } = await createPayPalOrder(amount, listingType, listingId);
         return orderId;
       }
     } catch (error: any) {
@@ -349,6 +368,7 @@ export function ListingPaymentModal({
   listingBreed,
   listingLocation,
   listingImage,
+  listingId,
   onPaymentSuccess,
   onPaymentError,
 }: ListingPaymentModalProps) {
@@ -424,6 +444,7 @@ export function ListingPaymentModal({
         const subscriptionResponse = await createStripeSubscription({
           listingType: listingTypeValue as string,
           includesFeatured: includeFeatured && canAddFeatured,
+          listingId: listingId, // Pass listingId for reactivation
           // No paymentMethodId - Payment Element will collect it
         });
         
@@ -774,6 +795,7 @@ export function ListingPaymentModal({
                   onError={handleError}
                   isSubscription={hasStripePriceId(listingType) || hasPayPalPlanId(listingType)}
                   includesFeatured={includeFeatured && canAddFeatured}
+                  listingId={listingId}
                 />
               </PayPalScriptProvider>
             </div>

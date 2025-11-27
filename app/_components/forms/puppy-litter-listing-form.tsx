@@ -15,7 +15,7 @@ import { puppyLitterListingSchema } from "@/_config/validate-schema";
 import BaseListingForm, { BaseFormProps } from "./base-listing-form";
 import { scrollToFirstError } from "@/_utils/scroll-to-error";
 import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
-import { createStripeSubscription, createPayPalSubscription, checkActiveSubscription } from "@/_lib/api/subscriptions";
+import { createStripeSubscription, createPayPalSubscription } from "@/_lib/api/subscriptions";
 import { isFeaturedAddonEligible, isSubscriptionType } from "@/_lib/pricing";
 import { hasStripePriceId, hasPayPalPlanId } from "@/_config/subscription-prices";
 import { getPaymentById } from "@/_lib/api/payments";
@@ -898,24 +898,7 @@ export default function PuppyLitterListingForm({
       return;
     }
 
-    // For subscription listing types, check if user already has an active subscription
-    const listingType = selectedListingType.id as ListingTypeEnum;
-    if (isSubscriptionType(listingType)) {
-      try {
-        const subscriptionCheck = await checkActiveSubscription(listingType);
-        if (subscriptionCheck.hasSubscription && subscriptionCheck.subscription) {
-          // User has active subscription, create listing directly without payment
-          console.log('✅ User has active subscription, creating listing directly:', subscriptionCheck.subscription.id);
-          await createListingAfterPayment(false, subscriptionCheck.subscription.id);
-          return;
-        }
-      } catch (error: any) {
-        console.error('Error checking subscription:', error);
-        // If check fails, proceed to payment modal
-      }
-    }
-
-    // Show payment modal for new listings (no subscription or one-time payment types)
+    // Show payment modal for new listings (each listing requires its own subscription)
     console.log('Opening payment modal...');
     setShowPaymentModal(true);
   };

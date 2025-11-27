@@ -12,6 +12,12 @@ export default function PayPalSubscriptionCallback() {
   const token = searchParams.get('token');
 
   useEffect(() => {
+    // Prevent multiple redirects
+    if (sessionStorage.getItem('paypalCallbackProcessed') === 'true') {
+      return;
+    }
+    sessionStorage.setItem('paypalCallbackProcessed', 'true');
+    
     // Check if we're in a popup window
     const isPopup = window.opener && window.opener !== window;
     
@@ -58,26 +64,36 @@ export default function PayPalSubscriptionCallback() {
         }, 1000);
       }
     } else {
-      // Not in popup - sync and redirect to subscriptions page
+      // Not in popup - redirect flow (PayPal opens in same window)
       if (success === 'true') {
-        // If we have a subscription ID, sync it
+        const pendingListingId = sessionStorage.getItem('pendingListingId');
         const dbSubscriptionId = sessionStorage.getItem('pendingPayPalSubscriptionId');
+        
+        // Sync subscription status
         if (dbSubscriptionId) {
-          syncPayPalSubscription(dbSubscriptionId)
-            .then(() => {
-              window.location.href = '/account/subscriptions?success=true';
-            })
-            .catch((error) => {
-              console.error('Failed to sync PayPal subscription status:', error);
-              window.location.href = '/account/subscriptions?success=true';
-            });
-        } else {
-          window.location.href = '/account/subscriptions?success=true';
+          syncPayPalSubscription(dbSubscriptionId).catch((error) => {
+            console.error('Failed to sync PayPal subscription status:', error);
+          });
         }
+        
+        // Clear all session storage
+        sessionStorage.removeItem('pendingPayPalSubscriptionId');
+        sessionStorage.removeItem('pendingPayPalApprovalUrl');
+        sessionStorage.removeItem('pendingListingId');
+        sessionStorage.removeItem('paypalCallbackProcessed');
+        
+        // Redirect to listings page - the listing will be activated by webhook
+        window.location.href = '/account/listings?payment=success';
       } else if (canceled === 'true') {
-        window.location.href = '/account/subscriptions?canceled=true';
+        // Clear any pending data
+        sessionStorage.removeItem('pendingPayPalSubscriptionId');
+        sessionStorage.removeItem('pendingPayPalApprovalUrl');
+        sessionStorage.removeItem('pendingListingId');
+        sessionStorage.removeItem('paypalCallbackProcessed');
+        window.location.href = '/account/listings?payment=canceled';
       } else {
-        window.location.href = '/account/subscriptions';
+        sessionStorage.removeItem('paypalCallbackProcessed');
+        window.location.href = '/account/listings';
       }
     }
   }, [success, canceled, subscriptionId, token]);

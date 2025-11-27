@@ -20,6 +20,15 @@ export interface SimpleListing {
   rating?: number;
   reviews?: number;
   listingType?: string;
+  type?: string;
+  favourite?: boolean;
+  age?: string;
+  userId?: string;
+  fields?: Record<string, any>;
+  individualPuppies?: Array<{ puppyDateOfBirth?: string }>;
+  availability?: string;
+  breed?: string;
+  metadata?: Record<string, any>;
 }
 
 export const PuppiesSlider = ({
