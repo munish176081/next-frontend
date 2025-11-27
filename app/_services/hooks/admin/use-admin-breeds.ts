@@ -12,6 +12,7 @@ export interface Breed {
   temperament?: string;
   lifeExpectancy?: string;
   isActive: boolean;
+  isFeatured?: boolean;
   sortOrder: number;
   imageUrl?: string;
   createdAt: Date;
@@ -147,18 +148,45 @@ export function useUpdateBreed() {
       const res = await axios.patch(`/breeds/${id}`, data);
       return res.data;
     },
+    onMutate: async ({ id, data }) => {
+      // Cancel any outgoing refetches to avoid overwriting optimistic update
+      await queryClient.cancelQueries({ queryKey: ['admin', 'breeds'], exact: false });
+      
+      // Snapshot the previous value
+      const previousQueries = queryClient.getQueriesData({ queryKey: ['admin', 'breeds'], exact: false });
+      
+      // Optimistically update all breed queries
+      queryClient.setQueriesData({ queryKey: ['admin', 'breeds'], exact: false }, (old: any) => {
+        if (!old?.breeds) return old;
+        return {
+          ...old,
+          breeds: old.breeds.map((breed: Breed) =>
+            breed.id === id ? { ...breed, ...data } : breed
+          ),
+        };
+      });
+      
+      return { previousQueries };
+    },
     onSuccess: (updatedBreed) => {
       toast({
         title: 'Breed Updated',
         description: `Successfully updated breed: ${updatedBreed.name}`,
       });
       
-      // Invalidate and refetch breeds lists
-      queryClient.invalidateQueries({ queryKey: ['admin', 'breeds'] });
-      queryClient.invalidateQueries({ queryKey: ['breeds'] });
+      // Invalidate and refetch breeds lists - use exact: false to invalidate all queries starting with the key
+      queryClient.invalidateQueries({ queryKey: ['admin', 'breeds'], exact: false });
+      queryClient.invalidateQueries({ queryKey: ['breeds'], exact: false });
       queryClient.invalidateQueries({ queryKey: ['admin', 'breeds', updatedBreed.id] });
     },
-    onError: (error: any) => {
+    onError: (error: any, variables, context) => {
+      // Rollback optimistic update on error
+      if (context?.previousQueries) {
+        context.previousQueries.forEach(([queryKey, data]) => {
+          queryClient.setQueryData(queryKey, data);
+        });
+      }
+      
       toast({
         title: 'Update Failed',
         description: error.response?.data?.message || 'Failed to update breed',

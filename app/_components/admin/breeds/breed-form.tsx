@@ -114,6 +114,9 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
   };
 
   const handleFormSubmit = (data: BreedFormData) => {
+    // Normalize imageUrl - trim and convert empty string to undefined
+    const imageUrl = data.imageUrl?.trim() || undefined;
+    
     // Ensure required fields are present for create operations
     if (!breed) {
       // Creating new breed - ensure all required fields
@@ -127,7 +130,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
         lifeExpectancy: data.lifeExpectancy,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
-        imageUrl: data.imageUrl,
+        imageUrl: imageUrl,
       };
       onSubmit(createData);
     } else {
@@ -142,7 +145,7 @@ export function BreedForm({ breed, onSubmit, onCancel, isLoading = false }: Bree
         lifeExpectancy: data.lifeExpectancy,
         isActive: data.isActive,
         sortOrder: data.sortOrder,
-        imageUrl: data.imageUrl,
+        imageUrl: imageUrl,
       };
       onSubmit(updateData);
     }

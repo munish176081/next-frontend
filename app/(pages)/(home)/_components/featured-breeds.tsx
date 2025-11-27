@@ -5,6 +5,7 @@ import ActionIcon from "@/_components/ui/action-icon";
 import { PuppyButton } from "@/_components/ui/puppy-button";
 import { useHomepageBreeds } from "@/_services/hooks/homepage/use-homepage-breeds";
 import { truncateBreedDescription } from "@/_utils/text-utils";
+import Image from "next/image";
 import Link from "next/link";
 import { useRef } from "react";
 import SwiperCore from "swiper";
@@ -64,9 +65,12 @@ export const FeaturedBreeds = () => {
             <strong className="font-semibold">breeds</strong>.{" "}
             <span className="relative">
               Click on a breed{" "}
-              <img
+              <Image
                 className="absolute left-0 -bottom-2.5"
                 src="/images/vectors/line_yellowWordb.svg"
+                width={200}
+                height={20}
+                alt=""
               />
             </span>{" "}
             to view available <strong className="font-semibold">puppies</strong>{" "}
@@ -78,9 +82,11 @@ export const FeaturedBreeds = () => {
             className="bg-black !h-24 !w-24 absolute z-10 bottom-0 max-md:hidden left-0"
             onClick={() => swiperRef.current?.slidePrev()}
           >
-            <img
+            <Image
               className="-scale-x-100"
               src="/images/vectors/nextPrevArrow.svg"
+              width={24}
+              height={24}
               alt="Prev"
             />
           </ActionIcon>
@@ -89,7 +95,7 @@ export const FeaturedBreeds = () => {
             className="bg-black !h-24 !w-24 absolute z-10 bottom-0 max-md:hidden right-0"
             onClick={() => swiperRef.current?.slideNext()}
           >
-            <img src="/images/vectors/nextPrevArrow.svg" alt="Next" />
+            <Image src="/images/vectors/nextPrevArrow.svg" width={24} height={24} alt="Next" />
           </ActionIcon>
         </div>
         <div className="group/section relative w-full max-md:w-auto max-md:overflow-hidden max-md:-mx-4 max-md:px-4">
@@ -113,10 +119,13 @@ export const FeaturedBreeds = () => {
                 >
                   <div className="relative flex h-48 group-hover:h-60 max-md:group-hover:h-48 w-full overflow-hidden items-center justify-center rounded-2xl transition-all max-w-full self-center">
                     {breed.imageUrl ? (
-                      <img
+                      <Image
                         className="w-full h-full object-cover"
                         src={breed.imageUrl}
                         alt={breed.name}
+                        width={300}
+                        height={240}
+                        loading="lazy"
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
@@ -147,9 +156,11 @@ export const FeaturedBreeds = () => {
             )) : null}
           </Swiper>
         </div>
-        <img
+        <Image
           src="/images/vectors/VectorArrowup.svg"
           className="hidden max-md:flex max-w-24 absolute -bottom-6 z-10 right-0"
+          width={96}
+          height={96}
           alt="Arrow Up"
         />
       </section>

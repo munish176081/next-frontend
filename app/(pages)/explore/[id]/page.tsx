@@ -42,6 +42,9 @@ const ExploreDetail = () => {
   const { isWishlisted, toggleWishlist } = useWishlist();
   const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   
+  // State for expanded details
+  const [expandedDetails, setExpandedDetails] = useState<Record<number, boolean>>({});
+  
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
 
@@ -578,9 +581,25 @@ const ExploreDetail = () => {
             )}
             <div className="absolute w-[220px] h-[195px] max-md:w-[100px] max-md:h-[100px] z-10 flex items-center justify-center top-0">
               <span className="bg-yellow-400 text-4xl font-semibold text-black -rotate-45 whitespace-nowrap px-20 h-16 flex items-center text-center w-min max-md:text-[18px] max-md:h-auto">
-                {transformedListing.listingType === 'PUPPY_LITTER_LISTING'
-                  ? "Litter Listing"
-                  : transformedListing.listingType} listing
+                {(() => {
+                  const listLitterOption = listing?.fields?.listLitterOption;
+                  
+                  // Check listLitterOption first
+                  if (listLitterOption === 'single-puppy') {
+                    return 'Puppy Listing';
+                  }
+                  if (listLitterOption === 'add-individually' || listLitterOption === 'same-details') {
+                    return 'Litter Listing';
+                  }
+                  
+                  // Fallback to listing type
+                  if (listing?.type === ListingTypeEnum.PUPPY_LITTER_LISTING) {
+                    return 'Litter Listing';
+                  }
+                  
+                  // Use formatted listing type with "Listing" suffix
+                  return `${transformedListing.listingType} Listing`;
+                })()}
               </span>
             </div>
             <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{ nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn", }}
@@ -1217,20 +1236,58 @@ const ExploreDetail = () => {
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
         <div className="container relative z-10">
           <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">Puppy Details</span>
-          {dogDetails.map((item, index) => (
-            <>
-            {
-            item.label !== "Dog Images" && (
-              <>
-              <div key={index} className={`flex justify-center py-3 text-[32px] ${item.title ? 'font-semibold' : ''}`}>
-                <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
-                <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-right ${item.title ? 'max-md:text-xl' : ''}`}>{item.value}</span>
-              </div>
-              <hr className="border-0 h-0.5 bg-gradient-to-r from-white/0 via-[#EFC951] to-white/0" />
-              </>
-              )}
-            </>
-          ))}
+          {dogDetails.map((item, index) => {
+            if (item.label === "Dog Images" || item.label === "Semen Images" || item.title) {
+              return (
+                <React.Fragment key={index}>
+                  {(item.label !== "Dog Images" && item.label !== "Semen Images") && (
+                    <>
+                      <div className={`flex justify-center py-3 text-[32px] ${item.title ? 'font-semibold' : ''}`}>
+                        <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
+                        <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-right ${item.title ? 'max-md:text-xl' : ''}`}>{item.value}</span>
+                      </div>
+                      <hr className="border-0 h-0.5 bg-gradient-to-r from-white/0 via-[#EFC951] to-white/0" />
+                    </>
+                  )}
+                </React.Fragment>
+              );
+            }
+            
+            const isExpanded = expandedDetails[index] || false;
+            const value = item.value || '';
+            // Consider text long if it's more than ~80 characters (roughly 2 lines at 32px font)
+            const isLongText = typeof value === 'string' && value.length > 80;
+            
+            return (
+              <React.Fragment key={index}>
+                <div className={`flex justify-center py-3 text-[32px] max-md:text-base`}>
+                  <span className="w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left">{item.label}</span>
+                  <div className="w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-right flex flex-col items-center max-md:items-center">
+                    <span 
+                      className={`${isLongText && !isExpanded ? 'line-clamp-2' : ''}`}
+                      style={{
+                        display: isLongText && !isExpanded ? '-webkit-box' : 'block',
+                        WebkitLineClamp: isLongText && !isExpanded ? 2 : undefined,
+                        WebkitBoxOrient: isLongText && !isExpanded ? 'vertical' : undefined,
+                        overflow: isLongText && !isExpanded ? 'hidden' : 'visible',
+                      }}
+                    >
+                      {value}
+                    </span>
+                    {isLongText && (
+                      <button
+                        onClick={() => setExpandedDetails(prev => ({ ...prev, [index]: !isExpanded }))}
+                        className="text-sm text-[#EFC951] hover:text-[#E6B847] mt-1 font-medium underline max-md:text-xs"
+                      >
+                        {isExpanded ? 'Show less' : 'Show more'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+                <hr className="border-0 h-0.5 bg-gradient-to-r from-white/0 via-[#EFC951] to-white/0" />
+              </React.Fragment>
+            );
+          })}
         </div>
       </section>
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col items-center bg-aboutOwner bg-no-repeat bg-center bg-container max-md:p-4 max-md:rounded-[20px]">

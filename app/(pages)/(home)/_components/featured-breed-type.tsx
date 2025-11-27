@@ -100,7 +100,7 @@ export const FeaturedBreedsByType = () => {
       <div className="flex flex-col gap-4 items-center m-auto relative w-full">
         <PawsIconIndigo className="w-16 h-16 max-md:max-w-5 max-md:max-h-5"/>
         <h1 className="text-40 max-md:text-[32px] font-medium leading-none text-center">Browse by Breed Type</h1>
-        <span className="text-xl max-md:text-base text-center font-[300] max-w-[900px] mt-2 w-full leading-normal">Meet our <strong className="font-semibold">adorable stars</strong>—each one nurtured in a <strong className="font-semibold">loving</strong> environment and ready for their forever home. Explore our <strong className="font-semibold">featured listings</strong> to find the <span className="relative font-semibold">perfect match <img className="absolute left-0 -bottom-2.5" src="/images/vectors/BroswByBreTypeLine.svg"/></span> for your family.</span>
+        <span className="text-xl max-md:text-base text-center font-[300] max-w-[900px] mt-2 w-full leading-normal">Meet our <strong className="font-semibold">adorable stars</strong>—each one nurtured in a <strong className="font-semibold">loving</strong> environment and ready for their forever home. Explore our <strong className="font-semibold">featured listings</strong> to find the <span className="relative font-semibold">perfect match <Image className="absolute left-0 -bottom-2.5" src="/images/vectors/BroswByBreTypeLine.svg" width={200} height={20} alt="" /></span> for your family.</span>
         <PuppyButton iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon" className="tracking-wide max-md:w-full max-md:order-2 max-md:-mt-4 max-md:mb-4">Browse Listing</PuppyButton> 
         <div className="flex relative h-48 w-full items-center -mt-8 max-md:mt-0 max-md:h-auto">
           <div className="flex relative z-10 bg-white p-2 rounded-full w-full shadow-section overflow-hidden">
@@ -128,14 +128,14 @@ export const FeaturedBreedsByType = () => {
                     {index === filters.length - 1 && filter.label === "Companion/Designer Breeds" ? (
                       <>Companion/<br className="max-md:hidden" />Designer Breeds</>
                     ) : filter.label} 
-                    <img className="w-4 h-4" src="/images/paws/image.png" />
+                    <Image className="w-4 h-4" src="/images/paws/image.png" width={16} height={16} alt="" />
                   </button>
                 ))}
               </div>
             </div>
           </div>
-          <img className="absolute top-0 left-0 -ml-8 min-w-[calc(100%+64px)] max-md:hidden" src="/images/comman/watermark.png" alt="yellow-bg" />
-          <img src="/images/vectors/browsebybreadmob.svg" className="absolute -bottom-16 left-0 -mx-4 max-w-[calc(100%+32px)] max-md:flex hidden" alt="yellow-bg" />
+          <Image className="absolute top-0 left-0 -ml-8 min-w-[calc(100%+64px)] max-md:hidden" src="/images/comman/watermark.png" width={1200} height={200} alt="yellow-bg" />
+          <Image src="/images/vectors/browsebybreadmob.svg" className="absolute -bottom-16 left-0 -mx-4 max-w-[calc(100%+32px)] max-md:flex hidden" width={400} height={200} alt="yellow-bg" />
         </div>
         <div className="group/section relative w-full max-md:w-[calc(100%+32px)] -mt-16 max-md:mt-0 max-md:overflow-hidden max-md:-mx-4 max-md:px-4">
           <Swiper loop={false} autoplay={{ delay: 2000 }} spaceBetween={16} navigation={{nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn",}} breakpoints={{768: { slidesPerView: 1, spaceBetween: 10 }, 840: { slidesPerView: 2, spaceBetween: 10 }, 1100: { slidesPerView: 4, spaceBetween: 10 },}} className="!px-8 !pt-12 !pb-12 max-md:!pb-4 max-md:!pt-0 !-mx-8">
@@ -144,7 +144,7 @@ export const FeaturedBreedsByType = () => {
                   <Link href={`/explore?breed=${encodeURIComponent(breed.name)}`} className="group flex w-full flex-col rounded-3xl bg-white p-4 transition-all shadow-CCard hover:shadow-CCardHover max-md:hover:shadow-CCard h-full">
                     <div className="relative flex h-48 group-hover:h-60 max-md:group-hover:h-48 w-full overflow-hidden items-center justify-center rounded-2xl transition-all max-w-full self-center">
                       {breed.imageUrl ? (
-                        <img className="w-full h-full object-cover" src={breed.imageUrl} alt={breed.name} />
+                        <Image className="w-full h-full object-cover" src={breed.imageUrl} alt={breed.name} width={300} height={240} loading="lazy" />
                       ) : (
                         <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
                           <div className="text-center">

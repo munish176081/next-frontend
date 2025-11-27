@@ -23,6 +23,7 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
   const [email, setEmail] = useState<string>("");
   const [verificationType, setVerificationType] = useState<"email" | "password-reset">("email");
   const [userLoggedIn, setUserLoggedIn] = useState(false);
+  const [isAppleDevice, setIsAppleDevice] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const { toast } = useToast();
@@ -49,6 +50,21 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
       setVerificationType('password-reset');
     }
   }, [searchParams, user?.email]);
+
+  // Detect Apple devices
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userAgent = window.navigator.userAgent.toLowerCase();
+      const platform = window.navigator.platform.toLowerCase();
+      
+      // Check for iOS, iPadOS, macOS, or other Apple devices
+      const isIOS = /iphone|ipad|ipod/.test(userAgent);
+      const isMacOS = /macintosh|mac os x/.test(userAgent) || platform.includes('mac');
+      const isSafari = /safari/.test(userAgent) && !/chrome|chromium|edg/.test(userAgent);
+      
+      setIsAppleDevice(isIOS || isMacOS || isSafari);
+    }
+  }, []);
 
   const handleChange = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
@@ -351,15 +367,17 @@ export function VerifyEmailPage({ noshow = false }: { noshow?: boolean }) {
                 <span className="text-base max-md:text-sm font-medium text-gray-900">Open Gmail</span>
               </button>
 
-              <button
-                onClick={handleOpenAppleMail}
-                className="flex items-center gap-3 max-md:gap-2 px-4 py-3 max-md:px-3 max-md:py-2 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center justify-center w-8 h-8 max-md:w-6 max-md:h-6">
-                  <img src="/icons/apple.png" alt="Apple icon" className="w-8 h-8 max-md:w-6 max-md:h-6" />
-                </div>
-                <span className="text-base max-md:text-sm font-medium text-gray-900">Open Apple Mail</span>
-              </button>
+              {isAppleDevice && (
+                <button
+                  onClick={handleOpenAppleMail}
+                  className="flex items-center gap-3 max-md:gap-2 px-4 py-3 max-md:px-3 max-md:py-2 border border-[#D8DADC] rounded-lg hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center justify-center w-8 h-8 max-md:w-6 max-md:h-6">
+                    <img src="/icons/apple.png" alt="Apple icon" className="w-8 h-8 max-md:w-6 max-md:h-6" />
+                  </div>
+                  <span className="text-base max-md:text-sm font-medium text-gray-900">Open Apple Mail</span>
+                </button>
+              )}
 
               <button
                 onClick={handleOpenOutlook}

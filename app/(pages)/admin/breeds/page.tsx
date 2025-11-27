@@ -69,6 +69,7 @@ export default function AdminBreedsPage() {
               </Button>
               <h1 className="text-2xl font-semibold">Create New Breed</h1>
             </div>
+            {/* @ts-ignore */}
             <BreedForm
               onSubmit={handleCreateSubmit}
               onCancel={handleCancel}

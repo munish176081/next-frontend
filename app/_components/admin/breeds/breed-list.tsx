@@ -5,13 +5,6 @@ import { Button } from "@/_components/ui/button";
 import { Input } from "@/_components/ui/input";
 import { Checkbox } from "@/_components/ui/form-fields/checkbox";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/_components/ui/select";
-import {
   Card,
   CardContent,
   CardHeader,
@@ -29,6 +22,7 @@ import { useToggleFeaturedBreed } from "@/_services/hooks/breeds/use-toggle-feat
 import { Search, Plus, Edit, Trash2, Eye, EyeOff, Trash, Star, StarOff } from "lucide-react";
 import { CSVImport } from "./csv-import";
 import { toast } from "@/_hooks/use-toast";
+import Image from "next/image";
 
 interface BreedListProps {
   onEdit: (breed: Breed) => void;
@@ -277,21 +271,45 @@ export function BreedList({ onEdit, onCreate }: BreedListProps) {
                       />
                     </td>
                     <td className="px-8 py-3 text-sm font-medium">
-                      <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200">
-                        {breed.imageUrl ? (
-                          <img
-                            src={breed.imageUrl}
-                            alt={breed.name}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.currentTarget.style.display = 'none';
-                              e.currentTarget.nextElementSibling?.classList.remove('hidden');
-                            }}
-                          />
-                        ) : null}
-                        <div className={`w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs ${breed.imageUrl ? 'hidden' : ''}`}>
-                          No Image
-                        </div>
+                      <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 bg-gray-100 relative">
+                        {breed.imageUrl && breed.imageUrl.trim() !== '' ? (
+                          <>
+                            {/* <img
+                              src={breed.imageUrl}
+                              alt={breed.name}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const img = e.currentTarget;
+                                img.style.display = 'none';
+                                const placeholder = img.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+                                if (placeholder) {
+                                  placeholder.classList.remove('hidden');
+                                }
+                              }}
+                              onLoad={(e) => {
+                                const img = e.currentTarget;
+                                const placeholder = img.parentElement?.querySelector('.image-placeholder') as HTMLElement;
+                                if (placeholder) {
+                                  placeholder.classList.add('hidden');
+                                }
+                              }}
+                            /> */}
+                            <Image
+                              src={breed.imageUrl}
+                              alt={breed.name}
+                              width={64}
+                              height={64}
+                              className="object-cover"
+                            />
+                            <div className="image-placeholder hidden w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs absolute inset-0">
+                              No Image
+                            </div>
+                          </>
+                        ) : (
+                          <div className="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-xs">
+                            No Image
+                          </div>
+                        )}
                       </div>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium">

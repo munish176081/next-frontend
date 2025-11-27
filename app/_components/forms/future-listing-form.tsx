@@ -293,7 +293,7 @@ export default function FutureListingForm({
 
       setIsSubmitted(true);
       await baseForm.deleteAllPendingFiles();
-      router.push('/account/listings');
+      router.push(`/explore/${listingId}`);
     } catch (error: any) {
       console.error('Error activating listing:', error);
       toast({
@@ -458,6 +458,19 @@ export default function FutureListingForm({
           id: editId,
           data: updateData
         });
+        
+        // Mark as submitted to prevent further clicks
+        setIsSubmitted(true);
+
+        // Delete pending files from R2 after successful form submission
+        const deleteResult = await baseForm.deleteAllPendingFiles();
+        if (!deleteResult.success) {
+          console.warn('Some pending files could not be deleted:', deleteResult.message);
+        }
+
+        // Navigate to explore detail page
+        router.push(`/explore/${editId}`);
+        return;
       } else {
         // Create new listing
         const listingData: CreateListingDto = {
@@ -507,8 +520,8 @@ export default function FutureListingForm({
         console.warn('Some pending files could not be deleted:', deleteResult.message);
       }
 
-      // Navigate immediately after successful submission
-      router.push('/account/listings');
+      // Navigate to explore detail page
+      router.push(`/explore/${createdListing.id}`);
 
     } catch (error) {
       console.error('Error submitting listing:', error);

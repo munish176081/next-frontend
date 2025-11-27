@@ -407,7 +407,7 @@ export default function ServicesListingForm({
         };
         await updateListingMutation.mutateAsync({ id: editId, data: updateData });
         setIsSubmitted(true);
-        router.push('/account/listings');
+        router.push(`/explore/${editId}`);
       } catch (error) {
         console.error('Error updating listing:', error);
         setIsSubmitting(false);
@@ -462,8 +462,8 @@ export default function ServicesListingForm({
         console.warn('Some pending files could not be deleted:', deleteResult.message);
       }
 
-      // Navigate to listings page
-      router.push('/account/listings');
+      // Navigate to explore detail page
+      router.push(`/explore/${draftListingId}`);
     } catch (error: any) {
       console.error('Error activating listing:', error);
       toast({

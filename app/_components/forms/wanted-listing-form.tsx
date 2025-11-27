@@ -131,6 +131,18 @@ export default function WantedListingForm({
           id: editId,
           data: updateData
         });
+        
+        // Mark as submitted to prevent further clicks
+        setIsSubmitted(true);
+
+        // Delete pending files from R2 after successful form submission
+        const deleteResult = await baseForm.deleteAllPendingFiles();
+        if (!deleteResult.success) {
+          console.warn('Some pending files could not be deleted:', deleteResult.message);
+        }
+
+        // Navigate to explore detail page
+        router.push(`/explore/${editId}`);
       } else {
         // Create new listing
         const listingData: CreateListingDto = {
@@ -148,20 +160,20 @@ export default function WantedListingForm({
           isPremium: false,
         };
 
-        await createListingMutation.mutateAsync(listingData);
+        const createdListing = await createListingMutation.mutateAsync(listingData);
+
+        // Mark as submitted to prevent further clicks
+        setIsSubmitted(true);
+
+        // Delete pending files from R2 after successful form submission
+        const deleteResult = await baseForm.deleteAllPendingFiles();
+        if (!deleteResult.success) {
+          console.warn('Some pending files could not be deleted:', deleteResult.message);
+        }
+
+        // Navigate to explore detail page
+        router.push(`/explore/${createdListing.id}`);
       }
-
-      // Mark as submitted to prevent further clicks
-      setIsSubmitted(true);
-
-      // Delete pending files from R2 after successful form submission
-      const deleteResult = await baseForm.deleteAllPendingFiles();
-      if (!deleteResult.success) {
-        console.warn('Some pending files could not be deleted:', deleteResult.message);
-      }
-
-      // Navigate immediately after successful submission
-      router.push('/account/listings');
 
     } catch (error) {
       console.error('Error submitting listing:', error);
