@@ -6,7 +6,7 @@ import { ListingField, getCommonFields, getContactFields, getDynamicFields, GEND
 import { isParentInfoRequired, getParentFields } from "@/_config/parent-fields";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
-import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum } from "@/_types/listing";
+import { CreateListingDto, UpdateListingDto, ListingTypeEnum, ListingCategoryEnum, ListingStatusEnum } from "@/_types/listing";
 import { isSubscriptionType } from "@/_lib/pricing";
 import { hasStripePriceId, hasPayPalPlanId } from "@/_config/subscription-prices";
 import { toast } from "@/_hooks/use-toast";
@@ -42,6 +42,7 @@ export default function StudListingForm({
   const [showFatherSection, setShowFatherSection] = useState(false);
   const [showStudSection, setShowStudSection] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [draftListingId, setDraftListingId] = useState<string | null>(null);
 
   // Use the base form functionality
   const baseForm = BaseListingForm({
@@ -95,7 +96,237 @@ export default function StudListingForm({
     };
   };
 
-  // Actual listing creation function (called after payment)
+  // Extract form data into structured format
+  const extractFormData = () => {
+    const commonFields = getCommonFields(selectedListingType);
+    const contactFields = getContactFields(selectedListingType);
+    const mediaFields = getDynamicFields(selectedListingType).filter(field => field.type === 'file');
+    const dynamicFields = getDynamicFields(selectedListingType);
+
+    // Extract common fields
+    const commonData: Record<string, any> = {};
+    commonFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        commonData[field.name] = formData[field.name];
+      }
+    });
+
+    // Extract contact info
+    const contactInfo: Record<string, any> = {};
+    contactFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        contactInfo[field.name.replace('contact', '').toLowerCase()] = formData[field.name];
+      }
+    });
+
+    // Extract media files
+    const mediaData: Record<string, any> = {};
+    mediaFields.forEach(field => {
+      if (formData[field.name] && Array.isArray(formData[field.name])) {
+        mediaData[field.name] = formData[field.name];
+      }
+    });
+
+    // Extract dynamic fields
+    const dynamicData: Record<string, any> = {};
+    dynamicFields.forEach(field => {
+      if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        dynamicData[field.name] = formData[field.name];
+      }
+    });
+
+    // Extract parent information
+    const motherInfo = {
+      name: formData.motherName,
+      breed: formData.motherBreed,
+      color: formData.motherColor,
+      weight: formData.motherWeight,
+      temperament: formData.motherTemperament,
+      healthInfo: formData.motherHealthInfo
+    };
+
+    const fatherInfo = {
+      name: formData.fatherName,
+      breed: formData.fatherBreed,
+      color: formData.fatherColor,
+      weight: formData.fatherWeight,
+      temperament: formData.fatherTemperament,
+      healthInfo: formData.fatherHealthInfo
+    };
+
+    const studInfo = {
+      name: formData.gender === 'bitch' ? formData.bitchName : formData.studName,
+      breed: formData.gender === 'bitch' ? formData.bitchBreed : formData.studBreed,
+      color: formData.gender === 'bitch' ? formData.bitchColor : formData.studColor,
+      weight: formData.gender === 'bitch' ? formData.bitchWeight : formData.studWeight,
+      temperament: formData.gender === 'bitch' ? formData.bitchTemperament : formData.studTemperament,
+      healthInfo: formData.gender === 'bitch' ? formData.bitchHealthInfo : formData.studHealthInfo
+    };
+
+    // Extract parent media
+    const motherImages = formData.motherImages || [];
+    const fatherImages = formData.fatherImages || [];
+    const studImages = formData.gender === 'bitch' ? (formData.bitchImages || []) : (formData.studImages || []);
+    const motherVideos = formData.motherVideos || [];
+    const fatherVideos = formData.fatherVideos || [];
+    const studVideos = formData.gender === 'bitch' ? (formData.bitchVideos || []) : (formData.studVideos || []);
+
+    // Collect all file fields
+    const allImages: string[] = [];
+    const allVideos: string[] = [];
+    const allDocuments: string[] = [];
+
+    dynamicFields.forEach(field => {
+      if (field.type === 'file' && formData[field.name]) {
+        const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+        if (field.fileConfig?.accept?.includes('image/*')) {
+          allImages.push(...files);
+        } else if (field.fileConfig?.accept?.includes('video/*')) {
+          allVideos.push(...files);
+        } else {
+          allDocuments.push(...files);
+        }
+      }
+    });
+
+    // Merge media data
+    if (mediaData.images) allImages.push(...mediaData.images);
+    if (mediaData.videos) allVideos.push(...mediaData.videos);
+    if (mediaData.documents) allDocuments.push(...mediaData.documents);
+
+    // Prepare metadata with parent media
+    const metadata: Record<string, any> = {};
+    if (motherImages.length > 0) metadata.motherImages = motherImages;
+    if (fatherImages.length > 0) metadata.fatherImages = fatherImages;
+    if (studImages.length > 0) {
+      if (formData.gender === 'bitch') {
+        metadata.bitchImages = studImages;
+      } else {
+        metadata.studImages = studImages;
+      }
+    }
+    if (motherVideos.length > 0) metadata.motherVideos = motherVideos;
+    if (fatherVideos.length > 0) metadata.fatherVideos = fatherVideos;
+    if (studVideos.length > 0) {
+      if (formData.gender === 'bitch') {
+        metadata.bitchVideos = studVideos;
+      } else {
+        metadata.studVideos = studVideos;
+      }
+    }
+
+    // Extract price
+    const price = commonData.price || formData.fee || null;
+
+    return {
+      commonData,
+      contactInfo,
+      dynamicData,
+      allImages,
+      allVideos,
+      allDocuments,
+      metadata,
+      motherInfo,
+      fatherInfo,
+      studInfo,
+      price,
+    };
+  };
+
+  // Create draft listing before payment
+  const createDraftListing = async (isFeatured: boolean): Promise<string> => {
+    setIsSubmitting(true);
+    try {
+      const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments, metadata, motherInfo, fatherInfo, studInfo, price } = extractFormData();
+
+      const listingData: CreateListingDto = {
+        title: commonData.title,
+        description: commonData.description,
+        type: selectedListingType.id as ListingTypeEnum,
+        category: baseForm.getCategoryFromType(selectedListingType.id as ListingTypeEnum),
+        price: price ? parseFloat(price) : undefined,
+        breed: commonData.breed,
+        breedId: breedId,
+        location: commonData.location,
+        fields: dynamicData,
+        contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+        motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
+        fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
+        studInfo: Object.values(studInfo).some(v => v) ? studInfo : undefined,
+        images: allImages.length > 0 ? allImages : undefined,
+        videos: allVideos.length > 0 ? allVideos : undefined,
+        documents: allDocuments.length > 0 ? allDocuments : undefined,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        tags: baseForm.extractTags(commonData, dynamicData),
+        isFeatured: isFeatured,
+        isPremium: false,
+        status: ListingStatusEnum.DRAFT,
+        isActive: false,
+      };
+
+      const createdListing = await createListingMutation.mutateAsync(listingData);
+      toast({
+        title: 'Draft Listing Created',
+        description: 'Your listing has been saved as a draft. Proceed to payment to publish it.',
+        variant: 'default',
+      });
+      return createdListing.id;
+    } catch (error: any) {
+      console.error('Error creating draft listing:', error);
+      toast({
+        title: 'Error creating draft listing',
+        description: error.message || 'Failed to create draft listing.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Activate listing after payment success
+  const activateListing = async (listingId: string, subscriptionId?: string, paymentId?: string) => {
+    setIsSubmitting(true);
+    try {
+      const updateData: UpdateListingDto = {
+        status: ListingStatusEnum.ACTIVE,
+        isActive: true,
+      };
+
+      if (subscriptionId) {
+        updateData.subscriptionId = subscriptionId;
+      } else if (paymentId) {
+        updateData.paymentId = paymentId;
+      }
+
+      await updateListingMutation.mutateAsync({
+        id: listingId,
+        data: updateData,
+      });
+
+      toast({
+        title: 'Listing Published!',
+        description: 'Your listing is now live.',
+        variant: 'success',
+      });
+
+      setIsSubmitted(true);
+      await baseForm.deleteAllPendingFiles();
+      router.push('/account/listings');
+    } catch (error: any) {
+      console.error('Error activating listing:', error);
+      toast({
+        title: 'Error publishing listing',
+        description: error.message || 'Failed to activate listing after payment.',
+        variant: 'destructive',
+      });
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // DEPRECATED: Keep for backward compatibility but use createDraftListing + activateListing instead
   const createListingAfterPayment = async (isFeatured: boolean, paymentId?: string) => {
     setIsSubmitting(true);
 
@@ -332,28 +563,54 @@ export default function StudListingForm({
       return;
     }
 
-    // Show payment modal for new listings (each listing requires its own subscription)
-    console.log('Opening payment modal...');
+    // Create draft listing before opening payment modal
+    try {
+      // Store current form data in session storage before redirecting to PayPal
+      sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
+
+      const draftListingId = await createDraftListing(false);
+      setDraftListingId(draftListingId);
+      sessionStorage.setItem('pendingListingId', draftListingId);
+
+      // Show payment modal for new listings
+      console.log('Opening payment modal with draft listing ID:', draftListingId);
     setShowPaymentModal(true);
+    } catch (error) {
+      console.error('Error in handleSubmit before payment:', error);
+    }
   };
 
   const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => {
     try {
-      // For subscription types, use subscriptionId if provided, otherwise use paymentId (which is subscriptionId for subscriptions)
+      const listingId = draftListingId || sessionStorage.getItem('pendingListingId');
+      if (!listingId) {
+        throw new Error('Draft listing ID not found');
+      }
+
+      // For subscription types, use subscriptionId if provided, otherwise use paymentId
       const listingTypeCheck = selectedListingType.id as ListingTypeEnum;
       const isSubscription = hasStripePriceId(listingTypeCheck) || hasPayPalPlanId(listingTypeCheck) || isSubscriptionType(listingTypeCheck);
       const subscriptionId = paymentData.subscriptionId || (isSubscription ? paymentData.paymentId : undefined);
-      console.log('🔔 [Form] Payment success:', {
+      
+      console.log('🔔 [Form] Payment success, activating listing:', {
+        listingId,
         paymentId: paymentData.paymentId,
         subscriptionId,
         listingType: selectedListingType.id,
         isSubscription
       });
-      await createListingAfterPayment(paymentData.isFeatured, subscriptionId || paymentData.paymentId);
+
+      await activateListing(listingId, subscriptionId, paymentData.paymentId);
+      
+      // Clear session storage
+      sessionStorage.removeItem('pendingListingId');
+      sessionStorage.removeItem('pendingFormData');
+      setDraftListingId(null);
     } catch (error: any) {
+      console.error('Error activating listing after payment:', error);
       toast({
-        title: 'Error creating listing',
-        description: error.message || 'Failed to create listing after payment',
+        title: 'Error activating listing',
+        description: error.message || 'Failed to activate listing after payment',
         variant: 'destructive',
       });
     }
@@ -680,6 +937,7 @@ export default function StudListingForm({
       {/* Payment Modal */}
       <ListingPaymentModal
         open={showPaymentModal}
+        listingId={draftListingId || undefined}
         onOpenChange={(open) => {
           console.log('Payment modal onOpenChange:', open);
           setShowPaymentModal(open);
