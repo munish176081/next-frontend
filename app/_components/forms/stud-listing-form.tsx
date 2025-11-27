@@ -261,7 +261,6 @@ export default function StudListingForm({
         isFeatured: isFeatured,
         isPremium: false,
         status: ListingStatusEnum.DRAFT,
-        isActive: false,
       };
 
       const createdListing = await createListingMutation.mutateAsync(listingData);
