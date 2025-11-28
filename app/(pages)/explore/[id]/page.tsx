@@ -635,6 +635,16 @@ const ExploreDetail = () => {
         </div>
         <div className="flex flex-col gap-3 max-md:gap-2">
           <span className="text-5xl font-medium max-md:text-3xl">{transformedListing.title}</span>
+          <div className="flex items-center gap-3 max-md:flex-col max-md:items-start">
+            <span className="text-5xl font-medium max-md:text-3xl">
+              {transformedListing.title}
+            </span>
+
+            <button className="ml-auto bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center gap-2">
+              <IconUser />
+              View Profile
+            </button>
+          </div>
           <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">{transformedListing.breed}</span>
           <span className='max-md:text-xs'>{transformedListing.location}</span>
           <div className="flex gap-2 max-md:gap-1">
@@ -1357,15 +1367,6 @@ const ExploreDetail = () => {
             'Date not available'
           }
         </span>
-        <div className="flex gap-4 h-[350px] max-md:h-auto w-full mt-7 max-md:flex-wrap max-md:mt-4">
-          <div className="w-2/12 max-md:w-[calc(100%/2-8px)] flex flex-col gap-4">
-            <span className="overflow-hidden flex w-full h-full rounded-2xl"><img src="/images/vectors/dog1.png" className="w-full h-full object-cover" /></span>
-            <span className="overflow-hidden flex w-full h-full rounded-2xl"><img src="/images/vectors/dog2.png" className="w-full h-full object-cover" /></span>
-          </div>
-          <div className="overflow-hidden w-2/12 max-md:w-[calc(100%/2-8px)] rounded-2xl"><img src="/images/vectors/dog3.png" className="w-full h-full object-cover" /></div>
-          <div className="overflow-hidden w-5/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog4.png" className="w-full h-full object-cover" /></div>
-          <div className="overflow-hidden w-3/12 max-md:w-full rounded-2xl"><img src="/images/vectors/dog5.png" className="w-full h-full object-cover" /></div>
-        </div>
       </section>
        {/* More from this Seller section */}
        {sellerListingsData && sellerListings.length > 0 && (
@@ -1388,74 +1389,6 @@ const ExploreDetail = () => {
           </div>
         </section>
       )}
-      
-      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white flex flex-col gap-8 max-md:gap-4 max-md:p-4 max-md:rounded-[20px]">
-        <span className="text-[40px] font-medium m-auto">Reviews</span>
-        <div className="flex border-2 border-dashed border-[#B8B8B8]/50 p-6 rounded-[20px] max-md:flex-col max-md:p-4 max-md:gap-4">
-          <div className="flex w-3/12 items-center gap-2 max-md:w-full max-md:justify-center">
-            <div className="relative w-24 h-24" style={{ '--rating': rating } as React.CSSProperties}>
-              <svg className="w-full h-full transform -rotate-45" viewBox="0 0 120 120"><circle className="text-[#E4E9EE]" strokeWidth="4" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60" /><circle className="text-[#FFA439]" strokeWidth="4" stroke="currentColor" fill="transparent" r="50" cx="60" cy="60" strokeDasharray="314" strokeDashoffset={dashOffset} style={{ transition: 'stroke-dashoffset 0.5s ease' }} /></svg>
-              <div className="absolute inset-0 flex items-center justify-center text-lg font-semibold text-gray-800">{rating.toFixed(1)}</div>
-            </div>
-            <div className="flex flex-col text-[13px] gap-2">
-              <span className="flex gap-1">
-                {Array.from({ length: fullStars }, (_, i) => (
-                  <React.Fragment key={`full-${i}`}>{fullStarSvg}</React.Fragment>
-                ))}
-                {halfStar && halfStarSvg}
-                {Array.from({ length: emptyStars }, (_, i) => (
-                  <React.Fragment key={`empty-${i}`}>{emptyStarSvg}</React.Fragment>
-                ))}
-              </span>
-              from {total.toLocaleString()} reviews
-            </div>
-          </div>
-          <div className="flex w-9/12 flex-col gap-4 max-md:w-full">
-            {ratingData.map((item) => {
-              const percent = total > 0 ? (item.count / total) * 100 : 0;
-              return (
-                <div key={item.rating} className="flex items-center gap-4 w-full">
-                  <span className="flex gap-1 items-baseline">{item.rating}<svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439" /></svg></span>
-                  <span className="bg-[#E4E9EE] h-[8px] w-full rounded-full flex overflow-hidden"><span className="bg-[#292929] h-full rounded-full transition-all duration-300" style={{ width: `${percent}%` }}></span></span>
-                  <span className="min-w-16">{item.count}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-        <div className="flex gap-8 items-start max-md:flex-col max-md:gap-4">
-          <div className="w-[300px] min-w-[300px] p-6 border-2 border-dashed border-[#B8B8B8]/50 rounded-[20px] bg-white flex flex-col max-md:w-full max-md:p-4">
-            <span className="text-2xl font-semibold flex justify-between items-center max-md:text-[18px]">Review Filter <img onClick={() => setShowReviews(!showReviews)} className={`hidden max-md:flex w-8 ${showReviews ? 'rotate-0' : 'rotate-90'}`} src='/images/vectors/reviewFilter.png' /></span>
-            <div className={`flex flex-col gap-3 mt-5 pt-5 border-t-2 border-dashed border-[#B8B8B8]/50 max-md:mt-4 ${showReviews ? '' : 'max-md:hidden'}`}>
-              <span className="flex justify-between items-center">Rating <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.96004 4.57853L5.70004 1.31853C5.31504 0.933529 4.68504 0.933529 4.30004 1.31853L1.04004 4.57853" stroke="#0B0F0E" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
-              {ratingData.map((item) => {
-                return (
-                  <label className="flex text-[#818B9C] items-center gap-1 cursor-pointer" key={item.rating}><span className="relative w-5 h-5 mr-2 flex items-center justify-center"><input className="w-full h-full border-2 appearance-none border-[#C4C8CC] rounded-none checked:bg-CSecondary checked:border-CSecondary peer" type="checkbox" /><svg className="absolute w-3 hidden peer-checked:flex" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg></span>{item.rating}<svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439" /></svg></label>
-                );
-              })}
-            </div>
-            <div className={`flex flex-col gap-3 mt-5 pt-5 border-t-2 border-dashed border-[#B8B8B8]/50 max-md:mt-4 ${showReviews ? '' : 'max-md:hidden'}`}>
-              <span className="flex justify-between items-center">Review Topics <svg width="10" height="6" viewBox="0 0 10 6" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8.96004 4.57853L5.70004 1.31853C5.31504 0.933529 4.68504 0.933529 4.30004 1.31853L1.04004 4.57853" stroke="#0B0F0E" stroke-width="1.5" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round" /></svg></span>
-              {reviewTopics.map((item) => {
-                return (
-                  <label className="flex text-[#818B9C] items-center gap-1 cursor-pointer" key={item.name}><span className="relative w-5 h-5 mr-2 flex items-center justify-center"><input className="w-full h-full border-2 appearance-none border-[#C4C8CC] rounded-none checked:bg-CSecondary checked:border-CSecondary peer" type="checkbox" /><svg className="absolute w-3 hidden peer-checked:flex" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><path d="M438.6 105.4c12.5 12.5 12.5 32.8 0 45.3l-256 256c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-12.5-12.5-12.5-32.8 0-45.3s32.8-12.5 45.3 0L160 338.7 393.4 105.4c12.5-12.5 32.8-12.5 45.3 0z" /></svg></span>{item.name}</label>
-                );
-              })}
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-6 max-md:grid-cols-1 max-md:gap-4">
-            {testimonials.map((testimonial, index) => (
-              <div key={index} className="w-full border border-black/20 rounded-[20px] p-8 gap-6 flex flex-col shadow-review">
-                <span className="w-11 h-11 rounded-full overflow-hidden"><img className="w-full h-full object-cover" src={testimonial.image} alt={testimonial.name} /></span>
-                <span className="flex gap-1"><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="#FFA439"></path></svg><svg width="18" height="17" viewBox="0 0 18 17" fill="none" xmlns="http://www.w3.org/2000/svg"><defs><linearGradient id="half-grad"><stop offset="50%" stop-color="#FFA439"></stop><stop offset="50%" stop-color="#E0E0E0"></stop></linearGradient></defs><path d="M10.4421 1.47865L11.9087 4.41198C12.1087 4.82031 12.6421 5.21198 13.0921 5.28698L15.7504 5.72865C17.4504 6.01198 17.8504 7.24531 16.6254 8.46198L14.5587 10.5286C14.2087 10.8786 14.0171 11.5536 14.1254 12.037L14.7171 14.5953C15.1837 16.6203 14.1087 17.4036 12.3171 16.3453L9.82541 14.8703C9.37541 14.6036 8.63375 14.6036 8.17541 14.8703L5.68375 16.3453C3.90041 17.4036 2.81708 16.612 3.28375 14.5953L3.87541 12.037C3.98375 11.5536 3.79208 10.8786 3.44208 10.5286L1.37541 8.46198C0.158746 7.24531 0.550413 6.01198 2.25041 5.72865L4.90875 5.28698C5.35041 5.21198 5.88375 4.82031 6.08375 4.41198L7.55041 1.47865C8.35041 -0.11302 9.65041 -0.11302 10.4421 1.47865Z" fill="url(#half-grad)"></path></svg></span>
-                <span className="text-[13px]">{testimonial.message}</span>
-                <span className="text-[13px] text-[#3D3D3D]">{testimonial.name} <br />{testimonial.title}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-      
      
       <section className="flex flex-col gap-6 container">
         <span className="text-[40px] font-medium max-md:text-[32px]">Similar listings you may like</span>
