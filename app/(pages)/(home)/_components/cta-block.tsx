@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { Routes } from "@/_config/routes";
 
 const features = [
   {
@@ -25,7 +26,9 @@ export function CtaBlock() {
       <div className="backdrop-blur-2xl bg-[#FAFAFA]/50 border border-black/20 rounded-xl p-8 absolute max-md:w-auto max-md:h-auto max-md:bottom-0 max-md:top-auto w-[500px] h-[330px] max-md:h-max top-0 bottom-0 m-auto left-12 flex flex-col gap-5 max-md:left-auto max-md:mx-4 max-md:mb-4 max-md:p-4 max-md:gap-2">
         <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">Grow Your Breeding Business with Pups4Sale!</span>
         <span className="max-md:text-xs">List your puppies, reach buyers, and grow your business effortlessly.</span>
-        <button className="h-20 max-md:h-12 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold mt-auto">Sign Up as a Breeder</button>
+        <Link href={Routes.auth.signUp}>
+         <button className="h-20 max-md:h-12 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold mt-auto">Sign Up as a Breeder</button>
+        </Link>
       </div>
       <div className="flex flex-col gap-6 absolute max-md:relative max-md:right-0 right-16 z-20 max-md:px-4">
         <span className="h-3/4 w-1 flex absolute -top-[70px] left-[38px] max-md:left-[46px] max-md:-top-[26px] z-10 bg-gradient-to-b from-white/0 via-CSecondary via-50% to-white"></span>
