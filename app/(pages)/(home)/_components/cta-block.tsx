@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Routes } from "@/_config/routes";
+import Link from "next/link";
 
 const features = [
   {
