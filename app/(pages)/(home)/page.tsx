@@ -25,7 +25,6 @@ function Home() {
       <PromotionBlock />
       <PupsForSale />
       <EthicalBreeder />
-      <TrustedBreeder />
       <Testimonial />
       <CtaBlock />
     </>

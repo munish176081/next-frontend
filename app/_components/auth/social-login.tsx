@@ -73,7 +73,7 @@ export default function SocialLogin({ type }: SocialLoginProps) {
           type="button"
           variant="outline"
           size="xl"
-          className="w-full h-16 border border-black font-medium text-lg rounded-full flex items-center justify-center gap-2 max-md:h-12 max-md:mt-0 max-md:text-base disabled:opacity-50"
+          className="w-full h-16 border border-black font-medium text-lg rounded-full flex items-center justify-center gap-2 max-md:h-12 max-md:mt-0 max-md:text-base disabled:opacity-50 hidden"
         >
           <FBIcon />
           {type === "signin" ? "Sign in with Facebook" : "Sign up with Facebook"}
