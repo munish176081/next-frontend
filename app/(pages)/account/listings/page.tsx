@@ -5,10 +5,7 @@ import { useDeleteListing } from "@/_services/hooks/listings/use-delete-listing"
 import { usePublishListing } from "@/_services/hooks/listings/use-publish-listing";
 import { useUpdateListing } from "@/_services/hooks/listings/use-update-listing";
 import { useUpdateAvailability } from "@/_services/hooks/listings/use-update-availability";
-import { useReactivateListing } from "@/_services/hooks/listings/use-reactivate-listing";
 import { ListingStatusEnum, ListingAvailabilityEnum } from "@/_types/listing";
-import { ListingPaymentModal } from "@/_components/payments/listing-payment-modal";
-import { ListingTypeEnum } from "@/_types/listing";
 import { DashboardLayout } from "@/_components/common/dashboard-layout";
 import { getShortCodeFromId } from "@/_config/listing-types";
 import { getListingPricingDisplay } from "@/_utils/pricing";
@@ -49,7 +46,6 @@ function UserListingsPage() {
   const publishListingMutation = usePublishListing();
   const updateListingMutation = useUpdateListing();
   const updateAvailabilityMutation = useUpdateAvailability();
-  const reactivateListingMutation = useReactivateListing();
 
   const [editingAvailability, setEditingAvailability] = useState<string | null>(
     null
@@ -57,9 +53,6 @@ function UserListingsPage() {
   const [newAvailability, setNewAvailability] =
     useState<ListingAvailabilityEnum>(ListingAvailabilityEnum.AVAILABLE);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [reactivatingListingId, setReactivatingListingId] = useState<string | null>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [selectedListingForReactivation, setSelectedListingForReactivation] = useState<any>(null);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this listing?")) {
@@ -263,7 +256,7 @@ function UserListingsPage() {
                   <th className="px-8 py-3 font-medium text-center">
                     Availability
                   </th>
-                  {/* <th className="px-8 py-3 font-medium text-center">Payment</th> */}
+                  <th className="px-8 py-3 font-medium text-center">Payment</th>
                   <th className="px-8 py-3 font-medium text-center">Actions</th>
                 </tr>
               </thead>
@@ -320,34 +313,11 @@ function UserListingsPage() {
                         : toTitleCaseFromId(listing.type)}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
-                      <div className="flex flex-col items-center gap-1">
-                        <span
-                          className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[getStatusDisplay(listing.status) as keyof typeof statusStyles] || ""}`}
-                        >
-                          {getStatusDisplay(listing.status)}
-                        </span>
-                        {listing.expiresAt ? (
-                          <span className={`text-[9px] ${new Date(listing.expiresAt) > new Date() ? 'text-gray-500' : 'text-red-600 font-medium'}`}>
-                            {new Date(listing.expiresAt) > new Date() 
-                              ? `Expires ${new Date(listing.expiresAt).toLocaleDateString()}`
-                              : 'Expired'
-                            }
-                          </span>
-                        ) : listing.isActive === false ? (
-                          <span className="text-[9px] text-red-600 font-medium">Inactive</span>
-                        ) : null}
-                        {(!listing.isActive || listing.status === ListingStatusEnum.EXPIRED) && (
-                          <button
-                            onClick={() => {
-                              setSelectedListingForReactivation(listing);
-                              setShowPaymentModal(true);
-                            }}
-                            className="text-[9px] text-blue-600 hover:text-blue-800 underline"
-                          >
-                            Reactivate
-                          </button>
-                        )}
-                      </div>
+                      <span
+                        className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[getStatusDisplay(listing.status) as keyof typeof statusStyles] || ""}`}
+                      >
+                        {getStatusDisplay(listing.status)}
+                      </span>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
                       {editingAvailability === listing.id ? (
@@ -398,7 +368,7 @@ function UserListingsPage() {
                         </div>
                       )}
                     </td>
-                    {/* <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
+                    <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
                       {listing.paymentId ? (
                         <span className="min-h-6 text-[10px] rounded-full w-16 mx-auto flex items-center justify-center text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]">
                           Paid
@@ -408,7 +378,7 @@ function UserListingsPage() {
                           Unpaid
                         </span>
                       )}
-                    </td> */}
+                    </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
                       <div className="relative dropdown-container">
                         <button
@@ -440,7 +410,7 @@ function UserListingsPage() {
                                 </button>
                               </Link>
 
-                              <Link href={`/account/listings/${listing.id}`}>
+                              <Link href={`/explore/${listing.id}`}>
                                 <button
                                   onClick={closeDropdown}
                                   className="w-full px-4 py-2 text-left text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -503,39 +473,6 @@ function UserListingsPage() {
           </div>
         )}
       </div>
-
-      {showPaymentModal && selectedListingForReactivation && (
-        <ListingPaymentModal
-          open={showPaymentModal}
-          onOpenChange={(open) => {
-            setShowPaymentModal(open);
-            if (!open) setSelectedListingForReactivation(null);
-          }}
-          listingType={selectedListingForReactivation.type as ListingTypeEnum}
-          listingTitle={selectedListingForReactivation.title}
-          listingBreed={selectedListingForReactivation.breed || ''}
-          listingLocation={selectedListingForReactivation.location || ''}
-          listingImage={selectedListingForReactivation.featuredImage || selectedListingForReactivation.metadata?.images?.[0]}
-          listingId={selectedListingForReactivation.id}
-          onPaymentSuccess={async (paymentData) => {
-            try {
-              await reactivateListingMutation.mutateAsync({
-                id: selectedListingForReactivation.id,
-                subscriptionId: paymentData.subscriptionId || paymentData.paymentId,
-                paymentId: paymentData.paymentId,
-              });
-              setShowPaymentModal(false);
-              setSelectedListingForReactivation(null);
-              refetch();
-            } catch (error) {
-              console.error('Error reactivating listing:', error);
-            }
-          }}
-          onPaymentError={(error) => {
-            console.error('Payment error:', error);
-          }}
-        />
-      )}
     </DashboardLayout>
   );
 }
