@@ -7,7 +7,8 @@ export const Routes = {
   },
   public: {
     home: "/",
-    terms: "/",
+    privacy: "/content/privacy-policy.html",
+    terms: "/content/terms-conditions-of-use.html",
     notFound: "/404",
     explore: "/explore",
     wishlist: "/wishlist",

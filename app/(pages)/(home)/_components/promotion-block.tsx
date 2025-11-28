@@ -14,7 +14,7 @@ export const PromotionBlock = () => {
             <span className="flex text-center flex-col items-center text-[#B8B6B6] font-light text-2xl max-md:text-xs gap-4 max-md:gap-0"><strong className="text-40 max-md:text-lg text-black font-semibold">1 in 8</strong>Dogs in Australia come<br/>from Pups4Sale</span>
             <span className="flex text-center flex-col items-center text-[#B8B6B6] font-light text-2xl max-md:text-xs gap-4 max-md:gap-0"><strong className="text-40 max-md:text-lg text-black font-semibold">20+</strong>Est.</span>
           </div>
-          <Link href={Routes.public.explore} className="w-44 max-md:w-60 flex rounded-full bg-black py-3 text-base font-semibold text-white transition hover:bg-gray-800 justify-center">View Listing</Link>
+          <Link href={Routes.public.explore} className="w-44 max-md:w-60 flex rounded-full bg-black py-3 text-base font-semibold text-white transition hover:bg-gray-800 justify-center hidden">View Listing</Link>
         </div>
         <img className="relative z-10 max-md:w-[400px] max-md:max-w-none" src="/images/banner/girl-with-dog.png" alt="Girl with dog"/>
       </div>

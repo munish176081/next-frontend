@@ -73,11 +73,11 @@ const menuItems = [
       },
     ],
   },
-  {
-    id: 4,
-    label: "Blogs",
-    path: Routes.public.blog,
-  },
+  // {
+  //   id: 4,
+  //   label: "Blogs",
+  //   path: Routes.public.blog,
+  // },
   {
     id: 5,
     label: "Contact us",

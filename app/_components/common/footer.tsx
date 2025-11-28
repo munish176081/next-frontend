@@ -1,23 +1,22 @@
 "use client";
 import Link from "next/link";
 import { LogoIcon } from "../icons";
+import { Routes } from "@/_config/routes";
 
 const infoItems = [
-  { label: "Privacy", path: "/content/privacy-policy.html" },
-  { label: "Terms & Conditions", path: "/content/terms-conditions-of-use.html" },
+  { label: "Privacy", path: Routes.public.privacy },
+  { label: "Terms & Conditions", path: Routes.public.terms },
   { label: "FAQ", path: "#" },
   { label: "Shipping and payment", path: "#" },
   { label: "Partners", path: "#" },
-  { label: "Blog", path: "#" },
-  { label: "Contact Us", path: "/contact" },
 ];
 
 const menuItems = [
-  { label: "Home", path: "#" },
-  { label: "Explore", path: "#" },
-  { label: "Add Listing", path: "#" },
-  { label: "Blogs", path: "#" },
-  { label: "Contact us", path: "#" },
+  { label: "Home", path: Routes.public.home },
+  { label: "Explore", path: Routes.public.explore },
+  { label: "Log In", path: Routes.auth.signIn },
+  { label: "Register", path: Routes.auth.signUp},
+  { label: "Contact us", path: Routes.public.contact },
 ];
 
 export const Footer = () => {
@@ -41,7 +40,7 @@ export const Footer = () => {
         </div>
         <div className="w-3/12 max-md:w-auto flex flex-col items-end max-md:items-center gap-2">
           <button className="bg-black text-white py-2 px-6 rounded-full text-sm font-medium hover:bg-gray-800 transition w-auto">Request a call</button>
-          <span className="text-xs font-semibold">+1 (999) 999-99-99 <br /> info@Pups4sale.com</span>
+          <span className="text-xs font-semibold">+1 (999) 999-99-99 <br /> admin@Pups4sale.com.au</span>
         </div>
       </div>
       <div className="flex gap-8 max-md:flex-col max-md:items-center">
