@@ -185,7 +185,7 @@ const ExploreListings = () => {
               <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin ml-2" />
             )} */}
           </div>
-          <select className="flex h-16 max-md:w-[calc(100%/2-8px)] max-md:text-base max-md rounded-full min-w-32 px-4 border border-black/20 appearance-none bg-selectArrow bg-no-repeat bg-[90%] outline-none text-xl">
+          <select className="flex h-16 max-md:w-[calc(100%/2-8px)] max-md:text-base max-md rounded-full min-w-32 px-4 border border-black/20 appearance-none bg-selectArrow bg-no-repeat bg-[90%] outline-none text-xl hidden">
             <option>Sort by</option>
           </select>
           <div className="max-md:flex max-md:w-[calc(100%/2-8px)] max-md:text-base max-md h-16 rounded-full border border-black/20 text-xl p-2 bg-white gap-3 items-center pr-6 cursor-pointer hidden justify-center" onClick={() => setShowFilterBtn(true)}>
