@@ -635,16 +635,6 @@ const ExploreDetail = () => {
         </div>
         <div className="flex flex-col gap-3 max-md:gap-2">
           <span className="text-5xl font-medium max-md:text-3xl">{transformedListing.title}</span>
-          <div className="flex items-center gap-3 max-md:flex-col max-md:items-start">
-            <span className="text-5xl font-medium max-md:text-3xl">
-              {transformedListing.title}
-            </span>
-
-            <button className="ml-auto bg-yellow-500 text-white px-4 py-2 rounded-lg flex items-center gap-2">
-              <IconUser />
-              View Profile
-            </button>
-          </div>
           <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">{transformedListing.breed}</span>
           <span className='max-md:text-xs'>{transformedListing.location}</span>
           <div className="flex gap-2 max-md:gap-1">
