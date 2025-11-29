@@ -148,12 +148,12 @@ export function calculateTotalPrice(
 }
 
 /**
- * Format price for display
+ * Format price for display (without decimal places)
  */
 export function formatPrice(amount: number | string | undefined | null): string {
   // Handle null, undefined, or empty values
   if (amount === null || amount === undefined || amount === '') {
-    return '$0.00';
+    return '$0';
   }
   
   // Convert string to number if needed
@@ -162,10 +162,12 @@ export function formatPrice(amount: number | string | undefined | null): string 
   // Check if it's a valid number
   if (isNaN(numAmount) || !isFinite(numAmount)) {
     console.warn('formatPrice: Invalid amount provided:', amount);
-    return '$0.00';
+    return '$0';
   }
   
-  return `$${numAmount.toFixed(2)}`;
+  // Round to nearest integer and format without decimals
+  const roundedAmount = Math.round(numAmount);
+  return `$${roundedAmount.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
 }
 
 /**

@@ -372,6 +372,10 @@ export default function PuppyLitterListingForm({
         }
       }
     });
+    
+    // Always include hideAddress (from location field toggle)
+    // Default to false if not set
+    dynamicData.hideAddress = formData.hideAddress === true;
 
     // Clean up litter-specific fields when switching to single puppy mode
     if (formData.listingType === 'puppy') {

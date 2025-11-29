@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Autocomplete, useLoadScript } from "@react-google-maps/api";
 import { MapPin } from "lucide-react";
 
-interface LocationFieldProps {
+export interface LocationFieldProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
@@ -12,6 +12,8 @@ interface LocationFieldProps {
   required?: boolean;
   label?: string;
   variant?: 'default' | 'form-field';
+  hideAddress?: boolean;
+  onHideAddressChange?: (hideAddress: boolean) => void;
 }
 
 const libraries: ("places")[] = ["places"];
@@ -23,7 +25,9 @@ export default function LocationField({
   error, 
   required = false,
   label = "Location",
-  variant = 'default'
+  variant = 'default',
+  hideAddress = false,
+  onHideAddressChange
 }: LocationFieldProps) {
   const [inputValue, setInputValue] = useState(value || '');
   const [autocompleteError, setAutocompleteError] = useState(false);
@@ -229,6 +233,21 @@ export default function LocationField({
         {error && (
           <span className="text-red-500 text-sm mt-1">{error}</span>
         )}
+        {/* Toggle for hiding address */}
+        {onHideAddressChange && (
+          <div className="flex items-center gap-3 mt-3">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideAddress}
+                onChange={(e) => onHideAddressChange(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#EFC951]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EFC951]"></div>
+            </label>
+            <span className="text-sm text-gray-600">Don't show Address</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -251,6 +270,21 @@ export default function LocationField({
         </div>
         {error && (
           <span className="text-red-500 text-sm mt-1">{error}</span>
+        )}
+        {/* Toggle for hiding address */}
+        {onHideAddressChange && (
+          <div className="flex items-center gap-3 mt-3">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideAddress}
+                onChange={(e) => onHideAddressChange(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#EFC951]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EFC951]"></div>
+            </label>
+            <span className="text-sm text-gray-600">Don't show Address</span>
+          </div>
         )}
       </div>
     );
@@ -275,6 +309,21 @@ export default function LocationField({
         </span>
         {error && (
           <span className="text-red-500 text-sm mt-1">{error}</span>
+        )}
+        {/* Toggle for hiding address */}
+        {onHideAddressChange && (
+          <div className="flex items-center gap-3 mt-3">
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={hideAddress}
+                onChange={(e) => onHideAddressChange(e.target.checked)}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#EFC951]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EFC951]"></div>
+            </label>
+            <span className="text-sm text-gray-600">Don't show Address</span>
+          </div>
         )}
       </div>
     );
@@ -321,6 +370,21 @@ export default function LocationField({
       </Autocomplete>
       {error && (
         <span className="text-red-500 text-sm mt-1">{error}</span>
+      )}
+      {/* Toggle for hiding address */}
+      {onHideAddressChange && (
+        <div className="flex items-center gap-3 mt-3">
+          <label className="relative inline-flex items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={hideAddress}
+              onChange={(e) => onHideAddressChange(e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#EFC951]/50 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#EFC951]"></div>
+          </label>
+          <span className="text-sm text-gray-600">Don't show Address</span>
+        </div>
       )}
     </div>
   );

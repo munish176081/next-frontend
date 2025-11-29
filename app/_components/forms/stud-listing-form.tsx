@@ -134,6 +134,10 @@ export default function StudListingForm({
         dynamicData[field.name] = formData[field.name];
       }
     });
+    
+    // Always include hideAddress (from location field toggle)
+    // Default to false if not set
+    dynamicData.hideAddress = formData.hideAddress === true;
 
     // Extract parent information
     const motherInfo = {

@@ -149,6 +149,10 @@ export default function SemenListingForm({
         }
       }
     });
+    
+    // Always include hideAddress (from location field toggle)
+    // Default to false if not set
+    dynamicData.hideAddress = formData.hideAddress === true;
 
     // Extract parent information (only father for semen listings)
     const fatherInfo = {

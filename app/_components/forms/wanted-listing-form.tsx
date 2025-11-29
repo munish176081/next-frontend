@@ -113,6 +113,10 @@ export default function WantedListingForm({
           dynamicData[field.name] = formData[field.name];
         }
       });
+      
+      // Always include hideAddress (from location field toggle)
+      // Default to false if not set
+      dynamicData.hideAddress = formData.hideAddress === true;
 
       if (editId) {
         // Update existing listing

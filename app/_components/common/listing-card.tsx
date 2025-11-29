@@ -352,12 +352,12 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           ) : isOtherServices ? (
             <>
               <Heading tag="h4" className="text-2xl font-semibold">{fields?.serviceCategory || title}</Heading>
-              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+              {location && !fields?.hideAddress && <Text className="text-base text-[#736E6E]">{location}</Text>}
             </>
           ) : isFutureLitter ? (
             <>
               <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
-              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+              {location && !fields?.hideAddress && <Text className="text-base text-[#736E6E]">{location}</Text>}
               {puppyImages.length > 0 && (
                 <div className="flex items-center gap-2 mt-2">
                   <span className="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full">
@@ -369,7 +369,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           ) : (
             <>
               <Heading tag="h4" className="text-2xl font-semibold">{title}</Heading>
-              {location && <Text className="text-base text-[#736E6E]">{location}</Text>}
+              {location && !fields?.hideAddress && <Text className="text-base text-[#736E6E]">{location}</Text>}
             </>
           )}
          

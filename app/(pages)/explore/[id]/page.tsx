@@ -17,6 +17,7 @@ import { formatListingType } from "@/_utils/listing";
 import { ListingTypeEnum } from "@/_types/listing";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useUser } from "@/_services/hooks/user/use-user";
 import { useGetListingById } from "@/_services/hooks/listings/use-get-listing-by-id";
 import { chatApiService } from "@/_services/chat/chatApiService";
@@ -349,7 +350,7 @@ const ExploreDetail = () => {
     const coreFields: Record<string, () => string> = {
       'Dog Name': () => transformedListing.fields?.dogName || transformedListing.title || '',
       'Breed': () => transformedListing.breed || '',
-      'Location': () => transformedListing.location || '',
+      'Location': () => transformedListing.fields?.hideAddress ? '' : (transformedListing.location || ''),
       'Age': () => formatValue(transformedListing.fields?.age),
       'Listing Type': () => transformedListing.listingType || '',
     };
@@ -423,9 +424,12 @@ const ExploreDetail = () => {
     if (transformedListing.pricingInfo) {
       const pricing = transformedListing.pricingInfo;
       if (pricing.minPrice && pricing.maxPrice) {
-        details.push({ label: 'Price Range', value: `$${pricing.minPrice} - $${pricing.maxPrice}` });
+        const minPrice = Math.round(Number(pricing.minPrice));
+        const maxPrice = Math.round(Number(pricing.maxPrice));
+        details.push({ label: 'Price Range', value: `$${minPrice} - $${maxPrice}` });
       } else if (pricing.price) {
-        details.push({ label: 'Price', value: `$${pricing.price}` });
+        const price = Math.round(Number(pricing.price));
+        details.push({ label: 'Price', value: `$${price}` });
       }
     }
     
@@ -678,9 +682,24 @@ const ExploreDetail = () => {
           </Swiper>
         </div>
         <div className="flex flex-col gap-3 max-md:gap-2">
-          <span className="text-5xl font-medium max-md:text-3xl">{transformedListing.title}</span>
+          <div className="flex items-start justify-between gap-4 max-md:flex-col max-md:gap-2">
+            <span className="text-5xl font-medium max-md:text-3xl flex-1">{transformedListing.title}</span>
+            {transformedListing.user?.username && (
+              <Link
+                href={`/user/${transformedListing.user.username}`}
+                className="bg-[#EFC951] hover:bg-[#E6B847] text-black px-6 py-3 rounded-full text-base font-medium transition-colors duration-200 flex items-center gap-2 whitespace-nowrap max-md:px-4 max-md:py-2 max-md:text-sm"
+              >
+                <svg className="w-5 h-5 max-md:w-4 max-md:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                View Profile
+              </Link>
+            )}
+          </div>
           <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">{transformedListing.breed}</span>
-          <span className='max-md:text-xs'>{transformedListing.location}</span>
+          {transformedListing.location && !transformedListing.fields?.hideAddress && (
+            <span className='max-md:text-xs'>{transformedListing.location}</span>
+          )}
           <div className="flex gap-2 max-md:gap-1">
             <span className="h-10 border max-md:h-8 max-md:text-[11px] max-md:px-2 border-[#87D78E4D] bg-[#87D78E4D]/30 px-4 rounded-full flex items-center">
               {transformedListing.availability === 'available' ? 'Available' :

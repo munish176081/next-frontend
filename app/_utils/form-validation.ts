@@ -73,6 +73,15 @@ export const validateField = (field: ListingField, value: any): string | null =>
           return `${field.label} cannot be in the future`;
         }
       }
+      // For expectedDateOfBirth fields, prevent past dates (only allow future dates)
+      if (value && field.name === 'expectedDateOfBirth') {
+        const selectedDate = new Date(value);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Set to start of today
+        if (selectedDate < today) {
+          return `${field.label} cannot be in the past`;
+        }
+      }
       break;
   }
 

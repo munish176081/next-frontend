@@ -8,6 +8,7 @@ export interface PricingData {
   maxPrice?: number;
   price?: number;
   fixedPrice?: number;
+  startingPrice?: number | string; // For Other Services listings
 }
 
 export interface PricingDisplayResult {
@@ -35,14 +36,28 @@ export const formatCurrency = (amount: number | undefined | null): string => {
  * Validates pricing data and returns display information
  */
 export const getPricingDisplay = (pricingData: PricingData): PricingDisplayResult => {
-  const { pricingOption, minPrice, maxPrice, price, fixedPrice } = pricingData;
+  const { pricingOption, minPrice, maxPrice, price, fixedPrice, startingPrice } = pricingData;
+
+  // Handle startingPrice (for Other Services listings) - takes priority if present
+  if (startingPrice !== undefined && startingPrice !== null && startingPrice !== '') {
+    const numericStartingPrice = typeof startingPrice === 'string' ? parseFloat(startingPrice) : startingPrice;
+    
+    if (!isNaN(numericStartingPrice) && numericStartingPrice > 0) {
+      const formattedStartingPrice = formatCurrency(numericStartingPrice);
+      return {
+        displayText: `Starting from $${formattedStartingPrice}`,
+        isValid: true,
+        hasError: false
+      };
+    }
+  }
 
   // If no pricing option is specified, fall back to using the price field
   if (!pricingOption) {
     // Convert to number and validate price
     const numericPrice = typeof price === 'string' ? parseFloat(price) : price;
     
-    if (price === undefined || price === null || numericPrice === undefined || isNaN(numericPrice) || numericPrice <= 0) {
+    if (price === undefined || price === null || numericPrice === undefined || isNaN(numericPrice) || numericPrice <= 0 ) {
       return {
         displayText: 'Price not available',
         isValid: false,
@@ -222,7 +237,8 @@ export const getListingPricingDisplay = (listingReference: {
     minPrice: listingReference.fields?.minPrice,
     maxPrice: listingReference.fields?.maxPrice,
     price: listingReference.price,
-    fixedPrice: listingReference.fields?.fixedPrice
+    fixedPrice: listingReference.fields?.fixedPrice,
+    startingPrice: listingReference.fields?.startingPrice // For Other Services listings
   };
 
   console.log(pricingData, "SUSHILssss", listingReference.fields  ) ; 
@@ -239,7 +255,8 @@ export const getPricingInfo = (fields: Record<string, any>, price?: number) => {
     minPrice: fields?.minPrice,
     maxPrice: fields?.maxPrice,
     price: price,
-    fixedPrice: fields?.fixedPrice
+    fixedPrice: fields?.fixedPrice,
+    startingPrice: fields?.startingPrice // For Other Services listings
   };
 };
 

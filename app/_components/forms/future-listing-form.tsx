@@ -143,6 +143,11 @@ export default function FutureListingForm({
         ? formData.registrationNumber 
         : '';
     }
+    
+    // Always include hideAddress (from location field toggle)
+    // This field is not in the configured fields but is set by the location field toggle
+    // Explicitly set as boolean (false if not true)
+    dynamicData.hideAddress = Boolean(formData.hideAddress);
 
     // Extract parent information
     const motherInfo = {
@@ -222,6 +227,9 @@ export default function FutureListingForm({
     try {
       const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments, metadata, motherInfo, fatherInfo, price } = extractFormData();
 
+      // Ensure hideAddress is explicitly set (force include even if false)
+      dynamicData.hideAddress = Boolean(formData.hideAddress);
+      
       const listingData: CreateListingDto = {
         title: commonData.title,
         description: commonData.description,
@@ -435,6 +443,9 @@ export default function FutureListingForm({
 
       if (editId) {
         // Update existing listing
+        // Ensure hideAddress is explicitly set (force include even if false)
+        dynamicData.hideAddress = Boolean(formData.hideAddress);
+        
         const updateData: UpdateListingDto = {
           title: commonData.title,
           description: commonData.description,

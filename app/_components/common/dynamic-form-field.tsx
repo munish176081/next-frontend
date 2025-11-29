@@ -24,9 +24,10 @@ interface DynamicFormFieldProps {
   category?: 'mother' | 'father' | 'stud' | 'bitch';
   onPendingDeletionsChange?: (fieldName: string, pendingUrls: string[]) => void;
   getDynamicLabel?: (fieldName: string, defaultLabel: string) => string;
+  getFieldValue?: (fieldName: string) => any; // Optional function to get other field values
 }
 
-export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange, getDynamicLabel }: DynamicFormFieldProps) {
+export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange, getDynamicLabel, getFieldValue }: DynamicFormFieldProps) {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
@@ -471,15 +472,25 @@ export default function DynamicFormField({ field, value, onChange, error, layout
 
     switch (field.type) {
       case 'location':
+        // Get hideAddress value from formData using getFieldValue if available
+        const hideAddressValue: boolean = getFieldValue ? (getFieldValue('hideAddress') || false) : false;
+        
         return (
-          <LocationField
-            value={value || ''}
-            onChange={(newValue) => onChange(field.name, newValue)}
-            placeholder={field.placeholder}
-            error={error}
-            required={field.required}
-            label={field.label}
-          />
+          <div>
+            <LocationField
+              value={value || ''}
+              onChange={(newValue) => onChange(field.name, newValue)}
+              placeholder={field.placeholder}
+              error={error}
+              required={field.required}
+              label={field.label}
+              hideAddress={hideAddressValue}
+              onHideAddressChange={(hideAddress: boolean) => {
+                // Store hideAddress in fields.hideAddress (dynamic field)
+                onChange('hideAddress', hideAddress);
+              }}
+            />
+          </div>
         );
 
       case 'phone':
@@ -533,15 +544,22 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         case 'date':
           // Convert string value to Date for DatePicker
           const dateValue = value ? (typeof value === 'string' ? new Date(value) : value) : undefined;
-          const minDate = field.validation?.min ? new Date(field.validation.min) : undefined;
+          let minDate = field.validation?.min ? new Date(field.validation.min) : undefined;
+          let maxDate = field.validation?.max ? new Date(field.validation.max) : undefined;
           
           // For dateOfBirth fields (non-stud listings), prevent future dates by default
           // Note: Stud listings now use 'age' field (number) instead of 'dateOfBirth'
-          let maxDate = field.validation?.max ? new Date(field.validation.max) : undefined;
           if (field.name === 'dateOfBirth' && !field.validation?.max) {
             // Set max date to today to prevent future dates
             maxDate = new Date();
             maxDate.setHours(23, 59, 59, 999); // Set to end of today
+          }
+          
+          // For expectedDateOfBirth fields, prevent past dates (only allow future dates)
+          if (field.name === 'expectedDateOfBirth' && !field.validation?.min) {
+            // Set min date to today to prevent past dates
+            minDate = new Date();
+            minDate.setHours(0, 0, 0, 0); // Set to start of today
           }
           
           return (

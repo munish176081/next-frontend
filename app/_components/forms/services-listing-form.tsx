@@ -140,11 +140,30 @@ export default function ServicesListingForm({
         dynamicData[field.name] = formData[field.name];
       }
     });
+    
+    // Always include hideAddress (from location field toggle)
+    // Default to false if not set
+    dynamicData.hideAddress = formData.hideAddress === true;
 
     // Special handling for service listings
-    if (selectedListingType.id === 'OTHER_SERVICES' && commonData.serviceCategory) {
-      dynamicData.serviceCategory = commonData.serviceCategory;
-      delete commonData.serviceCategory;
+    if (selectedListingType.id === 'OTHER_SERVICES') {
+      // Move serviceCategory to dynamic data
+      if (commonData.serviceCategory) {
+        dynamicData.serviceCategory = commonData.serviceCategory;
+        delete commonData.serviceCategory;
+      }
+      
+      // Move startingPrice to dynamic data (should be in fields JSON, not common fields)
+      if (commonData.startingPrice !== undefined && commonData.startingPrice !== '') {
+        dynamicData.startingPrice = commonData.startingPrice;
+        delete commonData.startingPrice;
+      }
+      
+      // Move priceDetailsAndAddOns to dynamic data (should be in fields JSON, not common fields)
+      if (commonData.priceDetailsAndAddOns !== undefined && commonData.priceDetailsAndAddOns !== '') {
+        dynamicData.priceDetailsAndAddOns = commonData.priceDetailsAndAddOns;
+        delete commonData.priceDetailsAndAddOns;
+      }
     }
 
     return {

@@ -245,6 +245,7 @@ export default function BaseListingForm({
                 layout="single"
                 onPendingDeletionsChange={handlePendingDeletions}
                 getDynamicLabel={getDynamicLabel}
+                getFieldValue={(fieldName) => formData[fieldName]}
               />
             ))}
           </div>
@@ -263,6 +264,7 @@ export default function BaseListingForm({
                 error={errors[field.name]}
                 layout="double"
                 getDynamicLabel={getDynamicLabel}
+                getFieldValue={(fieldName) => formData[fieldName]}
               />
             ))}
             
