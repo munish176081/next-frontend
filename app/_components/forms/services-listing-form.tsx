@@ -388,7 +388,7 @@ export default function ServicesListingForm({
     if (editId) {
       setIsSubmitting(true);
       try {
-        const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments, metadata } = extractFormData();
+        const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments } = extractFormData();
         const updateData: UpdateListingDto = {
           title: commonData.title,
           description: commonData.description,
@@ -397,11 +397,10 @@ export default function ServicesListingForm({
           breedId: breedId,
           location: commonData.location,
           fields: dynamicData,
-          contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          contactInfo: contactInfo && Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
           images: allImages.length > 0 ? allImages : undefined,
           videos: allVideos.length > 0 ? allVideos : undefined,
           documents: allDocuments.length > 0 ? allDocuments : undefined,
-          metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
           tags: baseForm.extractTags(commonData, dynamicData),
         };
         await updateListingMutation.mutateAsync({ id: editId, data: updateData });

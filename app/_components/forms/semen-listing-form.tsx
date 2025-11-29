@@ -130,7 +130,23 @@ export default function SemenListingForm({
     const dynamicData: Record<string, any> = {};
     dynamicFields.forEach(field => {
       if (formData[field.name] !== undefined && formData[field.name] !== '') {
-        dynamicData[field.name] = formData[field.name];
+        // Deduplicate deliveryOptions array
+        if (field.name === 'deliveryOptions' && Array.isArray(formData[field.name])) {
+          // Remove duplicates by normalizing to lowercase for comparison, but keep original format
+          const seen = new Set<string>();
+          const uniqueOptions = formData[field.name]
+            .filter((opt: string) => {
+              if (!opt || !opt.trim()) return false;
+              const normalized = opt.trim().toLowerCase();
+              if (seen.has(normalized)) return false;
+              seen.add(normalized);
+              return true;
+            })
+            .map((opt: string) => opt.trim());
+          dynamicData[field.name] = uniqueOptions;
+        } else {
+          dynamicData[field.name] = formData[field.name];
+        }
       }
     });
 

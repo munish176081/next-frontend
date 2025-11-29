@@ -6,9 +6,8 @@ import { ListingSummaryDto, ListingTypeEnum } from "@/_types/listing";
 import { formatListingType } from "@/_utils/listing";
 
 export const PupsForSale = () => {
-  // Fetch latest puppy-related listings (newest first)
+  // Fetch latest listings (all types, excluding $128 featured subscriptions)
   const { data, isLoading, error } = useGetListings({
-    types: [ListingTypeEnum.PUPPY_LISTING, ListingTypeEnum.PUPPY_LITTER_LISTING],
     limit: 8,
     sortBy: "createdAt",
     sortOrder: "DESC",

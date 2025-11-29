@@ -165,9 +165,7 @@ function Startlistingform() {
         // Initialize form data
         const initialData: Record<string, any> = {};
         [...listingData.requiredFields, ...listingData.optionalFields].forEach(field => {
-          if (field.name === 'deliveryOptions') {
-            initialData[field.name] = ['Pickup'];
-          } else if (field.type === 'checkbox') {
+          if (field.type === 'checkbox') {
             initialData[field.name] = [];
           } else if (field.name === 'pricingOption') {
             // Set default value for pricing option to fixed price

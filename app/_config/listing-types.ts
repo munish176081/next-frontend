@@ -9,10 +9,10 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
     required: true,
     fileConfig: {
       multiple: true,
-      accept: 'image/*',
+      accept: 'image/*,video/*',
       maxSize: 30,
       minCount: 1,
-      maxCount: 10
+      maxCount: 20
     },
     fieldCategory: 'dynamic'
   },
@@ -234,10 +234,10 @@ const MEDIA_FIELDS = {
     required: false,
     fileConfig: {
       multiple: true,
-      accept: 'image/*',
+      accept: 'image/*,video/*',
       maxSize: 30,
-      minCount: 1,
-      maxCount: 5
+      minCount: 3,
+      maxCount: 20
     },
     fieldCategory: 'media' as const
   },
@@ -249,7 +249,7 @@ const MEDIA_FIELDS = {
     fileConfig: {
       multiple: true,
       accept: 'video/*',
-      maxSize: 500,
+      maxSize: 30,
       minCount: 1,
       maxCount: 5
     },
@@ -453,9 +453,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: '.pdf,.doc,.docx',
+          accept: '.pdf,.jpeg,.jpg,.png',
           maxSize: 30,
-          maxCount: 5
+          minCount: 1,
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -480,10 +481,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: '.pdf,.doc,.docx,image/*',
+          accept: '.pdf,.jpeg,.jpg,.png',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -637,10 +638,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: 'image/*,.pdf',
+          accept: '.pdf,.jpeg,.jpg,.png',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -675,9 +676,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: '.pdf,.doc,.docx',
-          maxSize: 10,
-          maxCount: 5
+          accept: '.pdf,.jpeg,.jpg,.png',
+          maxSize: 30,
+          minCount: 1,
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -771,10 +773,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: false,
         fileConfig: {
           multiple: true,
-          accept: 'image/*,.pdf',
+          accept: '.pdf,.jpeg,.jpg,.png',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -904,10 +906,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         fileConfig: {
           multiple: true,
-          accept: 'image/*,.pdf',
+          accept: '.pdf,.jpeg,.jpg,.png',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       },
@@ -1123,10 +1125,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         fileConfig: {
           multiple: true,
-          accept: 'image/*',
+          accept: 'image/*,video/*',
           maxSize: 30,
-          minCount: 1,
-          maxCount: 5
+          minCount: 3,
+          maxCount: 20
         },
         fieldCategory: 'dynamic'
       }

@@ -106,20 +106,20 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
         name: "motherImages",
         type: "file",
         label: "Photos",
-        validation: { required: true, minCount: 1, maxCount: 5 },
+        validation: { required: true, minCount: 1, maxCount: 10 },
         uploadConfig: {
           category: "mother",
           customLabel: "Mother's Photos",
           icon: "👩‍🦰",
           className: "mother-upload",
-          accept: "image/*"
+          accept: "image/*,video/*"
         }
       },
       {
         name: "motherVideos",
         type: "file",
         label: "Videos",
-        validation: { required: false, maxCount: 2 },
+        validation: { required: false, maxCount: 10 },
         uploadConfig: {
           category: "mother",
           customLabel: "Mother's Videos",
@@ -176,20 +176,20 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
         name: "fatherImages",
         type: "file",
         label: "Photos",
-        validation: { required: true, minCount: 1, maxCount: 5 },
+        validation: { required: true, minCount: 1, maxCount: 10 },
         uploadConfig: {
           category: "father",
           customLabel: "Father's Photos",
           icon: "👨‍🦰",
           className: "father-upload",
-          accept: "image/*"
+          accept: "image/*,video/*"
         }
       },
       {
         name: "fatherVideos",
         type: "file",
         label: "Videos",
-        validation: { required: false, maxCount: 2 },
+        validation: { required: false, maxCount: 10 },
         uploadConfig: {
           category: "father",
           customLabel: "Father's Videos",
@@ -246,20 +246,20 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
         name: "studImages",
         type: "file",
         label: "Photos",
-        validation: { required: true, minCount: 1, maxCount: 5 },
+        validation: { required: true, minCount: 1, maxCount: 10 },
         uploadConfig: {
           category: "stud",
           customLabel: "Stud's Photos",
           icon: "🐕",
           className: "stud-upload",
-          accept: "image/*"
+          accept: "image/*,video/*"
         }
       },
       {
         name: "studVideos",
         type: "file",
         label: "Videos",
-        validation: { required: false, maxCount: 2 },
+        validation: { required: false, maxCount: 10 },
         uploadConfig: {
           category: "stud",
           customLabel: "Stud's Videos",
@@ -316,20 +316,20 @@ export const PARENT_FIELD_CONFIG: ParentFieldConfig = {
         name: "bitchImages",
         type: "file",
         label: "Photos",
-        validation: { required: true, minCount: 1, maxCount: 5 },
+        validation: { required: true, minCount: 1, maxCount: 10 },
         uploadConfig: {
           category: "bitch",
           customLabel: "Bitch's Photos",
           icon: "🐕",
           className: "bitch-upload",
-          accept: "image/*"
+          accept: "image/*,video/*"
         }
       },
       {
         name: "bitchVideos",
         type: "file",
         label: "Videos",
-        validation: { required: false, maxCount: 2 },
+        validation: { required: false, maxCount: 10 },
         uploadConfig: {
           category: "bitch",
           customLabel: "Bitch's Videos",

@@ -25,6 +25,7 @@ import MeetingScheduleForm from "@/_components/meetings/meeting-schedule-form";
 import { getPricingInfo, getPricingDisplayProps, getListingPricingDisplay } from "@/_utils/pricing";
 import { useWishlist } from "@/_contexts/wishlist-context";
 import { DatePicker } from "@/_components/ui/date-picker";
+import { FileViewerModal } from "@/_components/common/file-viewer-modal";
 
 const ExploreDetail = () => {
   const params = useParams();
@@ -44,6 +45,10 @@ const ExploreDetail = () => {
   
   // State for expanded details
   const [expandedDetails, setExpandedDetails] = useState<Record<number, boolean>>({});
+  
+  // State for file viewer modals
+  const [showDnaResultsModal, setShowDnaResultsModal] = useState(false);
+  const [showHealthCertificatesModal, setShowHealthCertificatesModal] = useState(false);
   
   // Fetch listing data
   const { data: listing, isLoading, error } = usePublicListing(listingId);
@@ -436,10 +441,49 @@ const ExploreDetail = () => {
     
     // Add delivery options if available
     if (transformedListing.fields?.deliveryOptions && Array.isArray(transformedListing.fields.deliveryOptions)) {
-      const deliveryOptions = transformedListing.fields.deliveryOptions
-        .filter((opt: string) => opt && opt.trim())
-        .map((opt: string) => formatLabel(opt))
+      // Map delivery option values to their display labels
+      const deliveryOptionLabels: Record<string, string> = {
+        'pickup': 'Pickup',
+        'road-transport': 'Road Transport',
+        'air-transport': 'Air Transport',
+        // Handle case variations
+        'Pickup': 'Pickup',
+        'Road Transport': 'Road Transport',
+        'Air Transport': 'Air Transport',
+        // Handle any other variations
+        'roadTransport': 'Road Transport',
+        'airTransport': 'Air Transport',
+        'Road-Transport': 'Road Transport',
+        'Air-Transport': 'Air Transport',
+      };
+      
+      // Debug: Log the raw delivery options data
+      console.log('🔍 Delivery Options Debug:', {
+        raw: transformedListing.fields.deliveryOptions,
+        listingId: listing?.id,
+      });
+      
+      // Remove duplicates by normalizing and using a Set
+      const uniqueOptions = Array.from(
+        new Set(
+          transformedListing.fields.deliveryOptions
+            .filter((opt: string) => opt && opt.trim())
+            .map((opt: string) => opt.trim().toLowerCase())
+        )
+      );
+      
+      const deliveryOptions = uniqueOptions
+        .map((normalized: string) => {
+          // Try to find a match (case-insensitive)
+          const matchedKey = Object.keys(deliveryOptionLabels).find(
+            key => key.toLowerCase() === normalized
+          );
+          // Use mapping if available, otherwise format the label
+          return matchedKey ? deliveryOptionLabels[matchedKey] : formatLabel(normalized.replace(/-/g, ' '));
+        })
+        .filter((label: string) => label && label.trim()) // Remove any empty labels
         .join(', ');
+      
       if (deliveryOptions) {
         details.push({ label: 'Delivery Options', value: deliveryOptions });
       }
@@ -672,15 +716,8 @@ const ExploreDetail = () => {
               if (dnaResults && Array.isArray(dnaResults) && dnaResults.length > 0) {
                 return (
                   <button 
-                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11" 
-                    onClick={() => {
-                      // Open each DNA result file in a new tab
-                      dnaResults.forEach((fileUrl, index) => {
-                        setTimeout(() => {
-                          window.open(fileUrl, `_blank_${index}`);
-                        }, index * 100); // Small delay to prevent browser blocking
-                      });
-                    }}
+                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11 hover:bg-gray-50 transition-colors" 
+                    onClick={() => setShowDnaResultsModal(true)}
                   >
                     <img className='max-md:w-4' src="/images/vectors/DNA.png" />
                     View DNA Results of Parents ({dnaResults.length} file{dnaResults.length !== 1 ? 's' : ''})
@@ -704,15 +741,8 @@ const ExploreDetail = () => {
               if (healthCertificates && Array.isArray(healthCertificates) && healthCertificates.length > 0) {
                 return (
                   <button 
-                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11" 
-                    onClick={() => {
-                      // Open each health certificate file in a new tab
-                      healthCertificates.forEach((fileUrl, index) => {
-                        setTimeout(() => {
-                          window.open(fileUrl, '_blank', 'noopener,noreferrer');
-                        }, index * 100); // Small delay to prevent browser blocking
-                      });
-                    }}
+                    className="h-20 text-[18px] font-medium justify-center border border-black/20 px-4 rounded-full flex items-center gap-2 max-md:text-sm max-md:h-11 hover:bg-gray-50 transition-colors" 
+                    onClick={() => setShowHealthCertificatesModal(true)}
                   >
                     <img className='max-md:w-4' src="/images/vectors/badges/vet-checked.svg" alt="Health Certificate" />
                     View Health Certificates ({healthCertificates.length} file{healthCertificates.length !== 1 ? 's' : ''})
@@ -882,10 +912,13 @@ const ExploreDetail = () => {
         <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
         <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Puppy Parents</span>
-        <div className="flex gap-6 relative z-10 mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4">
-          {transformedListing.fatherInfo && (
-            <div className="overflow-hidden flex flex-col gap-2 w-full">
-              <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
+        {(() => {
+          const hasBoth = transformedListing.fatherInfo && transformedListing.motherInfo;
+          return (
+            <div className={`flex gap-6 relative z-10 mt-8 max-md:flex-col max-md:gap-4 max-md:mt-4 ${hasBoth ? '' : 'justify-center'}`}>
+              {transformedListing.fatherInfo && (
+                <div className={`overflow-hidden flex flex-col gap-2 ${hasBoth ? 'w-full' : 'w-1/2 max-md:w-full'}`}>
+                  <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Father</span>
               <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
                 {(() => {
                   // Combine images and videos
@@ -998,7 +1031,7 @@ const ExploreDetail = () => {
             </div>
           )}
           {transformedListing.motherInfo && (
-            <div className="overflow-hidden flex flex-col gap-2 w-full">
+            <div className={`overflow-hidden flex flex-col gap-2 ${hasBoth ? 'w-full' : 'w-1/2 max-md:w-full'}`}>
               <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Mother</span>
               <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
                 {(() => {
@@ -1112,6 +1145,8 @@ const ExploreDetail = () => {
             </div>
           )}
         </div>
+          );
+        })()}
       </section>
       )}
       
@@ -1412,6 +1447,25 @@ const ExploreDetail = () => {
           </div>
       </section>
       <CtaBlock />
+      
+      {/* File Viewer Modals */}
+      {transformedListing?.fields?.dnaResults && Array.isArray(transformedListing.fields.dnaResults) && transformedListing.fields.dnaResults.length > 0 && (
+        <FileViewerModal
+          isOpen={showDnaResultsModal}
+          onClose={() => setShowDnaResultsModal(false)}
+          title="DNA Results of Parents"
+          files={transformedListing.fields.dnaResults}
+        />
+      )}
+      
+      {transformedListing?.fields?.healthCertificates && Array.isArray(transformedListing.fields.healthCertificates) && transformedListing.fields.healthCertificates.length > 0 && (
+        <FileViewerModal
+          isOpen={showHealthCertificatesModal}
+          onClose={() => setShowHealthCertificatesModal(false)}
+          title="Health Certificates"
+          files={transformedListing.fields.healthCertificates}
+        />
+      )}
     </>
   );
 };

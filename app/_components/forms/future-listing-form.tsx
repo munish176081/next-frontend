@@ -772,7 +772,7 @@ export default function FutureListingForm({
 
               {showMotherSection && (
                 <div className="border-t border-gray-100 p-6">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 parentInfo">
                     {getParentFields('mother').map((field) => {
                       const isRequired = isParentInfoRequired(selectedListingType.id as ListingTypeEnum);
                       return (

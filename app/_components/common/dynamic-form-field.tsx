@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useRef, useEffect, lazy, Suspense } from 'react';
+import React, { useState, useRef, useEffect, lazy, Suspense, useCallback } from 'react';
 import { ListingField } from '@/_config/listing-types';
 import { useFileUpload } from '@/_services/hooks/upload/use-file-upload';
 import { useDeleteUpload } from '@/_services/hooks/upload/use-delete-upload';
@@ -32,6 +32,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
   const [fileValidationErrors, setFileValidationErrors] = useState<string[]>([]);
   const [pendingDeletions, setPendingDeletions] = useState<string[]>([]); // Track files marked for deletion
+  const [failedFiles, setFailedFiles] = useState<Map<string, { file: File; error: string; retryCount: number }>>(new Map()); // Track failed uploads
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Helper function to determine file type from URL
@@ -130,56 +131,114 @@ export default function DynamicFormField({ field, value, onChange, error, layout
     }
   };
 
+    // Map to track which File object corresponds to which upload
+    const fileUploadMapRef = useRef<Map<string, File>>(new Map());
+
     const { uploadFile, isUploading } = useFileUpload({
-    onSuccess: (result) => {
-      console.log('Upload success for:', result.fileName, 'URL:', result.finalUrl);
-      
-      // Use functional state updates to avoid race conditions
-      setUploadedUrls(prevUrls => {
-        const newUrls = [...prevUrls, result.finalUrl];
-        console.log('Updated URLs:', newUrls);
+      onSuccess: (result) => {
+        console.log('Upload success for:', result.fileName, 'URL:', result.finalUrl);
         
-        // Validate count requirements AFTER upload is complete (using active files)
-        const activeFiles = newUrls.filter(url => !pendingDeletions.includes(url));
-        // For optional fields, only validate minCount if files are actually provided
-        if (field.fileConfig?.minCount) {
-          if (field.required && activeFiles.length < field.fileConfig.minCount) {
-            const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
-            setFileValidationErrors([errorMessage]);
-          } else if (!field.required && activeFiles.length > 0 && activeFiles.length < field.fileConfig.minCount) {
-            const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+        // Remove from failed files if it was there
+        setFailedFiles(prev => {
+          const newMap = new Map(prev);
+          newMap.delete(result.fileName);
+          return newMap;
+        });
+        
+        // Remove from file upload map
+        fileUploadMapRef.current.delete(result.fileName);
+        
+        // Use functional state updates to avoid race conditions
+        setUploadedUrls(prevUrls => {
+          const newUrls = [...prevUrls, result.finalUrl];
+          console.log('Updated URLs:', newUrls);
+          
+          // Validate count requirements AFTER upload is complete (using active files)
+          const activeFiles = newUrls.filter(url => !pendingDeletions.includes(url));
+          // For optional fields, only validate minCount if files are actually provided
+          if (field.fileConfig?.minCount) {
+            if (field.required && activeFiles.length < field.fileConfig.minCount) {
+              const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+              setFileValidationErrors([errorMessage]);
+            } else if (!field.required && activeFiles.length > 0 && activeFiles.length < field.fileConfig.minCount) {
+              const errorMessage = `At least ${field.fileConfig.minCount} file(s) are required`;
+              setFileValidationErrors([errorMessage]);
+            } else {
+              // Clear validation errors if count is now valid
+              setFileValidationErrors([]);
+            }
+          } else if (field.fileConfig?.maxCount && activeFiles.length > field.fileConfig.maxCount) {
+            const errorMessage = `Maximum ${field.fileConfig.maxCount} file(s) are allowed`;
             setFileValidationErrors([errorMessage]);
           } else {
             // Clear validation errors if count is now valid
             setFileValidationErrors([]);
           }
-        } else if (field.fileConfig?.maxCount && activeFiles.length > field.fileConfig.maxCount) {
-          const errorMessage = `Maximum ${field.fileConfig.maxCount} file(s) are allowed`;
-          setFileValidationErrors([errorMessage]);
-        } else {
-          // Clear validation errors if count is now valid
-          setFileValidationErrors([]);
-        }
+          
+          // Update parent component with active URLs only
+          onChange(field.name, activeFiles);
+          return newUrls;
+        });
         
-        // Update parent component with active URLs only
-        onChange(field.name, activeFiles);
-        return newUrls;
-      });
+        // Remove the file from uploading set
+        setUploadingFiles(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(result.fileName);
+          console.log('Removed from uploading:', result.fileName, 'Remaining:', Array.from(newSet));
+          return newSet;
+        });
+      },
+      onError: (error) => {
+        console.error('Upload failed:', error);
+        // Find the file that failed by checking which files are still in uploading state
+        // but haven't succeeded - this is a best-effort approach
+        const stillUploading = Array.from(uploadingFiles);
+        stillUploading.forEach(fileName => {
+          const file = fileUploadMapRef.current.get(fileName);
+          if (file) {
+            setFailedFiles(prev => {
+              const newMap = new Map(prev);
+              const existing = newMap.get(fileName);
+              newMap.set(fileName, {
+                file,
+                error: error.message || 'Upload failed after retries',
+                retryCount: existing ? existing.retryCount + 1 : 0
+              });
+              return newMap;
+            });
+            
+            // Remove from uploading set
+            setUploadingFiles(prev => {
+              const newSet = new Set(prev);
+              newSet.delete(fileName);
+              return newSet;
+            });
+          }
+        });
+      }
+    });
+
+    // Function to retry a failed upload
+    const retryFailedUpload = (fileName: string) => {
+      const failedFileData = failedFiles.get(fileName);
+      if (!failedFileData) return;
       
-      // Remove the file from uploading set
+      const { file } = failedFileData;
+      const fileType = FileValidator.getFileType(file);
+      
+      // Add back to uploading set
       setUploadingFiles(prev => {
         const newSet = new Set(prev);
-        newSet.delete(result.fileName);
-        console.log('Removed from uploading:', result.fileName, 'Remaining:', Array.from(newSet));
+        newSet.add(fileName);
         return newSet;
       });
-    },
-    onError: (error) => {
-      console.error('Upload failed:', error);
-      // Note: We can't easily identify which specific file failed in this callback
-      // The error handling is done at the hook level with toast notifications
-    }
-  });
+      
+      // Track file in upload map
+      fileUploadMapRef.current.set(fileName, file);
+      
+      // Retry upload
+      uploadFile({ file, fileType });
+    };
 
   const { mutate: deleteUpload, isPending: isDeleting } = useDeleteUpload();
   const { mutate: bulkDeleteUpload, isPending: isBulkDeleting } = useBulkDeleteUpload();
@@ -206,12 +265,24 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         allowedTypes.push('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/tiff', 'image/svg+xml');
       } else if (type === 'video/*') {
         allowedTypes.push('video/mp4', 'video/avi', 'video/mov', 'video/wmv', 'video/flv', 'video/webm', 'video/mkv', 'video/3gp', 'video/ogg', 'video/m4v');
-      } else if (type === '.pdf') {
-        allowedTypes.push('application/pdf');
       } else if (type.startsWith('.')) {
-        // Handle other file extensions
+        // Handle file extensions
         const extension = type.toLowerCase();
-        if (extension === '.doc' || extension === '.docx') {
+        if (extension === '.pdf') {
+          allowedTypes.push('application/pdf');
+        } else if (extension === '.jpeg' || extension === '.jpg') {
+          allowedTypes.push('image/jpeg', 'image/jpg');
+        } else if (extension === '.png') {
+          allowedTypes.push('image/png');
+        } else if (extension === '.gif') {
+          allowedTypes.push('image/gif');
+        } else if (extension === '.webp') {
+          allowedTypes.push('image/webp');
+        } else if (extension === '.bmp') {
+          allowedTypes.push('image/bmp');
+        } else if (extension === '.svg') {
+          allowedTypes.push('image/svg+xml');
+        } else if (extension === '.doc' || extension === '.docx') {
           allowedTypes.push('application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         } else if (extension === '.xls' || extension === '.xlsx') {
           allowedTypes.push('application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
@@ -339,10 +410,14 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       return newSet;
     });
 
-    // Upload each file
+    // Upload each file with error tracking
     files.forEach((file, index) => {
       console.log(`Uploading file ${index + 1}/${files.length}:`, file.name);
       const fileType = FileValidator.getFileType(file);
+      
+      // Track file in upload map for error handling
+      fileUploadMapRef.current.set(file.name, file);
+      
       uploadFile({ file, fileType });
     });
 
@@ -668,7 +743,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                     {isBulkDeleting ? 'Clearing...' : 'Clear All'}
                   </button>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 imgsection">
                   {uploadedUrls.map((url, index) => {
                     const fileType = getFileTypeFromUrl(url);
                     const fileName = fileNames[index] || url.split('/').pop() || `File ${index + 1}`;

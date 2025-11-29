@@ -154,6 +154,9 @@ nav.space-x-1.flex.items-center {
   box-shadow: 0px 2px 4px 0px rgba(35, 38, 59, 0.1);
 }
 
+.parentInfo .imgsection {
+  grid-template-columns: repeat(1, minmax(0,1fr)) !important;
+}
 .navbar {
   box-shadow: 0px 4px 23px 0px #0000001f;
 }
