@@ -44,7 +44,7 @@ export const SearchLocationInput = ({
           startIconClassName=""
           inputClassName="text-black flex items-center gap-4 w-full h-20 min-h-20 max-md:h-12 max-md:min-h-12 border border-black rounded-[51px] px-8 outline-none focus:outline-none !text-base !px-[70px]  max-md:!px-[50px]"
           // placeholder="Queen St, Melbourne VIC 3000, Australia..."
-          placeholder="Location"
+          placeholder="Enter your location"
           required
           clearable={locationInputAddress ? true : false}
           endIcon={true}
@@ -53,7 +53,7 @@ export const SearchLocationInput = ({
             onChangePlace(undefined);
             onChangeSearchInput("");
           }}
-          value={locationInputAddress || "Location"}
+          value={locationInputAddress}
           variant="flat"
           onChange={(event) => {
             onChangeSearchInput(event.target.value);

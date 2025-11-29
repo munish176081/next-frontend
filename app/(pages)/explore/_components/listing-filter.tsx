@@ -17,6 +17,7 @@ import { toast } from "@/_hooks/use-toast";
 import { Routes } from "@/_config/routes";
 import { useBreeds } from "@/_services/hooks/breeds/useBreeds";
 import { LocationAutoComplete } from "@/_components/common/location-auto-complete";
+import { useEffect } from "react";
 
 export const listingFilterSchema = z
   .object({
@@ -49,7 +50,7 @@ export type ListingFilterType = z.infer<typeof listingFilterSchema>;
 
 export const extractFilterDataFromSeach = (params: ReadonlyURLSearchParams) => {
   const types = params.get("types");
-  const breed = params.get("breed");
+  const breed = params.get("breed") ? decodeURIComponent(params.get("breed")!) : null;
   const age = params.get("age");
   const location = params.get("location");
   const address = params.get("address");
@@ -120,6 +121,39 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
   const maxInputPrice = watch("maxPrice") ?? 0;
   const minPriceSpan = watch("minPrice") ?? 0;
   const maxPriceSpan = watch("maxPrice") ?? 0;
+
+  // Sync form values when URL params change (e.g., when clicking breed card from home page)
+  useEffect(() => {
+    const currentBreed = breed || "";
+    const currentTypes = defaultValues.types || [];
+    const currentAge = age || "";
+    const currentLocation = location || "";
+    const currentPriceTypes = priceTypes || ['price_on_request', 'price_range', 'price_available'];
+
+    // Update form values if they've changed
+    if (currentBreed !== watch("breed")) {
+      setValue("breed", currentBreed);
+    }
+    if (JSON.stringify(currentTypes) !== JSON.stringify(watch("types"))) {
+      setValue("types", currentTypes);
+    }
+    if (currentAge !== watch("age")) {
+      setValue("age", currentAge);
+    }
+    if (currentLocation !== watch("location")) {
+      setValue("location", currentLocation);
+    }
+    if (minPrice && Number(minPrice) !== watch("minPrice")) {
+      setValue("minPrice", Number(minPrice));
+    }
+    if (maxPrice && Number(maxPrice) !== watch("maxPrice")) {
+      setValue("maxPrice", Number(maxPrice));
+    }
+    if (JSON.stringify(currentPriceTypes) !== JSON.stringify(watch("priceTypes"))) {
+      setValue("priceTypes", currentPriceTypes);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [breed, defaultValues.types, age, location, minPrice, maxPrice, priceTypes, setValue]);
 
   function handleFormSubmit(data: ListingFilterType) {
     if (Object.keys(errors).length > 0) {
