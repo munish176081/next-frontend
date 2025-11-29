@@ -538,10 +538,10 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         fileConfig: {
           multiple: true,
-          accept: 'image/*',
+          accept: 'image/*,video/*',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 20
         },
         fieldCategory: 'dynamic'
       },

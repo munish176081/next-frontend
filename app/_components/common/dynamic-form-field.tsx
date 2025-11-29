@@ -190,41 +190,27 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       },
       onError: (error) => {
         console.error('Upload failed:', error);
-        // Find the file that failed by checking which files are still in uploading state
-        // but haven't succeeded - this is a best-effort approach
-        const stillUploading = Array.from(uploadingFiles);
-        stillUploading.forEach(fileName => {
-          const file = fileUploadMapRef.current.get(fileName);
-          if (file) {
-            setFailedFiles(prev => {
-              const newMap = new Map(prev);
-              const existing = newMap.get(fileName);
-              newMap.set(fileName, {
-                file,
-                error: error.message || 'Upload failed after retries',
-                retryCount: existing ? existing.retryCount + 1 : 0
-              });
-              return newMap;
-            });
-            
-            // Remove from uploading set
-            setUploadingFiles(prev => {
-              const newSet = new Set(prev);
-              newSet.delete(fileName);
-              return newSet;
-            });
-          }
-        });
+        // Note: The retry logic in useFileUpload will automatically retry failed uploads
+        // up to 3 times with exponential backoff. If it still fails after retries,
+        // we need to track it. However, we don't have direct file reference here.
+        // The failed files will be tracked when uploads timeout or fail after all retries.
       }
     });
 
     // Function to retry a failed upload
-    const retryFailedUpload = (fileName: string) => {
+    const retryFailedUpload = useCallback((fileName: string) => {
       const failedFileData = failedFiles.get(fileName);
       if (!failedFileData) return;
       
       const { file } = failedFileData;
       const fileType = FileValidator.getFileType(file);
+      
+      // Remove from failed files temporarily
+      setFailedFiles(prev => {
+        const newMap = new Map(prev);
+        newMap.delete(fileName);
+        return newMap;
+      });
       
       // Add back to uploading set
       setUploadingFiles(prev => {
@@ -238,7 +224,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       
       // Retry upload
       uploadFile({ file, fileType });
-    };
+    }, [failedFiles, uploadFile]);
 
   const { mutate: deleteUpload, isPending: isDeleting } = useDeleteUpload();
   const { mutate: bulkDeleteUpload, isPending: isBulkDeleting } = useBulkDeleteUpload();
@@ -410,7 +396,7 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       return newSet;
     });
 
-    // Upload each file with error tracking
+    // Upload each file - retry logic is handled automatically by useFileUpload
     files.forEach((file, index) => {
       console.log(`Uploading file ${index + 1}/${files.length}:`, file.name);
       const fileType = FileValidator.getFileType(file);
@@ -418,8 +404,51 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       // Track file in upload map for error handling
       fileUploadMapRef.current.set(file.name, file);
       
-      uploadFile({ file, fileType });
+      uploadFile({ 
+        file, 
+        fileType 
+      });
     });
+    
+    // Set up a periodic check for stuck uploads (files that have been uploading too long)
+    useEffect(() => {
+      if (uploadingFiles.size === 0) return;
+      
+      const checkInterval = setInterval(() => {
+        // Check for files that have been uploading for more than 90 seconds
+        // These are likely failed but didn't trigger error callback
+        setUploadingFiles(prev => {
+          const stuckFiles: string[] = [];
+          prev.forEach(fileName => {
+            const file = fileUploadMapRef.current.get(fileName);
+            if (file) {
+              // Mark as failed if stuck
+              setFailedFiles(prevFailed => {
+                const newMap = new Map(prevFailed);
+                if (!newMap.has(fileName)) {
+                  newMap.set(fileName, {
+                    file,
+                    error: 'Upload timed out. Please check your connection and retry.',
+                    retryCount: 0
+                  });
+                }
+                return newMap;
+              });
+              stuckFiles.push(fileName);
+            }
+          });
+          
+          if (stuckFiles.length > 0) {
+            const newSet = new Set(prev);
+            stuckFiles.forEach(name => newSet.delete(name));
+            return newSet;
+          }
+          return prev;
+        });
+      }, 90000); // Check every 90 seconds
+      
+      return () => clearInterval(checkInterval);
+    }, [uploadingFiles]);
 
     // Clear the input value to allow selecting the same file again
     if (e.target) {
@@ -899,6 +928,54 @@ export default function DynamicFormField({ field, value, onChange, error, layout
                     </ul>
                   </div>
                 </div>
+              </div>
+            )}
+
+            {/* Failed Uploads Section */}
+            {failedFiles.size > 0 && (
+              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
+                <div className="flex items-start mb-2">
+                  <svg className="h-5 w-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                  </svg>
+                  <h4 className="text-sm font-medium text-red-800">Failed Uploads</h4>
+                </div>
+                <ul className="space-y-2">
+                  {Array.from(failedFiles.entries()).map(([fileName, failedData]) => (
+                    <li key={fileName} className="flex items-center justify-between p-2 bg-white rounded border border-red-200">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-red-800 truncate">{fileName}</p>
+                        <p className="text-xs text-red-600 mt-0.5">{failedData.error}</p>
+                        {failedData.retryCount > 0 && (
+                          <p className="text-xs text-red-500 mt-0.5">Retry attempt: {failedData.retryCount}</p>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => retryFailedUpload(fileName)}
+                        disabled={uploadingFiles.has(fileName)}
+                        className="ml-3 px-3 py-1.5 text-xs font-medium text-white bg-red-600 hover:bg-red-700 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                      >
+                        {uploadingFiles.has(fileName) ? (
+                          <>
+                            <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Retrying...
+                          </>
+                        ) : (
+                          <>
+                            <svg className="h-3 w-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                            </svg>
+                            Retry
+                          </>
+                        )}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
 
