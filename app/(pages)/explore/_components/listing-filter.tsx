@@ -104,7 +104,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
     formState: { errors },
   } = useForm<ListingFilterType>({
     defaultValues: {
-      types: [],
+      types: defaultValues.types || [],
       breed: breed || "",
       age: age || "",
       location: location || "",
@@ -122,38 +122,43 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
   const minPriceSpan = watch("minPrice") ?? 0;
   const maxPriceSpan = watch("maxPrice") ?? 0;
 
-  // Sync form values when URL params change (e.g., when clicking breed card from home page)
+  /**
+   * Sync form values when URL params actually change
+   * (e.g., navigating from home with a pre-selected breed).
+   *
+   * IMPORTANT: We reset the form from the URL, instead of
+   * overwriting user edits on every render. This fixes the issue
+   * where selecting filters (breed, location, age, etc.) would
+   * immediately get reverted back to the old URL values.
+   */
   useEffect(() => {
-    const currentBreed = breed || "";
-    const currentTypes = defaultValues.types || [];
-    const currentAge = age || "";
-    const currentLocation = location || "";
-    const currentPriceTypes = priceTypes || ['price_on_request', 'price_range', 'price_available'];
+    const {
+      lat: _lat,
+      lng: _lng,
+      address: _address,
+      maxPrice: syncMaxPrice,
+      minPrice: syncMinPrice,
+      breed: syncBreed,
+      age: syncAge,
+      location: syncLocation,
+      priceTypes: syncPriceTypes,
+      ...syncDefaultValues
+    } = extractFilterDataFromSeach(searchParams);
 
-    // Update form values if they've changed
-    if (currentBreed !== watch("breed")) {
-      setValue("breed", currentBreed);
-    }
-    if (JSON.stringify(currentTypes) !== JSON.stringify(watch("types"))) {
-      setValue("types", currentTypes);
-    }
-    if (currentAge !== watch("age")) {
-      setValue("age", currentAge);
-    }
-    if (currentLocation !== watch("location")) {
-      setValue("location", currentLocation);
-    }
-    if (minPrice && Number(minPrice) !== watch("minPrice")) {
-      setValue("minPrice", Number(minPrice));
-    }
-    if (maxPrice && Number(maxPrice) !== watch("maxPrice")) {
-      setValue("maxPrice", Number(maxPrice));
-    }
-    if (JSON.stringify(currentPriceTypes) !== JSON.stringify(watch("priceTypes"))) {
-      setValue("priceTypes", currentPriceTypes);
-    }
+    reset({
+      types: syncDefaultValues.types || [],
+      breed: syncBreed || "",
+      age: syncAge || "",
+      location: syncLocation || "",
+      ...(syncMinPrice && { minPrice: +syncMinPrice }),
+      ...(syncMaxPrice && { maxPrice: +syncMaxPrice }),
+      priceTypes: syncPriceTypes || ['price_on_request', 'price_range', 'price_available'],
+      ...syncDefaultValues,
+    });
+    // Using stringified search params as a stable dependency so this
+    // only runs when the URL query actually changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [breed, defaultValues.types, age, location, minPrice, maxPrice, priceTypes, setValue]);
+  }, [searchParams.toString(), reset]);
 
   function handleFormSubmit(data: ListingFilterType) {
     if (Object.keys(errors).length > 0) {
