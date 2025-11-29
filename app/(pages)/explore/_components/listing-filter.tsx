@@ -278,35 +278,69 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
           </div>
         )}/>
         
-        <Controller name="location" control={control} render={({ field }) => (
-          <div className="flex flex-col gap-2">
-            <span className="text-xl font-medium">Location</span>
-            <div className="flex flex-col">
-              <LocationAutoComplete
-                onSearchPlace={(place) => {
-                  if (!place) return;
-                  field.onChange(place.formatted_address || "");
-                }}
-                loader={
-                  <div className="w-full h-12 bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-[#736E6E]">
-                    Loading...
-                  </div>
-                }
-              >
-                <input
-                  type="text"
-                  placeholder="Select location"
-                  value={field.value || ""}
-                  onChange={(e) => field.onChange(e.target.value)}
-                  className="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light outline-none"
-                />
-              </LocationAutoComplete>
-              {errors?.location?.message && (
-                <span className="text-red-500 text-xs mt-1">{errors.location.message}</span>
-              )}
+        <Controller
+          name="location"
+          control={control}
+          render={({ field }) => (
+            <div className="flex flex-col gap-2">
+              <span className="text-xl font-medium">Location</span>
+              <div className="flex flex-col">
+                <LocationAutoComplete
+                  onSearchPlace={(place) => {
+                    if (!place) return;
+
+                    const components = place.address_components ?? [];
+                    const isInAustralia = components.some(
+                      (c) =>
+                        c.types.includes("country") && c.short_name === "AU"
+                    );
+
+                    if (!isInAustralia) {
+                      field.onChange(place.formatted_address || "");
+                      return;
+                    }
+
+                    const suburb = components.find((c) =>
+                      c.types.includes("locality")
+                    )?.long_name;
+                    const postcode = components.find((c) =>
+                      c.types.includes("postal_code")
+                    )?.long_name;
+                    const state = components.find((c) =>
+                      c.types.includes("administrative_area_level_1")
+                    )?.short_name;
+
+                    const parts = [suburb, postcode, state].filter(Boolean);
+                    const formatted =
+                      parts.length > 0
+                        ? parts.join(", ")
+                        : place.formatted_address || "";
+
+                    field.onChange(formatted);
+                  }}
+                  loader={
+                    <div className="w-full h-12 bg-[#F1F1F1] rounded-full flex items-center justify-center text-sm text-[#736E6E]">
+                      Loading...
+                    </div>
+                  }
+                >
+                  <input
+                    type="text"
+                    placeholder="Select location"
+                    value={field.value || ""}
+                    onChange={(e) => field.onChange(e.target.value)}
+                    className="w-full border-none !bg-[#F1F1F1] rounded-full !h-12 p-2 px-4 text-sm text-[#736E6E] font-light outline-none"
+                  />
+                </LocationAutoComplete>
+                {errors?.location?.message && (
+                  <span className="text-red-500 text-xs mt-1">
+                    {errors.location.message}
+                  </span>
+                )}
+              </div>
             </div>
-          </div>
-        )}/>
+          )}
+        />
         
         <Controller name="priceTypes" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">

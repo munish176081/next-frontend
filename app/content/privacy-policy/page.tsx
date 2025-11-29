@@ -41,18 +41,19 @@ function PrivacyPage() {
         <section className="flex gap-6 max-md:flex-col max-md:gap-4">
           <div
             className="flex w-full max-md:w-full rounded-40 p-8 bg-white flex-col items-start max-md:p-4"
+            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: privacy_content }}
-            />
+          />
         </section>
       </div>
 
       <section className="rounded-40 container max-2xl:w-auto max-md:my-0 max-2xl:my-4 my-10 py-8 overflow-hidden border border-black/20 bg-white flex flex-col relative justify-center max-md:py-4 max-2xl:mx-4">
         <div className="backdrop-blur-2xl bg-[#FAFAFA]/50 border border-black/20 rounded-3xl p-8 absolute max-md:static max-md:w-auto max-md:mx-4 max-md:p-4 max-md:gap-3 max-md:mb-4 top-4 z-20 m-auto right-4 flex flex-col gap-5 h-[calc(100%-32px)] w-[540px]">
           <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">
-            Subscribe and get exclusive deals & offer
+            Subscribe and get exclusive deals &amp; offer
           </span>
           <span className="max-md:text-xs">
-            Subscribe to our email & get updates right in your inbox
+            Subscribe to our email &amp; get updates right in your inbox
           </span>
           <input
             type="text"
@@ -72,6 +73,7 @@ function PrivacyPage() {
           <img
             className="h-full max-w-max"
             src="/images/cta-block/background.png"
+            alt="Subscribe background"
           />
         </div>
       </section>
@@ -86,3 +88,5 @@ export default function Page() {
     </Suspense>
   );
 }
+
+

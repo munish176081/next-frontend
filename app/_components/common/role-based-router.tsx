@@ -54,11 +54,19 @@ export const RoleBasedRouter = ({ children }: RoleBasedRouterProps) => {
       }
       
       // Skip routing logic for public pages
-      if (pathname === '/' || 
-          pathname.startsWith('/explore') || pathname.startsWith('/wishlist') || 
-          pathname.startsWith('/meetings') || pathname.startsWith('/contact') || 
-          pathname.startsWith('/blog') || pathname.startsWith('/create-listing') ||
-          pathname.startsWith('/chat') || pathname.startsWith('/user')) {
+      if (
+        pathname === '/' || 
+        pathname.startsWith('/explore') || 
+        pathname.startsWith('/wishlist') || 
+        pathname.startsWith('/meetings') || 
+        pathname.startsWith('/contact') || 
+        pathname.startsWith('/blog') || 
+        pathname.startsWith('/create-listing') ||
+        pathname.startsWith('/chat') || 
+        pathname.startsWith('/user') ||
+        // Treat content pages (privacy, terms, FAQ, shipping, partners, etc.) as public
+        pathname.startsWith('/content')
+      ) {
         return;
       }
 

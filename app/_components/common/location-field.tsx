@@ -83,23 +83,20 @@ export default function LocationField({
         const isSuburbOrPostcode = place.types?.includes('locality') || place.types?.includes('postal_code');
         
         if (isInAustralia && isSuburbOrPostcode) {
-          // Extract only suburb, state, postcode, and country parts
+          // Extract only suburb, postcode, and state parts
           const suburb = place.address_components?.find((c) =>
             c.types.includes('locality')
+          )?.long_name;
+          const postcode = place.address_components?.find((c) =>
+            c.types.includes('postal_code')
           )?.long_name;
           const state = place.address_components?.find((c) =>
             c.types.includes('administrative_area_level_1')
           )?.short_name;
-          const postcode = place.address_components?.find((c) =>
-            c.types.includes('postal_code')
-          )?.long_name;
-          const country = place.address_components?.find((c) =>
-            c.types.includes('country')
-          )?.long_name;
 
-          // Construct clean address
-          const parts = [suburb, state, postcode, country].filter(Boolean);
-          const formattedAddress = parts.join(' ');
+          // Construct clean address in the format: Town, Postcode, State
+          const parts = [suburb, postcode, state].filter(Boolean);
+          const formattedAddress = parts.join(', ');
 
           setInputValue(formattedAddress);
           onChange(formattedAddress);

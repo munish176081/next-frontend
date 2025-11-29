@@ -1,3 +1,7 @@
+/* Terms & Conditions page – clean route version (/content/terms-conditions-of-use)
+ * Content restored from the previous terms-conditions-of-use.html route.
+ */
+
 "use client";
 
 import { Suspense } from "react";
@@ -6,7 +10,7 @@ function TermsPage() {
   const terms_content = `<h2 class="text-2xl font-semibold text-gray-800">Updated: May 2020</h2>
 
   <p class="mt-6 text-sm leading-relaxed">
-    The "Terms & Conditions of Use" of this website are as detailed below & supercede any prior Terms & Conditions of Use. When you register with pups4sale.com.au, you will be required to agree to these Terms & Conditions as part of the registration process.
+    The "Terms &amp; Conditions of Use" of this website are as detailed below &amp; supercede any prior Terms &amp; Conditions of Use. When you register with pups4sale.com.au, you will be required to agree to these Terms &amp; Conditions as part of the registration process.
   </p>
 
   <p class="mt-2 text-sm leading-relaxed">
@@ -18,7 +22,7 @@ function TermsPage() {
 
     <li>If pups4sale.com.au is made aware of any serious health concerns or poor living conditions regarding the pup/s being sold by you, the relevant authorities will be notified. Pups4sale does not support "puppy farms" (as the term is commonly applied), as we consider the health of adult dogs as well as puppies to be of paramount importance. </li>
 
-    <li>The pup/s advertised for sale by you are wormed, microchipped and vaccinated according to the required schedule of your veterinarian, with the relevant vaccination & microchipping certificate supplied to the purchaser at the time of sale. Additionally, potential purchasers of your pups are to be fully informed prior to purchase of any known health concerns regarding the pup(s) in question.</li>
+    <li>The pup/s advertised for sale by you are wormed, microchipped and vaccinated according to the required schedule of your veterinarian, with the relevant vaccination &amp; microchipping certificate supplied to the purchaser at the time of sale. Additionally, potential purchasers of your pups are to be fully informed prior to purchase of any known health concerns regarding the pup(s) in question.</li>
 
     <li>The pup/s advertised for sale by you are your property to sell, or you are an authorised selling agent for the owner. If you are required by law to possess such, you agree to supply upon request by a purchaser, your Local Council breeder registration (such as a Breeder Identification Number (BIN)). Pups4sale does not require you to disclose such information in your advertisement on our website, but it must be made available to purchasers at the point of sale. </li>
 
@@ -41,30 +45,32 @@ function TermsPage() {
 
     <li>Photographs placed by you with your advertisement may be used to further promote your litter(s) and/or any of Puppy Dog Pty Ltd's websites, at the discretion of the Director/s of Puppy Dog Pty Ltd.</li>
 
-    <li>You indemnify absolutely Puppy Dog Pty Ltd, it's directors, employees & agents from all liability arising from the placement of your advertisement(s), and/or the content of such advertisement(s) and/or any activity you may undertake in relation to such advertisements.</li>
+    <li>You indemnify absolutely Puppy Dog Pty Ltd, it's directors, employees &amp; agents from all liability arising from the placement of your advertisement(s), and/or the content of such advertisement(s) and/or any activity you may undertake in relation to such advertisements.</li>
 
     <li>Puppy Dog Pty Ltd (the owner of this website) reserves the right to alter the terms and conditions of use of this site at any time whatsoever.</li>
 
     <li>Whilst we do everything reasonably possible to detect and prevent scam attempts on our site, Puppy Dog Pty Ltd t/a pups4sale does not accept any liability nor take responsibility for the authenticity of any advertisement placed on our website whatsoever. The use of this website is entirely at the user's own risk.</li>
   </ol>`;
+
   return (
     <>
       <div className="container flex flex-col gap-16 pt-16 max-2xl:p-4 max-md:gap-4">
         <section className="flex gap-6 max-md:flex-col max-md:gap-4">
           <div
             className="flex w-full max-md:w-full rounded-40 p-8 bg-white flex-col items-start max-md:p-4"
+            // eslint-disable-next-line react/no-danger
             dangerouslySetInnerHTML={{ __html: terms_content }}
-            />
+          />
         </section>
       </div>
 
       <section className="rounded-40 container max-2xl:w-auto max-md:my-0 max-2xl:my-4 my-10 py-8 overflow-hidden border border-black/20 bg-white flex flex-col relative justify-center max-md:py-4 max-2xl:mx-4">
         <div className="backdrop-blur-2xl bg-[#FAFAFA]/50 border border-black/20 rounded-3xl p-8 absolute max-md:static max-md:w-auto max-md:mx-4 max-md:p-4 max-md:gap-3 max-md:mb-4 top-4 z-20 m-auto right-4 flex flex-col gap-5 h-[calc(100%-32px)] w-[540px]">
           <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">
-            Subscribe and get exclusive deals & offer
+            Subscribe and get exclusive deals &amp; offer
           </span>
           <span className="max-md:text-xs">
-            Subscribe to our email & get updates right in your inbox
+            Subscribe to our email &amp; get updates right in your inbox
           </span>
           <input
             type="text"
@@ -84,6 +90,7 @@ function TermsPage() {
           <img
             className="h-full max-w-max"
             src="/images/cta-block/background.png"
+            alt="Subscribe background"
           />
         </div>
       </section>
@@ -98,3 +105,4 @@ export default function Page() {
     </Suspense>
   );
 }
+

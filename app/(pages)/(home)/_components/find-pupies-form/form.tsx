@@ -16,6 +16,31 @@ export function FindForm() {
     lng?: number;
   }>();
 
+  const formatAustralianLocation = (place: google.maps.places.PlaceResult) => {
+    const components = place.address_components ?? [];
+
+    const isInAustralia = components.some(
+      (c) => c.types.includes("country") && c.short_name === "AU"
+    );
+
+    if (!isInAustralia) {
+      return place.formatted_address ?? "";
+    }
+
+    const suburb = components.find((c) =>
+      c.types.includes("locality")
+    )?.long_name;
+    const postcode = components.find((c) =>
+      c.types.includes("postal_code")
+    )?.long_name;
+    const state = components.find((c) =>
+      c.types.includes("administrative_area_level_1")
+    )?.short_name;
+
+    const parts = [suburb, postcode, state].filter(Boolean);
+    return parts.length ? parts.join(", ") : place.formatted_address ?? "";
+  };
+
   const router = useRouter();
 
   const handleFormSubmit = (e: SyntheticEvent) => {
@@ -33,7 +58,24 @@ export function FindForm() {
 
   return (
     <form noValidate onSubmit={handleFormSubmit} className="confidenceform flex flex-col gap-5">
-      <SearchLocationInput locationInputAddress={searchLocation?.address} onChangeSearchInput={(value) => {setSearchLocation({address: value,});}} onChangePlace={(place) => {if (!place) return;setSearchLocation({address: place.formatted_address!, ...(place.geometry?.location?.toJSON() ?? {}),});}}/>
+      <SearchLocationInput
+        locationInputAddress={searchLocation?.address}
+        onChangeSearchInput={(value) => {
+          setSearchLocation({
+            address: value,
+          });
+        }}
+        onChangePlace={(place) => {
+          if (!place) return;
+
+          const formattedAddress = formatAustralianLocation(place);
+
+          setSearchLocation({
+            address: formattedAddress,
+            ...(place.geometry?.location?.toJSON() ?? {}),
+          });
+        }}
+      />
       <BreedSelect 
         value={breed} 
         onChange={(value) => setBreed(value)} 

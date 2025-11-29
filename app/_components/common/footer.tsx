@@ -6,9 +6,9 @@ import { Routes } from "@/_config/routes";
 const infoItems = [
   { label: "Privacy", path: Routes.public.privacy },
   { label: "Terms & Conditions", path: Routes.public.terms },
-  { label: "FAQ", path: "#" },
-  { label: "Shipping and payment", path: "#" },
-  { label: "Partners", path: "#" },
+  { label: "FAQ", path: Routes.public.faq },
+  { label: "Shipping and payment", path: Routes.public.shippingAndPayment },
+  { label: "Partners", path: Routes.public.partners },
 ];
 
 const menuItems = [

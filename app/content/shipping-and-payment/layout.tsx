@@ -2,7 +2,9 @@ import { Header } from "@/_components/header";
 import { Footer } from "@/_components/common/footer";
 import { Suspense } from "react";
 
-export default function Contact({ children }: React.PropsWithChildren) {
+export default function ShippingPaymentLayout({
+  children,
+}: React.PropsWithChildren) {
   return (
     <>
       <Header />
@@ -13,3 +15,5 @@ export default function Contact({ children }: React.PropsWithChildren) {
     </>
   );
 }
+
+

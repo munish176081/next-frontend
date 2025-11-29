@@ -7,8 +7,11 @@ export const Routes = {
   },
   public: {
     home: "/",
-    privacy: "/content/privacy-policy.html",
-    terms: "/content/terms-conditions-of-use.html",
+    privacy: "/content/privacy-policy",
+    terms: "/content/terms-conditions-of-use",
+    faq: "/content/faq",
+    shippingAndPayment: "/content/shipping-and-payment",
+    partners: "/content/partners",
     notFound: "/404",
     explore: "/explore",
     wishlist: "/wishlist",
