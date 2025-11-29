@@ -18,6 +18,14 @@ export const usePublishListing = () => {
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
       queryClient.invalidateQueries({ queryKey: ['current-user-listing', id] });
       
+      // Invalidate public listing cache (used by explore detail page)
+      queryClient.invalidateQueries({ queryKey: ['public-listing', id] });
+      
+      // Invalidate related queries that might show this listing
+      queryClient.invalidateQueries({ queryKey: ['similar-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['search-listings'] });
+      
       toast({
         title: "Success",
         description: "Listing published successfully!",

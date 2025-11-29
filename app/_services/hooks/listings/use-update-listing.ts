@@ -20,6 +20,15 @@ export const useUpdateListing = () => {
       queryClient.invalidateQueries({ queryKey: ['current-user-listing', id] });
       queryClient.invalidateQueries({ queryKey: ['listing', id] }); // Backup invalidation for any remaining usage
       
+      // Invalidate and refetch public listing cache (used by explore detail page)
+      queryClient.invalidateQueries({ queryKey: ['public-listing', id] });
+      queryClient.refetchQueries({ queryKey: ['public-listing', id] });
+      
+      // Invalidate related queries that might show this listing
+      queryClient.invalidateQueries({ queryKey: ['similar-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['search-listings'] });
+      
       toast({
         title: "Success",
         description: "Listing updated successfully!",

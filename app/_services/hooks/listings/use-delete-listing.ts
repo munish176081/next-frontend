@@ -17,6 +17,14 @@ export const useDeleteListing = () => {
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
       queryClient.removeQueries({ queryKey: ['current-user-listing', id] });
       
+      // Remove public listing cache (listing no longer exists)
+      queryClient.removeQueries({ queryKey: ['public-listing', id] });
+      
+      // Invalidate related queries that might show this listing
+      queryClient.invalidateQueries({ queryKey: ['similar-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['seller-listings'] });
+      queryClient.invalidateQueries({ queryKey: ['search-listings'] });
+      
       toast({
         title: "Success",
         description: "Listing deleted successfully!",
