@@ -502,11 +502,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               </div>
             )}
           </div>
-          <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-2 rounded-full">
+          {/* <div className="flex items-center gap-1 text-base bg-gray-50 px-3 py-2 rounded-full">
             {rating && <span className="font-semibold text-gray-700">{rating}</span>}
             <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
             {reviews !== undefined && <span className="text-gray-600">({reviews})</span>}
-          </div>
+          </div> */}
         </div>
         <PuppyButton className="w-full h-[50px] mt-2" iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon">View Listing</PuppyButton>
       </Link>
