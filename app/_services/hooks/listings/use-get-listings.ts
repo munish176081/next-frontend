@@ -5,6 +5,7 @@ import { PaginatedListingsResponseDto, ListingTypeEnum, ListingCategoryEnum, Lis
 interface GetListingsParams {
   search?: string;
   type?: ListingTypeEnum;
+  types?: ListingTypeEnum[]; // Support multiple types (mapped to QueryListingDto.types)
   category?: ListingCategoryEnum;
   status?: ListingStatusEnum;
   breed?: string;

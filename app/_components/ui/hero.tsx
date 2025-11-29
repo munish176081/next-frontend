@@ -15,7 +15,7 @@ const Hero: React.FC = () => {
       </div>
       <span className="text-xl max-md:text-base text-center font-[300] mt-6">Quality puppies from <strong className="font-semibold">trusted</strong> breeders - where every <br className="max-md:hidden" /> puppy finds a <strong className="font-semibold">loving home.</strong></span>
       <Link href={Routes.public.explore}>
-        <PuppyButton iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon" className="tracking-wide mt-6 max-md:w-full">Browse Puppies</PuppyButton> 
+        <PuppyButton iconSrc="/images/paws/paws-white-vertical.svg" altText="Paws icon" className="tracking-wide mt-6 max-md:w-full mb-6">Browse Puppies</PuppyButton> 
       </Link>
       <div className="flex relative w-full justify-center pt-4 mt-5 items-center max-md:flex-col">
         <Image alt="Paws decoration" className="absolute left-24 -top-32 max-md:top-[20px] max-md:-left-[10px] max-md:max-w-[40px]" src="/images/home/paws-indigo.svg" width={60} height={60} priority />

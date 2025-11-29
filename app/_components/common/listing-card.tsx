@@ -386,7 +386,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           {/* {age && <Text className="text-base text-[#736E6E]">Age: {age}</Text>} */}
           {description && (<Text className="text-base text-[#A6A4A4]">{description.length > 40 ? description.substring(0, 40) + "..." : description}</Text>)}
         </div>
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 min-h-[64px]">
           <div className="flex flex-col gap-1">
             {isSemenListing && semenInfo ? (
               <div className="flex flex-col gap-1">
@@ -454,8 +454,10 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               </div>
             ) : pricingProps.isPriceOnRequest ? (
               <div className="flex items-center gap-2">
-                <div className="px-3 py-1 bg-gradient-to-r from-CPrimary/10 to-CPrimary/5 rounded-full border border-CPrimary/20">
-                  <Text className="text-lg font-semibold text-CPrimary">Price on Request</Text>
+                <div className="px-3 py-0.5 bg-gradient-to-r from-CPrimary/10 to-CPrimary/5 rounded-full border border-CPrimary/20">
+                  <Text className="text-sm font-semibold text-CPrimary leading-none">
+                    Price on Request
+                  </Text>
                 </div>
               </div>
             ) : pricingProps.hasPriceRange ? (
