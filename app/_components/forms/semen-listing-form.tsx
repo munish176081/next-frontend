@@ -246,7 +246,6 @@ export default function SemenListingForm({
     try {
       const updateData: UpdateListingDto = {
         status: ListingStatusEnum.ACTIVE,
-        isActive: true,
       };
 
       if (subscriptionId) {

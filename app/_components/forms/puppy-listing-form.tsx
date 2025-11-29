@@ -371,7 +371,6 @@ export default function PuppyListingForm({
     try {
       const updateData: UpdateListingDto = {
         status: ListingStatusEnum.ACTIVE,
-        isActive: true,
       };
 
       if (subscriptionId) {

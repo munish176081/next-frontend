@@ -188,7 +188,6 @@ export default function ServicesListingForm({
   const activateListing = async (listingId: string, subscriptionId?: string) => {
     const updateData: UpdateListingDto = {
       status: 'active' as any,
-      isActive: true,
     };
 
     if (subscriptionId) {

@@ -559,7 +559,6 @@ export default function PuppyLitterListingForm({
     try {
       const updateData: UpdateListingDto = {
         status: ListingStatusEnum.ACTIVE,
-        isActive: true,
       };
 
       if (subscriptionId) {

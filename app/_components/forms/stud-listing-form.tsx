@@ -289,7 +289,6 @@ export default function StudListingForm({
     try {
       const updateData: UpdateListingDto = {
         status: ListingStatusEnum.ACTIVE,
-        isActive: true,
       };
 
       if (subscriptionId) {
