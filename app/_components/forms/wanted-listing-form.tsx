@@ -108,8 +108,23 @@ export default function WantedListingForm({
 
       // Extract dynamic fields (go to fields JSON)
       const dynamicData: Record<string, any> = {};
+      const allImages: string[] = [];
+      const allVideos: string[] = [];
+      
       dynamicFields.forEach(field => {
-        if (formData[field.name] !== undefined && formData[field.name] !== '') {
+        if (field.type === 'file' && formData[field.name]) {
+          // Handle file fields separately - extract images and videos
+          const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
+          files.forEach((file: string) => {
+            // Check if it's an image or video based on file extension
+            const lowerFile = file.toLowerCase();
+            if (lowerFile.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/)) {
+              allImages.push(file);
+            } else if (lowerFile.match(/\.(mp4|webm|ogg|mov|avi)$/)) {
+              allVideos.push(file);
+            }
+          });
+        } else if (formData[field.name] !== undefined && formData[field.name] !== '') {
           dynamicData[field.name] = formData[field.name];
         }
       });
@@ -127,7 +142,9 @@ export default function WantedListingForm({
           breedId: breedId,
           location: commonData.location,
           fields: dynamicData,
-          contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          contactInfo: contactInfo && Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          images: allImages.length > 0 ? allImages : undefined,
+          videos: allVideos.length > 0 ? allVideos : undefined,
           tags: baseForm.extractTags(commonData, dynamicData),
         };
 
@@ -158,7 +175,9 @@ export default function WantedListingForm({
           breedId: breedId,
           location: commonData.location,
           fields: dynamicData,
-          contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          contactInfo: contactInfo && Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+          images: allImages.length > 0 ? allImages : undefined,
+          videos: allVideos.length > 0 ? allVideos : undefined,
           tags: baseForm.extractTags(commonData, dynamicData),
           isFeatured: false,
           isPremium: false,

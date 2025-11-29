@@ -11,7 +11,7 @@ const PUPPY_DETAILS_COMMON_FIELDS: ListingField[] = [
       multiple: true,
       accept: 'image/*,video/*',
       maxSize: 30,
-      minCount: 1,
+      minCount: 3,
       maxCount: 20
     },
     fieldCategory: 'dynamic'
@@ -540,7 +540,7 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,video/*',
           maxSize: 30,
-          minCount: 1,
+          minCount: 3,
           maxCount: 20
         },
         fieldCategory: 'dynamic'
@@ -719,7 +719,8 @@ export const LISTING_TYPES: ListingType[] = [
         required: true,
         placeholder: 'Enter age in years',
         validation: {
-          min: 0
+          min: 0,
+          max:30,
         },
         fieldCategory: 'dynamic'
       },
@@ -743,7 +744,7 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,video/*',
           maxSize: 30,
-          minCount: 1,
+          minCount: 3,
           maxCount: 20
         },
         fieldCategory: 'dynamic'
@@ -880,7 +881,7 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*',
           maxSize: 30,
-          minCount: 1,
+          minCount: 3,
           maxCount: 5
         },
         fieldCategory: 'dynamic'
@@ -894,8 +895,8 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,.pdf',
           maxSize: 30,
-          minCount: 1,
-          maxCount: 5
+          minCount: 3,
+          maxCount: 20
         },
         fieldCategory: 'dynamic'
       },
@@ -935,7 +936,7 @@ export const LISTING_TYPES: ListingType[] = [
           accept: '.pdf,.doc,.docx',
           maxSize: 30,
           minCount: 1,
-          maxCount: 5
+          maxCount: 10
         },
         fieldCategory: 'dynamic'
       }
@@ -1049,6 +1050,20 @@ export const LISTING_TYPES: ListingType[] = [
       CONTACT_FIELDS.contactPhone
     ],
     optionalFields: [
+      {
+        name: 'images',
+        label: 'Upload Images',
+        type: 'file',
+        required: false,
+        fileConfig: {
+          multiple: true,
+          accept: 'image/*,video/*',
+          maxSize: 30,
+          minCount: 1,
+          maxCount: 20
+        },
+        fieldCategory: 'dynamic'
+      },
       {
         name: 'specificColor',
         label: 'Specific Colour / Temperament',

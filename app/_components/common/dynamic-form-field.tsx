@@ -35,6 +35,8 @@ export default function DynamicFormField({ field, value, onChange, error, layout
   const [pendingDeletions, setPendingDeletions] = useState<string[]>([]); // Track files marked for deletion
   const [failedFiles, setFailedFiles] = useState<Map<string, { file: File; error: string; retryCount: number }>>(new Map()); // Track failed uploads
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileUploadMapRef = useRef<Map<string, File>>(new Map()); // Map to track which File object corresponds to which upload
+  const uploadStartTimesRef = useRef<Map<string, number>>(new Map()); // Track when each upload started
 
   // Helper function to determine file type from URL
   const getFileTypeFromUrl = (url: string): 'image' | 'video' | 'pdf' | 'document' => {
@@ -103,6 +105,46 @@ export default function DynamicFormField({ field, value, onChange, error, layout
     }
   }, [value]);
 
+  // Set up a periodic check for stuck uploads (files that have been uploading too long)
+  useEffect(() => {
+    if (uploadingFiles.size === 0) return;
+    
+    const checkInterval = setInterval(() => {
+      // Check for files that have been uploading for more than 90 seconds
+      // These are likely failed but didn't trigger error callback
+      setUploadingFiles(prev => {
+        const stuckFiles: string[] = [];
+        prev.forEach(fileName => {
+          const file = fileUploadMapRef.current.get(fileName);
+          if (file) {
+            // Mark as failed if stuck
+            setFailedFiles(prevFailed => {
+              const newMap = new Map(prevFailed);
+              if (!newMap.has(fileName)) {
+                newMap.set(fileName, {
+                  file,
+                  error: 'Upload timed out. Please check your connection and retry.',
+                  retryCount: 0
+                });
+              }
+              return newMap;
+            });
+            stuckFiles.push(fileName);
+          }
+        });
+        
+        if (stuckFiles.length > 0) {
+          const newSet = new Set(prev);
+          stuckFiles.forEach(name => newSet.delete(name));
+          return newSet;
+        }
+        return prev;
+      });
+    }, 90000); // Check every 90 seconds
+    
+    return () => clearInterval(checkInterval);
+  }, [uploadingFiles]);
+
   // Helper function to get current active files (excluding pending deletions)
   const getActiveFiles = () => {
     return uploadedUrls.filter(url => !pendingDeletions.includes(url));
@@ -132,9 +174,6 @@ export default function DynamicFormField({ field, value, onChange, error, layout
     }
   };
 
-    // Map to track which File object corresponds to which upload
-    const fileUploadMapRef = useRef<Map<string, File>>(new Map());
-
     const { uploadFile, isUploading } = useFileUpload({
       onSuccess: (result) => {
         console.log('Upload success for:', result.fileName, 'URL:', result.finalUrl);
@@ -146,8 +185,9 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           return newMap;
         });
         
-        // Remove from file upload map
+        // Remove from file upload map and start times
         fileUploadMapRef.current.delete(result.fileName);
+        uploadStartTimesRef.current.delete(result.fileName);
         
         // Use functional state updates to avoid race conditions
         setUploadedUrls(prevUrls => {
@@ -190,11 +230,72 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         });
       },
       onError: (error) => {
-        console.error('Upload failed:', error);
-        // Note: The retry logic in useFileUpload will automatically retry failed uploads
-        // up to 3 times with exponential backoff. If it still fails after retries,
-        // we need to track it. However, we don't have direct file reference here.
-        // The failed files will be tracked when uploads timeout or fail after all retries.
+        console.error('Upload failed after all retries:', error);
+        
+        // Check if this is a verification error (file uploaded but verification failed)
+        const isVerificationError = error.message?.includes('verification failed') || 
+                                    error.message?.includes('corrupted') ||
+                                    error.message?.includes('incomplete');
+        
+        const errorMessage = isVerificationError
+          ? 'File uploaded but verification failed. The file may be corrupted. Please try uploading again.'
+          : error.message || 'Upload failed after all retries. Please check your connection and try again.';
+        
+        // Find which file(s) failed by checking files that have been uploading
+        // We'll mark files that have been uploading for at least 1 second as failed
+        // (to avoid marking files that just started)
+        const now = Date.now();
+        const failedFileNames: string[] = [];
+        
+        // Get current uploading files from state
+        setUploadingFiles(prev => {
+          prev.forEach(fileName => {
+            const startTime = uploadStartTimesRef.current.get(fileName);
+            const file = fileUploadMapRef.current.get(fileName);
+            
+            // Mark as failed if:
+            // 1. File exists in our tracking maps
+            // 2. Upload has been running for at least 1 second (to avoid false positives)
+            // OR if it's the only file uploading (most likely the one that failed)
+            if (file && startTime) {
+              const uploadDuration = now - startTime;
+              const shouldMarkAsFailed = uploadDuration > 1000 || prev.size === 1;
+              
+              if (shouldMarkAsFailed) {
+                failedFileNames.push(fileName);
+              }
+            }
+          });
+          
+          // Mark failed files
+          if (failedFileNames.length > 0) {
+            setFailedFiles(prevFailed => {
+              const newMap = new Map(prevFailed);
+              failedFileNames.forEach(fileName => {
+                const file = fileUploadMapRef.current.get(fileName);
+                if (file && !newMap.has(fileName)) {
+                  newMap.set(fileName, {
+                    file,
+                    error: errorMessage,
+                    retryCount: 0
+                  });
+                }
+              });
+              return newMap;
+            });
+            
+            // Remove failed files from uploading set and cleanup
+            const newSet = new Set(prev);
+            failedFileNames.forEach(name => {
+              newSet.delete(name);
+              fileUploadMapRef.current.delete(name);
+              uploadStartTimesRef.current.delete(name);
+            });
+            return newSet;
+          }
+          
+          return prev;
+        });
       }
     });
 
@@ -404,52 +505,14 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       
       // Track file in upload map for error handling
       fileUploadMapRef.current.set(file.name, file);
+      // Track upload start time
+      uploadStartTimesRef.current.set(file.name, Date.now());
       
       uploadFile({ 
         file, 
         fileType 
       });
     });
-    
-    // Set up a periodic check for stuck uploads (files that have been uploading too long)
-    useEffect(() => {
-      if (uploadingFiles.size === 0) return;
-      
-      const checkInterval = setInterval(() => {
-        // Check for files that have been uploading for more than 90 seconds
-        // These are likely failed but didn't trigger error callback
-        setUploadingFiles(prev => {
-          const stuckFiles: string[] = [];
-          prev.forEach(fileName => {
-            const file = fileUploadMapRef.current.get(fileName);
-            if (file) {
-              // Mark as failed if stuck
-              setFailedFiles(prevFailed => {
-                const newMap = new Map(prevFailed);
-                if (!newMap.has(fileName)) {
-                  newMap.set(fileName, {
-                    file,
-                    error: 'Upload timed out. Please check your connection and retry.',
-                    retryCount: 0
-                  });
-                }
-                return newMap;
-              });
-              stuckFiles.push(fileName);
-            }
-          });
-          
-          if (stuckFiles.length > 0) {
-            const newSet = new Set(prev);
-            stuckFiles.forEach(name => newSet.delete(name));
-            return newSet;
-          }
-          return prev;
-        });
-      }, 90000); // Check every 90 seconds
-      
-      return () => clearInterval(checkInterval);
-    }, [uploadingFiles]);
 
     // Clear the input value to allow selecting the same file again
     if (e.target) {

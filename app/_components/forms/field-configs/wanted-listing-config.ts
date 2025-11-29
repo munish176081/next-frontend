@@ -34,7 +34,7 @@ export const WANTED_LISTING_FIELD_CONFIG: FieldConfig = {
     
     // Additional Information fields
     additional: [
-      'specificColor', 'messageToBreeders'
+      'images', 'specificColor', 'messageToBreeders'
     ],
     
     // Contact fields order
