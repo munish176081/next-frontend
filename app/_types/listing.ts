@@ -251,6 +251,7 @@ export interface ListingSummaryDto {
   paymentId?: string | null;
   expiresAt?: Date;
   isActive?: boolean;
+  subscriptionRenewalDate?: Date;
 }
 
 export interface PaginatedListingsResponseDto {

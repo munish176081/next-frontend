@@ -28,7 +28,8 @@ import {
   BookOpen,
   HelpCircle,
   LogOut,
-  PawPrint
+  PawPrint,
+  ClipboardList
 } from "lucide-react";
 
 export interface SidebarItem {
@@ -117,6 +118,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/blogs",
         icon: FileText,
         description: "Manage blog posts and categories"
+      },
+      {
+        name: "Listing Management",
+        href: "/admin/listings",
+        icon: ClipboardList,
+        description: "Approve and manage listings"
       }
     ]
   },
@@ -152,6 +159,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/breeds",
         icon: PawPrint,
         description: "Manage dog breeds"
+      },
+      {
+        name: "Listing Management",
+        href: "/admin/listings",
+        icon: ClipboardList,
+        description: "Approve and manage listings"
       }
     ]
   },

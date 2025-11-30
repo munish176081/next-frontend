@@ -204,9 +204,10 @@ export default function ServicesListingForm({
   };
 
   // Activate listing after payment success
+  // Link payment/subscription to listing after payment success (listing remains in PENDING_REVIEW for admin approval)
   const activateListing = async (listingId: string, subscriptionId?: string) => {
     const updateData: UpdateListingDto = {
-      status: 'active' as any,
+      // Don't change status - listing stays in PENDING_REVIEW for admin approval
     };
 
     if (subscriptionId) {

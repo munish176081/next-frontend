@@ -274,11 +274,12 @@ export default function FutureListingForm({
   };
 
   // Activate listing after payment success
+  // Link payment/subscription to listing after payment success (change DRAFT to PENDING_REVIEW for admin approval)
   const activateListing = async (listingId: string, subscriptionId?: string, paymentId?: string) => {
     setIsSubmitting(true);
     try {
       const updateData: UpdateListingDto = {
-        status: ListingStatusEnum.ACTIVE,
+        status: ListingStatusEnum.PENDING_REVIEW, // Change from DRAFT to PENDING_REVIEW after payment
       };
 
       if (subscriptionId) {
@@ -293,19 +294,19 @@ export default function FutureListingForm({
       });
 
       toast({
-        title: 'Listing Published!',
-        description: 'Your listing is now live.',
+        title: 'Payment Successful!',
+        description: 'Your listing has been submitted and is pending admin approval. You will be notified once it is approved.',
         variant: 'success',
       });
 
       setIsSubmitted(true);
       await baseForm.deleteAllPendingFiles();
-      router.push(`/explore/${listingId}`);
+      router.push(`/account/listings`);
     } catch (error: any) {
-      console.error('Error activating listing:', error);
+      console.error('Error updating listing:', error);
       toast({
-        title: 'Error publishing listing',
-        description: error.message || 'Failed to activate listing after payment.',
+        title: 'Error updating listing',
+        description: error.message || 'Failed to update listing after payment.',
         variant: 'destructive',
       });
       throw error;
