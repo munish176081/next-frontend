@@ -11,6 +11,7 @@ export const PupsForSale = () => {
     limit: 8,
     sortBy: "createdAt",
     sortOrder: "DESC",
+    excludeFeaturedSubscriptions: true, 
   });
 
   const listings =

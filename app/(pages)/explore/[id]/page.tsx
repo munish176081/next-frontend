@@ -195,6 +195,62 @@ const ExploreDetail = () => {
       // Fallback to default images if no images are provided
       return ["/images/vectors/detailSlide1.png", "/images/vectors/detailSlide2.png", "/images/vectors/detailSlide3.png"];
     })(),
+    videos: (() => {
+      const allVideos: string[] = [];
+      
+      // For puppy/litter listings, extract videos from individualPuppies
+      if (listing.type === ListingTypeEnum.PUPPY_LITTER_LISTING && listing.fields?.individualPuppies && Array.isArray(listing.fields.individualPuppies)) {
+        listing.fields.individualPuppies.forEach((puppy: any) => {
+          if (puppy.puppyImages && Array.isArray(puppy.puppyImages)) {
+            const puppyVideos = puppy.puppyImages.filter((file: string) => {
+              const lowerFile = file.toLowerCase();
+              return lowerFile.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)$/);
+            });
+            allVideos.push(...puppyVideos);
+          }
+        });
+      }
+      
+      // For Other Services listings, check serviceImages for videos
+      if (listing.type === ListingTypeEnum.OTHER_SERVICES && listing.fields?.serviceImages) {
+        let serviceFiles: string[] = [];
+        
+        if (Array.isArray(listing.fields.serviceImages)) {
+          serviceFiles = listing.fields.serviceImages;
+        } else if (typeof listing.fields.serviceImages === 'string') {
+          if (listing.fields.serviceImages.includes(',')) {
+            serviceFiles = listing.fields.serviceImages.split(',').map((file: string) => file.trim()).filter(Boolean);
+          } else {
+            serviceFiles = [listing.fields.serviceImages.trim()];
+          }
+        }
+        
+        const serviceVideos = serviceFiles
+          .map((file: string) => {
+            if (!file) return null;
+            const cleaned = file.trim().replace(/,$/, '').trim();
+            return cleaned || null;
+          })
+          .filter((file: string | null): file is string => {
+            if (!file) return false;
+            const lowerFile = file.toLowerCase();
+            return !!lowerFile.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)$/);
+          });
+        allVideos.push(...serviceVideos);
+      }
+      
+      // Extract videos from metadata.videos
+      if (listing.metadata?.videos && Array.isArray(listing.metadata.videos) && listing.metadata.videos.length > 0) {
+        const validVideos = listing.metadata.videos.filter((video: string) => {
+          const lowerVideo = video.toLowerCase();
+          return lowerVideo.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)$/);
+        });
+        allVideos.push(...validVideos);
+      }
+      
+      // Remove duplicates and return
+      return Array.from(new Set(allVideos));
+    })(),
     motherImages: listing.metadata?.motherImages || [],
     fatherImages: listing.metadata?.fatherImages || [],
     motherVideos: listing.metadata?.motherVideos || [],
@@ -650,35 +706,83 @@ const ExploreDetail = () => {
                 })()}
               </span>
             </div>
-            <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} autoplay={{ delay: 2000 }} slidesPerView={1} spaceBetween={0} navigation={{ nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn", }}
+            <Swiper className="w-full" loop={false} modules={[Autoplay, Navigation, FreeMode, Thumbs]} slidesPerView={1} spaceBetween={0} navigation={{ nextEl: ".swipperNextBtn", prevEl: ".swipperPrevBtn", }}
               thumbs={{ swiper: thumbsSwiper }}>
-              {transformedListing.images && transformedListing.images.length > 0 ? (
-                transformedListing.images.map((image: string, index: number) => (
-                  <SwiperSlide key={index} className="group relative flex flex-col overflow-hidden">
-                    <Image src={image} className="object-cover w-full h-[554px] max-md:h-[260px]" alt={`${transformedListing.title} - Image ${index + 1}`} width={100} height={100} />
-                  </SwiperSlide>
-                ))
-              ) : (
-                <SwiperSlide className="group relative flex flex-col overflow-hidden">
-                  <img src="/images/vectors/detailSlide1.png" className="object-cover w-full h-[554px] max-md:h-[260px]" alt="Default listing image" />
-                </SwiperSlide>
-              )}
+              {(() => {
+                // Combine images and videos
+                const media = [
+                  ...(transformedListing.images || []).map((url: string) => ({ url, type: 'image' as const })),
+                  ...(transformedListing.videos || []).map((url: string) => ({ url, type: 'video' as const }))
+                ];
+                
+                if (media.length > 0) {
+                  return media.map((item, index: number) => (
+                    <SwiperSlide key={index} className="group relative flex flex-col overflow-hidden">
+                      {item.type === 'video' ? (
+                        <video 
+                          src={item.url} 
+                          controls
+                          className="object-cover w-full h-[554px] max-md:h-[260px]"
+                          playsInline
+                        />
+                      ) : (
+                        <Image src={item.url} className="object-cover w-full h-[554px] max-md:h-[260px]" alt={`${transformedListing.title} - Image ${index + 1}`} width={100} height={100} />
+                      )}
+                    </SwiperSlide>
+                  ));
+                } else {
+                  return (
+                    <SwiperSlide className="group relative flex flex-col overflow-hidden">
+                      <img src="/images/vectors/detailSlide1.png" className="object-cover w-full h-[554px] max-md:h-[260px]" alt="Default listing image" />
+                    </SwiperSlide>
+                  );
+                }
+              })()}
             </Swiper>
             <ActionIcon rounded="full" className="bg-black !h-16 max-md:hidden !w-16 absolute top-0 bottom-0 m-auto z-10 left-4 swipperPrevBtn"><img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" /></ActionIcon>
             <ActionIcon rounded="full" className="bg-black !h-16 max-md:hidden !w-16 absolute top-0 bottom-0 m-auto z-10 right-4 swipperNextBtn"><img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" /></ActionIcon>
           </div>
           <Swiper onSwiper={setThumbsSwiper} spaceBetween={20} slidesPerView={3} freeMode={true} watchSlidesProgress={true} modules={[FreeMode, Navigation, Thumbs]} className="w-full mt-8 max-md:mt-4">
-            {transformedListing.images && transformedListing.images.length > 0 ? (
-              transformedListing.images.map((image: string, index: number) => (
-                <SwiperSlide key={index} className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary">
-                  <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src={image} alt={`${transformedListing.title} - Thumbnail ${index + 1}`} width={100} height={100} />
-                </SwiperSlide>
-              ))
-            ) : (
-              <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary">
-                <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src="/images/vectors/detailSlide1.png" alt="Default listing thumbnail" width={100} height={100} />
-              </SwiperSlide>
-            )}
+            {(() => {
+              // Combine images and videos for thumbnails
+              const media = [
+                ...(transformedListing.images || []).map((url: string) => ({ url, type: 'image' as const })),
+                ...(transformedListing.videos || []).map((url: string) => ({ url, type: 'video' as const }))
+              ];
+              
+              if (media.length > 0) {
+                return media.map((item, index: number) => (
+                  <SwiperSlide key={index} className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary relative">
+                    {item.type === 'video' ? (
+                      <div className="relative w-full h-[238px] max-md:h-[100px]">
+                        <video 
+                          src={item.url} 
+                          className="w-full h-full object-cover"
+                          muted
+                          playsInline
+                        />
+                        <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                          <div className="bg-white/90 rounded-full p-2">
+                            <svg fill="#000000" height="20px" width="20px" version="1.1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 60 60">
+                              <path d="M45.563,29.174l-22-15c-0.307-0.208-0.703-0.231-1.031-0.058C22.205,14.289,22,14.629,22,15v30 c0,0.371,0.205,0.711,0.533,0.884C22.679,45.962,22.84,46,23,46c0.197,0,0.394-0.059,0.563-0.174l22-15 C45.836,30.64,46,30.331,46,30S45.836,29.36,45.563,29.174z M24,43.107V16.893L43.225,30L24,43.107z"></path>
+                              <path d="M30,0C13.458,0,0,13.458,0,30s13.458,30,30,30s30-13.458,30-30S46.542,0,30,0z M30,58C14.561,58,2,45.439,2,30 S14.561,2,30,2s28,12.561,28,28S45.439,58,30,58z"></path>
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src={item.url} alt={`${transformedListing.title} - Thumbnail ${index + 1}`} width={100} height={100} />
+                    )}
+                  </SwiperSlide>
+                ));
+              } else {
+                return (
+                  <SwiperSlide className="!border-4 border-transparent !rounded-3xl max-md:!rounded-lg !overflow-hidden cursor-pointer [&.swiper-slide-thumb-active]:border-CSecondary">
+                    <Image className='w-full h-[238px] max-md:h-[100px] object-cover' src="/images/vectors/detailSlide1.png" alt="Default listing thumbnail" width={100} height={100} />
+                  </SwiperSlide>
+                );
+              }
+            })()}
           </Swiper>
         </div>
         <div className="flex flex-col gap-3 max-md:gap-2">

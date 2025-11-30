@@ -23,6 +23,7 @@ interface GetListingsParams {
   sortOrder?: 'ASC' | 'DESC';
   includeExpired?: boolean;
   includeDrafts?: boolean;
+  excludeFeaturedSubscriptions?: boolean;
 }
 
 async function getListings(params: GetListingsParams = {}): Promise<PaginatedListingsResponseDto> {

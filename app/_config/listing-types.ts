@@ -1059,7 +1059,7 @@ export const LISTING_TYPES: ListingType[] = [
           multiple: true,
           accept: 'image/*,video/*',
           maxSize: 30,
-          minCount: 1,
+          minCount: 3,
           maxCount: 20
         },
         fieldCategory: 'dynamic'
