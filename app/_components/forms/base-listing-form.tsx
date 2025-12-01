@@ -432,6 +432,21 @@ export default function BaseListingForm({
           if (field.fileConfig?.minCount && urls.length < field.fileConfig.minCount) {
             newErrors[field.name] = `Please upload at least ${field.fileConfig.minCount} ${field.fileConfig.accept?.includes('image/*') ? 'photo(s)' : 'file(s)'}`;
           }
+        }else if(field.type === 'text'){
+          const minLen = field.validation?.minLength;
+          const maxLen = field.validation?.maxLength;
+          const str = value?.toString() || '';
+          
+          if (str.trim() === '') {
+            newErrors[field.name] = `${field.label} is required`;
+          } else {
+            // if (typeof minLen === 'number' && str.length < minLen) {
+            //   newErrors[field.name] = `${field.label} must be at least ${minLen} characters`;
+            // }
+            if (typeof maxLen === 'number' && str.length > maxLen) {
+              newErrors[field.name] = `${field.label} must be at most ${maxLen} characters`;
+            }
+          }
         } else if (!value || value.toString().trim() === '') {
           newErrors[field.name] = `${field.label} is required`;
         }

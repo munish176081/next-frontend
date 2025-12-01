@@ -700,6 +700,11 @@ const ExploreDetail = () => {
                   if (listing?.type === ListingTypeEnum.PUPPY_LITTER_LISTING) {
                     return 'Litter Listing';
                   }
+
+                  // Fallback to future listing type
+                  if (listing?.type === ListingTypeEnum.FUTURE_LISTING) {
+                    return 'Future Litter';
+                  }
                   
                   // Use formatted listing type with "Listing" suffix
                   return `${transformedListing.listingType} Listing`;

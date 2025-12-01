@@ -7,7 +7,7 @@ import { Heading, Text } from "../ui/typegraphy";
 import { useWishlist } from "@/_contexts/wishlist-context";
 import { useState } from "react";
 import { getPricingInfo, getPricingDisplayProps } from "@/_utils/pricing";
-import { ListingTypeEnum } from "@/_types/listing";
+import { ListingTypeEnum, getListingLabel } from "@/_types/listing";
 import { getAvailabilityInfo, getAvailabilityBadgeText, getAvailabilityBadgeClasses, getAvailabilityBadgeIconPath, AvailabilityStatus } from "@/_utils/availability";
 
 interface ListingCardProps {
@@ -319,9 +319,11 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
              {/* top-6 -left-7 */}
             <span className="bg-yellow-400 text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min">
-            {listing.type === 'PUPPY_LITTER_LISTING'
+            {/* {listing.type === 'PUPPY_LITTER_LISTING'
                         ? "Litter Listing"
-                        : listingType || badge}
+                        : listingType || badge} */}
+            
+            {getListingLabel(listing.type)}
             </span>
           </div>
         )}
@@ -392,7 +394,7 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
               <div className="flex flex-col gap-1">
                 <div className="flex items-baseline gap-2">
                   <Text className="text-2xl font-normal text-gray-900">
-                    ${semenInfo.price?.toLocaleString()}
+                    ${semenInfo.price ? parseInt(semenInfo.price.toString()) : 0}
                   </Text>
                 </div>
                 <Text className="text-sm text-gray-500 font-medium">per straw/dose</Text>

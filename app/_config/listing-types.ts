@@ -75,6 +75,8 @@ export interface ListingField {
   validation?: {
     min?: number;
     max?: number;
+    minLength?: number;
+    maxLength?: number;
     pattern?: string;
     message?: string;
   };
@@ -170,7 +172,7 @@ const COMMON_FIELDS = {
     type: 'number' as const,
     required: false,
     placeholder: 'Enter fee amount',
-    validation: { min: 0 },
+    validation: { min: 0 , max: 999999 },
     fieldCategory: 'common' as const
   }
 };
@@ -733,6 +735,10 @@ export const LISTING_TYPES: ListingType[] = [
         type: 'text',
         required: true,
         placeholder: 'Enter registration number',
+        validation: {
+          minLength: 4,
+          maxLength: 20,
+        },
         fieldCategory: 'dynamic'
       },
       {

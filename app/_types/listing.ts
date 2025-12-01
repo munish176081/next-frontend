@@ -9,6 +9,22 @@ export enum ListingTypeEnum {
   OTHER_SERVICES = 'OTHER_SERVICES',
 }
 
+export const ListingTypeLabel: Record<ListingTypeEnum, string> = {
+  [ListingTypeEnum.SEMEN_LISTING]: "Semen Listing",
+  [ListingTypeEnum.PUPPY_LISTING]: "Puppy Listing",
+  [ListingTypeEnum.PUPPY_LITTER_LISTING]: "Litter Listing",
+  [ListingTypeEnum.LITTER_LISTING]: "Litter Listing",
+  [ListingTypeEnum.STUD_LISTING]: "Stud Listing",
+  [ListingTypeEnum.FUTURE_LISTING]: "Future Litter",
+  [ListingTypeEnum.WANTED_LISTING]: "Wanted Puppy",
+  [ListingTypeEnum.OTHER_SERVICES]: "Other Services",
+};
+
+export const getListingLabel = (type?: string): string => {
+  if (!type) return "Unknown";
+  return ListingTypeLabel[type as ListingTypeEnum] ?? type;
+};
+
 export enum ListingTypeShortCodeEnum {
   SEMEN_LISTING = 'semen_listing',
   PUPPY_LISTING = 'puppy_listing',

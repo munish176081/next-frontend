@@ -279,13 +279,7 @@ function UserListingsPage() {
   return (
     <DashboardLayout title="My Listings" showTimeFilter={false}>
       <div className="flex flex-col border border-black/20 rounded-[20px] pb-4">
-        <div className="flex gap-4 items-center p-6 justify-between">
-          <span className="text-[22px] font-semibold">Listings</span>
-          <div className="flex h-10 rounded-full border border-black/20 text-xs gap-3 items-center px-6 cursor-pointer justify-center">
-            <img className="w-4" src="/images/vectors/filter.png" /> Filter
-          </div>
-        </div>
-
+  
         {expiringListings.length > 0 && (
           <div className="mx-6 mb-4 p-4 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
             <div className="flex items-start gap-3">
