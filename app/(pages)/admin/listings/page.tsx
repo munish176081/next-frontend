@@ -27,6 +27,7 @@ const statusStyles: Record<string, string> = {
   active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
   draft: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
   pending_review: "text-white bg-[#FFCE20] border border-[#FFCE20]",
+  "payment_processing": "text-white bg-[#3B82F6] border border-[#3B82F6]",
   expired: "text-white bg-[#EE5D50] border border-[#EE5D50]",
   suspended: "text-white bg-[#EE5D50] border border-[#EE5D50]",
 };
@@ -101,7 +102,12 @@ function AdminListingsPage() {
     }
   };
 
-  const getStatusDisplay = (status: ListingStatusEnum) => {
+  const getStatusDisplay = (status: ListingStatusEnum, subscriptionId?: string | null) => {
+    // If listing has subscriptionId and status is DRAFT, it's payment processing
+    if (subscriptionId && status === ListingStatusEnum.DRAFT) {
+      return "Payment Processing";
+    }
+    
     switch (status) {
       case ListingStatusEnum.ACTIVE:
         return "Active";
@@ -118,7 +124,11 @@ function AdminListingsPage() {
     }
   };
 
-  const getStatusStyle = (status: ListingStatusEnum) => {
+  const getStatusStyle = (status: ListingStatusEnum, subscriptionId?: string | null) => {
+    // If listing has subscriptionId and status is DRAFT, use payment_processing style
+    if (subscriptionId && status === ListingStatusEnum.DRAFT) {
+      return statusStyles["payment_processing"];
+    }
     return statusStyles[status.toLowerCase()] || statusStyles.draft;
   };
 
@@ -229,8 +239,8 @@ function AdminListingsPage() {
                       </td>
                       <td className="px-8 py-4">{listing.type}</td>
                       <td className="px-8 py-4 text-center">
-                        <Badge className={getStatusStyle(listing.status)}>
-                          {getStatusDisplay(listing.status)}
+                        <Badge className={getStatusStyle(listing.status, listing.subscriptionId)}>
+                          {getStatusDisplay(listing.status, listing.subscriptionId)}
                         </Badge>
                       </td>
                       <td className="px-8 py-4 text-center">

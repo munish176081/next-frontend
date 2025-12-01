@@ -20,6 +20,7 @@ import {
   Trash2,
   Eye,
   AlertTriangle,
+  RefreshCw,
 } from "lucide-react";
 import Link from "next/link";
 import { toast } from "@/_hooks/use-toast";
@@ -30,6 +31,7 @@ const statusStyles = {
   Active: "text-[#74D27E] bg-[#87D78E4D] border border-[#74D27E]",
   Draft: "text-[#FFCE20] bg-[#EFC95133] border border-[#FFCE20]",
   "Pending Review": "text-white bg-[#FFCE20] border border-[#FFCE20]",
+  "Payment Processing": "text-white bg-[#3B82F6] border border-[#3B82F6]",
   Pending: "text-white bg-[#FFCE20] border border-[#FFCE20]",
   Expired: "text-white bg-[#EE5D50] border border-[#EE5D50]",
   Suspended: "text-white bg-[#EE5D50] border border-[#EE5D50]",
@@ -165,7 +167,13 @@ function UserListingsPage() {
     };
   }, [openDropdown]);
 
-  const getStatusDisplay = (status: ListingStatusEnum) => {
+  const getStatusDisplay = (status: ListingStatusEnum, subscriptionId?: string | null) => {
+    // If listing has subscriptionId and status is DRAFT, it's payment processing
+    // This means payment was made but webhook hasn't processed yet
+    if (subscriptionId && status === ListingStatusEnum.DRAFT) {
+      return "Payment Processing";
+    }
+    
     switch (status) {
       case ListingStatusEnum.ACTIVE:
         return "Active";
@@ -180,6 +188,10 @@ function UserListingsPage() {
       default:
         return "Draft";
     }
+  };
+
+  const isPaymentProcessing = (listing: any): boolean => {
+    return !!(listing.subscriptionId && listing.status === ListingStatusEnum.DRAFT);
   };
 
   const getAvailabilityStatus = (listing: any) => {
@@ -314,6 +326,18 @@ function UserListingsPage() {
                   const daysLeft = renewalDate ? getDaysUntilExpiry(renewalDate) : null;
                   const expiringSoon = renewalDate ? isExpiringSoon(renewalDate) : false;
                   
+                  // Debug: Log listing data for payment processing detection
+                  if (listing.status === ListingStatusEnum.DRAFT) {
+                    console.log('🔍 [Listings Page] Draft listing check:', {
+                      id: listing.id,
+                      title: listing.title,
+                      status: listing.status,
+                      subscriptionId: listing.subscriptionId,
+                      hasSubscriptionId: !!listing.subscriptionId,
+                      shouldShowProcessing: !!(listing.subscriptionId && listing.status === ListingStatusEnum.DRAFT),
+                    });
+                  }
+                  
                   return (
                   <tr key={listing.id} className={expiringSoon ? "bg-amber-50/50" : ""}>
                     <td className="px-8 py-3 text-sm font-medium">
@@ -378,11 +402,49 @@ function UserListingsPage() {
                         : toTitleCaseFromId(listing.type)}
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
-                      <span
-                        className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[getStatusDisplay(listing.status) as keyof typeof statusStyles] || ""}`}
-                      >
-                        {getStatusDisplay(listing.status)}
-                      </span>
+                      <div className="flex items-center justify-center gap-2">
+                        {(() => {
+                          const paymentProcessing = isPaymentProcessing(listing);
+                          const statusDisplay = getStatusDisplay(listing.status, listing.subscriptionId);
+                          
+                          // Debug logging for payment processing detection
+                          if (listing.status === ListingStatusEnum.DRAFT) {
+                            console.log('🔍 [Listings Page] Draft listing check:', {
+                              id: listing.id,
+                              title: listing.title?.substring(0, 20),
+                              status: listing.status,
+                              subscriptionId: listing.subscriptionId,
+                              hasSubscriptionId: !!listing.subscriptionId,
+                              paymentProcessing,
+                              statusDisplay,
+                              fullListing: listing,
+                            });
+                          }
+                          
+                          return (
+                            <>
+                              <span
+                                className={`min-h-6 text-[10px] rounded-full px-3 py-1 flex items-center justify-center whitespace-nowrap ${statusStyles[statusDisplay as keyof typeof statusStyles] || statusStyles.Draft}`}
+                              >
+                                {statusDisplay}
+                              </span>
+                              {paymentProcessing && (
+                                <button
+                                  onClick={() => {
+                                    console.log('🔄 [Listings Page] Refreshing listings...');
+                                    refetch();
+                                  }}
+                                  disabled={isLoading}
+                                  className="p-1.5 rounded-full hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                  title="Refresh status"
+                                >
+                                  <RefreshCw className={`w-3.5 h-3.5 text-gray-600 ${isLoading ? 'animate-spin' : ''}`} />
+                                </button>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-8 py-3 text-sm font-medium whitespace-nowrap text-center">
                       {editingAvailability === listing.id ? (
@@ -485,7 +547,7 @@ function UserListingsPage() {
                                 </button>
                               </Link>
 
-                              {listing.status === ListingStatusEnum.DRAFT && (
+                              {/* {listing.status === ListingStatusEnum.DRAFT && (
                                 <button
                                   onClick={() => {
                                     handlePublish(listing.id);
@@ -499,7 +561,7 @@ function UserListingsPage() {
                                     ? "Publishing..."
                                     : "Publish"}
                                 </button>
-                              )}
+                              )} */}
 
                               <button
                                 onClick={() => {
