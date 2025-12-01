@@ -1,6 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { axios } from "@/_lib/axios";
+import { ListingStatusEnum } from "@/_types/listing";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
 import { ListingField, getCommonFields, getContactFields, getDynamicFields } from "@/_config/listing-types";
 import { useCreateListing } from "@/_services/hooks/listings/use-create-listing";
@@ -34,6 +37,7 @@ export default function ServicesListingForm({
 }: ServicesListingFormProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const queryClient = useQueryClient();
   const createListingMutation = useCreateListing();
   const updateListingMutation = useUpdateListing();
   
@@ -197,7 +201,7 @@ export default function ServicesListingForm({
       isFeatured: isFeatured,
       isPremium: false,
       status: 'draft' as any, // Create as DRAFT, will be activated after payment
-    };
+    } as CreateListingDto & { status?: string };
 
     const createdListing = await createListingMutation.mutateAsync(listingData);
     return createdListing.id;
@@ -205,14 +209,19 @@ export default function ServicesListingForm({
 
   // Activate listing after payment success
   // Link payment/subscription to listing after payment success (listing remains in PENDING_REVIEW for admin approval)
-  const activateListing = async (listingId: string, subscriptionId?: string) => {
-    const updateData: UpdateListingDto = {
-      // Don't change status - listing stays in PENDING_REVIEW for admin approval
-    };
+  const activateListing = async (listingId: string, subscriptionId?: string, isPayPal: boolean = false) => {
+    const updateData: UpdateListingDto & { status?: ListingStatusEnum; subscriptionId?: string } = {};
 
     if (subscriptionId) {
       updateData.subscriptionId = subscriptionId;
     }
+
+    // For PayPal: Keep status as DRAFT until webhook processes it (will show "Payment Processing")
+    // For Stripe: Set to PENDING_REVIEW immediately (webhook processes faster)
+    if (!isPayPal) {
+      updateData.status = ListingStatusEnum.PENDING_REVIEW;
+    }
+    // For PayPal, don't set status - let webhook change it from DRAFT to PENDING_REVIEW
 
     await updateListingMutation.mutateAsync({
       id: listingId,
@@ -349,7 +358,7 @@ export default function ServicesListingForm({
           isPremium: false,
           paymentId: actualPaymentId,
           subscriptionId: subscriptionId,
-        };
+        } as CreateListingDto & { subscriptionId?: string };
 
         const createdListing = await createListingMutation.mutateAsync(listingData);
         
@@ -360,7 +369,7 @@ export default function ServicesListingForm({
           console.log('🔔 [Frontend] Linking subscription to listing:', { listingId: createdListing.id, subscriptionId: paymentId });
           await updateListingMutation.mutateAsync({
             id: createdListing.id,
-            data: { subscriptionId: paymentId } // paymentId is actually subscriptionId
+            data: { subscriptionId: paymentId } as UpdateListingDto & { subscriptionId?: string } // paymentId is actually subscriptionId
           });
           console.log('✅ [Frontend] Listing linked to subscription');
         }
@@ -425,7 +434,7 @@ export default function ServicesListingForm({
         };
         await updateListingMutation.mutateAsync({ id: editId, data: updateData });
         setIsSubmitted(true);
-        router.push(`/explore/${editId}`);
+        router.push(`/account/listings`);
       } catch (error) {
         console.error('Error updating listing:', error);
         setIsSubmitting(false);
@@ -433,44 +442,105 @@ export default function ServicesListingForm({
       return;
     }
 
-    // For new listings: Create draft listing first, then open payment modal
-    setIsSubmitting(true);
-    try {
-      const listingId = await createDraftListing(false); // We'll update featured status after payment
-      setDraftListingId(listingId);
-      setIsSubmitting(false);
-      setShowPaymentModal(true);
-    } catch (error: any) {
-      console.error('Error creating draft listing:', error);
-      toast({
-        title: 'Error creating listing',
-        description: error.message || 'Failed to create listing. Please try again.',
-        variant: 'destructive',
-      });
-      setIsSubmitting(false);
+    // For new listings: Check for existing draft before creating a new one
+    // Check for existing draft listing before creating a new one
+    let existingDraftId = draftListingId || sessionStorage.getItem('pendingListingId');
+    
+    // If no existing draft, create a new one
+    if (!existingDraftId) {
+      setIsSubmitting(true);
+      try {
+        // Store current form data in session storage
+        sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
+
+        const newDraftListingId = await createDraftListing(false); // We'll update featured status after payment
+        setDraftListingId(newDraftListingId);
+        sessionStorage.setItem('pendingListingId', newDraftListingId);
+        existingDraftId = newDraftListingId;
+        setIsSubmitting(false);
+      } catch (error: any) {
+        console.error('Error creating draft listing:', error);
+        toast({
+          title: 'Error creating listing',
+          description: error.message || 'Failed to create listing. Please try again.',
+          variant: 'destructive',
+        });
+        setIsSubmitting(false);
+        return;
+      }
+    } else {
+      // Reuse existing draft - update form data in session storage
+      sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
+      // Ensure state is synced with sessionStorage
+      if (!draftListingId && existingDraftId) {
+        setDraftListingId(existingDraftId);
+      }
     }
+
+    // Show payment modal with existing or newly created draft listing
+    console.log('Opening payment modal with draft listing ID:', existingDraftId);
+    setShowPaymentModal(true);
   };
 
   const handlePaymentSuccess = async (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => {
-    if (!draftListingId) {
-      console.error('No draft listing ID found');
-      return;
-    }
-
     try {
+      const listingId = draftListingId || sessionStorage.getItem('pendingListingId');
+      if (!listingId) {
+        throw new Error('Draft listing ID not found');
+      }
+
       const isSubscription = isSubscriptionType(selectedListingType.id as ListingTypeEnum);
       const subscriptionId = paymentData.subscriptionId || (isSubscription ? paymentData.paymentId : undefined);
       
+      // For PayPal, the webhook might take a moment, so we'll poll for status updates
+      const isPayPal = paymentData.paymentMethod === 'paypal';
+      
       // Activate the draft listing and link subscription
-      await activateListing(draftListingId, subscriptionId);
+      // For PayPal: Keep as DRAFT (will show "Payment Processing" until webhook processes)
+      // For Stripe: Set to PENDING_REVIEW immediately
+      await activateListing(listingId, subscriptionId, isPayPal);
       
       // Update featured status if needed
       if (paymentData.isFeatured) {
         await updateListingMutation.mutateAsync({
-          id: draftListingId,
+          id: listingId,
           data: { isFeatured: true },
         });
       }
+
+      // For PayPal subscriptions, poll for status update from webhook
+      if (isPayPal && isSubscription) {
+        let pollCount = 0;
+        const maxPolls = 10; // Poll for up to 10 seconds (10 * 1 second intervals)
+        const pollInterval = 1000; // 1 second
+
+        const pollListingStatus = setInterval(async () => {
+          pollCount++;
+          try {
+            const { data: listing } = await axios.get(`/listings/${listingId}`);
+            
+            // If status is no longer DRAFT, webhook has processed
+            if (listing.status !== ListingStatusEnum.DRAFT) {
+              clearInterval(pollListingStatus);
+              // Invalidate queries to refresh listing data
+              queryClient.invalidateQueries({ queryKey: ['current-user-listing', listingId] });
+              queryClient.invalidateQueries({ queryKey: ['user-listings'] });
+              queryClient.invalidateQueries({ queryKey: ['current-user-listings'] });
+            } else if (pollCount >= maxPolls) {
+              clearInterval(pollListingStatus);
+              // Max polls reached, status will update on next page refresh
+            }
+          } catch (error) {
+            console.error('Error polling listing status:', error);
+            clearInterval(pollListingStatus);
+          }
+        }, pollInterval);
+      }
+
+      // Clear session storage
+      sessionStorage.removeItem('pendingListingId');
+      sessionStorage.removeItem('pendingFormData');
+      setDraftListingId(null);
 
       setIsSubmitted(true);
       
@@ -481,7 +551,7 @@ export default function ServicesListingForm({
       }
 
       // Navigate to explore detail page
-      router.push(`/explore/${draftListingId}`);
+      router.push(`/explore/${listingId}`);
     } catch (error: any) {
       console.error('Error activating listing:', error);
       toast({
@@ -535,7 +605,7 @@ export default function ServicesListingForm({
         listingBreed={getListingPreviewData().breed}
         listingLocation={getListingPreviewData().location}
         listingImage={getListingPreviewData().image}
-        listingId={draftListingId || editId}
+        listingId={draftListingId || editId || undefined}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentError={(error) => {
           toast({

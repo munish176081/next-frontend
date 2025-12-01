@@ -163,7 +163,7 @@ export default function WantedListingForm({
         }
 
         // Navigate to explore detail page
-        router.push(`/explore/${editId}`);
+        router.push(`/account/listings`);
       } else {
         // Create new listing
         const listingData: CreateListingDto = {
@@ -195,7 +195,7 @@ export default function WantedListingForm({
         }
 
         // Navigate to explore detail page
-        router.push(`/explore/${createdListing.id}`);
+        router.push(`/account/listings`);
       }
 
     } catch (error) {

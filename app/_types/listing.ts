@@ -249,6 +249,7 @@ export interface ListingSummaryDto {
     imageUrl?: string;
   };
   paymentId?: string | null;
+  subscriptionId?: string | null;
   expiresAt?: Date;
   isActive?: boolean;
   subscriptionRenewalDate?: Date;
