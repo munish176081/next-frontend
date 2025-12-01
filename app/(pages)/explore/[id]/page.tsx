@@ -705,6 +705,16 @@ const ExploreDetail = () => {
                   if (listing?.type === ListingTypeEnum.FUTURE_LISTING) {
                     return 'Future Litter';
                   }
+
+                   // Fallback to other services listing type
+                  if (listing?.type === ListingTypeEnum.OTHER_SERVICES) {
+                    return 'Other Services';
+                  }
+
+                   // Fallback to wanted listing type
+                  if (listing?.type === ListingTypeEnum.WANTED_LISTING) {
+                    return 'Wanted Puppy';
+                  }
                   
                   // Use formatted listing type with "Listing" suffix
                   return `${transformedListing.listingType} Listing`;
