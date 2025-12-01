@@ -74,7 +74,8 @@ export const validateField = (field: ListingField, value: any): string | null =>
         }
       }
       // For expectedDateOfBirth fields, prevent past dates (only allow future dates)
-      if (value && field.name === 'expectedDateOfBirth') {
+      const futureDateFields = ['expectedDateOfBirth', 'collectionDate'];
+      if (value && futureDateFields.includes(field.name)) {
         const selectedDate = new Date(value);
         const today = new Date();
         today.setHours(0, 0, 0, 0); // Set to start of today
