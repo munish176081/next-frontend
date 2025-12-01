@@ -42,7 +42,7 @@ export const Footer = () => {
           <Link href="tel:0425408058">
             <button className="bg-black text-white py-2 px-6 rounded-full text-sm font-medium hover:bg-gray-800 transition w-auto">Request a call</button>
           </Link>
-          <Link   href="mailto:admin@pups4sale.com.au">
+          <Link href="mailto:admin@pups4sale.com.au">
             <button className="bg-black w-full text-white py-2 px-6 rounded-full text-sm font-medium hover:bg-gray-800 transition w-auto">Email us</button>
           </Link>
         </div>

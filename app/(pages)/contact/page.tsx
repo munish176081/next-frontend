@@ -10,6 +10,7 @@ import { useContact } from "@/_services/hooks/contact/use-contact";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { contactFormSchema, ContactFormType } from "@/_config/validate-schema";
 import PhoneNumber from "@/_components/ui/form-fields/phone-number";
+import Link from "next/link";
 
 function Contact() {
   const {
@@ -167,7 +168,7 @@ function Contact() {
                   <img src="/images/vectors/message.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Email</strong> hello@pups4sale.com
+                  <strong className="text-black font-medium">Email</strong> <Link href="mailto:admin@pups4sale.com.au">admin@pups4sale.com.au</Link>
                 </span>
               </div>
               <div className="flex gap-4 items-center max-md:flex-col max-md:text-center max-md:w-full max-md:gap-2">
@@ -175,7 +176,7 @@ function Contact() {
                   <img src="/images/vectors/phone.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Phone</strong> 825-362-3175
+                  <strong className="text-black font-medium">Phone</strong> <Link href="tel:0425408058">0425408058</Link>
                 </span>
               </div>
               <div className="flex gap-4 items-center max-md:flex-col max-md:text-center max-md:w-full max-md:gap-2">
@@ -183,7 +184,7 @@ function Contact() {
                   <img src="/images/vectors/address.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Address</strong> 959 Jerde Prairie
+                  <strong className="text-black font-medium">Address</strong> 5/337 Settlement Rd, Thomastown, VIC, 3074
                 </span>
               </div>
             </div>
