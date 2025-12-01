@@ -14,7 +14,7 @@ import { usePublicListing, useSimilarListings } from "@/_services/hooks/listings
 import { useSellerListings } from "@/_services/hooks/listings/use-seller-listings";
 import { useParams } from "next/navigation";
 import { formatListingType } from "@/_utils/listing";
-import { ListingTypeEnum } from "@/_types/listing";
+import { ListingTypeEnum, getListingLabel } from "@/_types/listing";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -697,27 +697,27 @@ const ExploreDetail = () => {
                   }
                   
                   // Fallback to listing type
-                  if (listing?.type === ListingTypeEnum.PUPPY_LITTER_LISTING) {
-                    return 'Litter Listing';
-                  }
+                  // if (listing?.type === ListingTypeEnum.PUPPY_LITTER_LISTING) {
+                  //   return 'Litter Listing';
+                  // }
 
-                  // Fallback to future listing type
-                  if (listing?.type === ListingTypeEnum.FUTURE_LISTING) {
-                    return 'Future Litter';
-                  }
+                  // // Fallback to future listing type
+                  // if (listing?.type === ListingTypeEnum.FUTURE_LISTING) {
+                  //   return 'Future Litter';
+                  // }
 
-                   // Fallback to other services listing type
-                  if (listing?.type === ListingTypeEnum.OTHER_SERVICES) {
-                    return 'Other Services';
-                  }
+                  //  // Fallback to other services listing type
+                  // if (listing?.type === ListingTypeEnum.OTHER_SERVICES) {
+                  //   return 'Other Services';
+                  // }
 
-                   // Fallback to wanted listing type
-                  if (listing?.type === ListingTypeEnum.WANTED_LISTING) {
-                    return 'Wanted Puppy';
-                  }
-                  
+                  //  // Fallback to wanted listing type
+                  // if (listing?.type === ListingTypeEnum.WANTED_LISTING) {
+                  //   return 'Wanted Puppy';
+                  // }
+                  return getListingLabel(listing?.type);
                   // Use formatted listing type with "Listing" suffix
-                  return `${transformedListing.listingType} Listing`;
+                  //return `${transformedListing.listingType} Listing`;
                 })()}
               </span>
             </div>
