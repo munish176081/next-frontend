@@ -558,8 +558,8 @@ export default function PuppyLitterListingForm({
 
       const createdListing = await createListingMutation.mutateAsync(listingData);
       toast({
-        title: 'Draft Listing Created',
-        description: 'Your listing has been saved as a draft. Proceed to payment to publish it.',
+        title: 'Awaiting Payment',
+        description: 'Your listing will enter admin review once payment is complete.',
         variant: 'default',
       });
       return createdListing.id;

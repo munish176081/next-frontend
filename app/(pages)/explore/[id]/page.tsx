@@ -1028,7 +1028,125 @@ const ExploreDetail = () => {
         </div>
       </section>
       
-      {transformedListing.listingType !== ListingTypeEnum.OTHER_SERVICES && 
+     
+      
+      {/* Individual Puppies Section */}
+      {listing?.fields?.individualPuppies && 
+       Array.isArray(listing.fields.individualPuppies) && 
+       listing.fields.individualPuppies.length > 0 && (
+      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
+        <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
+        <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
+        <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Individual Puppies</span>
+        <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:grid-cols-1 max-md:gap-4 max-md:mt-4">
+          {listing.fields.individualPuppies.map((puppy: any, index: number) => {
+            // Filter out non-image files from puppyImages
+            const puppyImages = Array.isArray(puppy.puppyImages) 
+              ? puppy.puppyImages.filter((img: string) => {
+                  if (!img) return false;
+                  const lowerImg = img.toLowerCase();
+                  return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+                })
+              : [];
+            
+            if (puppyImages.length === 0) return null;
+            
+            return (
+              <div key={index} className="overflow-hidden flex flex-col gap-2 w-full">
+                <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Puppy {index + 1}</span>
+                <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
+                  <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
+                    {puppyImages.length > 1 ? (
+                      <>
+                        <Swiper 
+                          className="w-full h-full" 
+                          loop={false} 
+                          modules={[Navigation]} 
+                          slidesPerView={1} 
+                          spaceBetween={0}
+                          navigation={{ 
+                            nextEl: `.puppy${index}NextBtn-${listingId}`, 
+                            prevEl: `.puppy${index}PrevBtn-${listingId}` 
+                          }}
+                        >
+                          {puppyImages.map((image: string, imgIndex: number) => (
+                            <SwiperSlide key={imgIndex} className="relative w-full h-full">
+                              <Image 
+                                src={image} 
+                                alt={`Puppy ${index + 1} image ${imgIndex + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </SwiperSlide>
+                          ))}
+                        </Swiper>
+                        <ActionIcon 
+                          rounded="full" 
+                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 left-2 puppy${index}PrevBtn-${listingId}`}
+                        >
+                          <img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                        </ActionIcon>
+                        <ActionIcon 
+                          rounded="full" 
+                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 right-2 puppy${index}NextBtn-${listingId}`}
+                        >
+                          <img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" />
+                        </ActionIcon>
+                      </>
+                    ) : (
+                      <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
+                        <Image 
+                          src={puppyImages[0]} 
+                          alt={`Puppy ${index + 1}`}
+                          fill
+                          className="object-cover"
+                        />
+                      </span>
+                    )}
+                  </div>
+                  
+                  {(puppy.microchipNumber || 
+                    puppy.puppyGender || 
+                    puppy.puppyColour || 
+                    puppy.puppyDateOfBirth || 
+                    puppy.vaccinationStatus) && (
+                    <ul className="list-disc list-inside text-xs text-[#8A8585]">
+                      {puppy.microchipNumber && (
+                        <li>Microchip Number: {puppy.microchipNumber}</li>
+                      )}
+                      {puppy.puppyGender && (
+                        <li>Gender: {puppy.puppyGender === 'male' ? 'Male' : puppy.puppyGender === 'female' ? 'Female' : puppy.puppyGender}</li>
+                      )}
+                      {puppy.puppyColour && (
+                        <li>Color: {puppy.puppyColour}</li>
+                      )}
+                      {puppy.puppyDateOfBirth && (
+                        <li>Date of Birth: {(() => {
+                          try {
+                            const date = new Date(puppy.puppyDateOfBirth);
+                            if (!isNaN(date.getTime())) {
+                              return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                            }
+                            return puppy.puppyDateOfBirth;
+                          } catch (e) {
+                            return puppy.puppyDateOfBirth;
+                          }
+                        })()}</li>
+                      )}
+                      {puppy.vaccinationStatus && (
+                        <li>Vaccination Status: {puppy.vaccinationStatus}</li>
+                      )}
+                    </ul>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+      )}
+
+{transformedListing.listingType !== ListingTypeEnum.OTHER_SERVICES && 
        transformedListing.listingType !== ListingTypeEnum.WANTED_LISTING && 
        (transformedListing.fatherInfo || transformedListing.motherInfo) && (
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
@@ -1273,132 +1391,16 @@ const ExploreDetail = () => {
       </section>
       )}
       
-      {/* Individual Puppies Section */}
-      {listing?.fields?.individualPuppies && 
-       Array.isArray(listing.fields.individualPuppies) && 
-       listing.fields.individualPuppies.length > 0 && (
-      <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
-        <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
-        <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
-        <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Individual Puppies</span>
-        <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:grid-cols-1 max-md:gap-4 max-md:mt-4">
-          {listing.fields.individualPuppies.map((puppy: any, index: number) => {
-            // Filter out non-image files from puppyImages
-            const puppyImages = Array.isArray(puppy.puppyImages) 
-              ? puppy.puppyImages.filter((img: string) => {
-                  if (!img) return false;
-                  const lowerImg = img.toLowerCase();
-                  return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
-                })
-              : [];
-            
-            if (puppyImages.length === 0) return null;
-            
-            return (
-              <div key={index} className="overflow-hidden flex flex-col gap-2 w-full">
-                <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Puppy {index + 1}</span>
-                <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
-                  <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
-                    {puppyImages.length > 1 ? (
-                      <>
-                        <Swiper 
-                          className="w-full h-full" 
-                          loop={false} 
-                          modules={[Navigation]} 
-                          slidesPerView={1} 
-                          spaceBetween={0}
-                          navigation={{ 
-                            nextEl: `.puppy${index}NextBtn-${listingId}`, 
-                            prevEl: `.puppy${index}PrevBtn-${listingId}` 
-                          }}
-                        >
-                          {puppyImages.map((image: string, imgIndex: number) => (
-                            <SwiperSlide key={imgIndex} className="relative w-full h-full">
-                              <Image 
-                                src={image} 
-                                alt={`Puppy ${index + 1} image ${imgIndex + 1}`}
-                                fill
-                                className="object-cover"
-                              />
-                            </SwiperSlide>
-                          ))}
-                        </Swiper>
-                        <ActionIcon 
-                          rounded="full" 
-                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 left-2 puppy${index}PrevBtn-${listingId}`}
-                        >
-                          <img className="-scale-x-100 max-w-3" src="/images/vectors/nextPrevArrow.svg" />
-                        </ActionIcon>
-                        <ActionIcon 
-                          rounded="full" 
-                          className={`bg-black !h-12 max-md:!h-8 !w-12 max-md:!w-8 absolute top-0 bottom-0 m-auto z-10 right-2 puppy${index}NextBtn-${listingId}`}
-                        >
-                          <img className="max-w-3" src="/images/vectors/nextPrevArrow.svg" />
-                        </ActionIcon>
-                      </>
-                    ) : (
-                      <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
-                        <Image 
-                          src={puppyImages[0]} 
-                          alt={`Puppy ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
-                      </span>
-                    )}
-                  </div>
-                  
-                  {(puppy.microchipNumber || 
-                    puppy.puppyGender || 
-                    puppy.puppyColour || 
-                    puppy.puppyDateOfBirth || 
-                    puppy.vaccinationStatus) && (
-                    <ul className="list-disc list-inside text-xs text-[#8A8585]">
-                      {puppy.microchipNumber && (
-                        <li>Microchip Number: {puppy.microchipNumber}</li>
-                      )}
-                      {puppy.puppyGender && (
-                        <li>Gender: {puppy.puppyGender === 'male' ? 'Male' : puppy.puppyGender === 'female' ? 'Female' : puppy.puppyGender}</li>
-                      )}
-                      {puppy.puppyColour && (
-                        <li>Color: {puppy.puppyColour}</li>
-                      )}
-                      {puppy.puppyDateOfBirth && (
-                        <li>Date of Birth: {(() => {
-                          try {
-                            const date = new Date(puppy.puppyDateOfBirth);
-                            if (!isNaN(date.getTime())) {
-                              return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-                            }
-                            return puppy.puppyDateOfBirth;
-                          } catch (e) {
-                            return puppy.puppyDateOfBirth;
-                          }
-                        })()}</li>
-                      )}
-                      {puppy.vaccinationStatus && (
-                        <li>Vaccination Status: {puppy.vaccinationStatus}</li>
-                      )}
-                    </ul>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </section>
-      )}
-      
       <section className="relative">
         <img className="mix-blend-multiply absolute bottom-0 max-md:max-w-52 max-md:top-0 max-md:my-auto max-md:-ml-4" src="/images/vectors/gradientLeft.png" />
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
         <div className="container relative z-10">
           <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">Puppy Details</span>
           {dogDetails.map((item, index) => {
-            if (item.label === "Dog Images" || item.label === "Semen Images" || item.title) {
+            if (item.label === "Dog Images" || item.label === "Dog Name" || item.label === "Semen Images" || item.label === "Hide Address" || item.label === "Listing Type" || item.label === "Location" || item.title) {
               return (
                 <React.Fragment key={index}>
-                  {(item.label !== "Dog Images" && item.label !== "Semen Images") && (
+                  {(item.label !== "Dog Images" && item.label !== "Dog Name" && item.label !== "Semen Images" && item.label !== "Hide Address" && item.label !== "Listing Type" && item.label !== "Location") && (
                     <>
                       <div className={`flex justify-center py-3 text-[32px] ${item.title ? 'font-semibold' : ''}`}>
                         <span className={`w-1/3 max-md:w-1/2 text-center max-md:text-base max-md:text-left ${item.title ? 'max-md:text-xl' : ''}`}>{item.label}</span>
