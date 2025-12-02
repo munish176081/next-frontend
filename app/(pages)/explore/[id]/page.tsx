@@ -828,7 +828,11 @@ const ExploreDetail = () => {
               </Link>
             )}
           </div>
-          <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">{transformedListing.breed}</span>
+          {transformedListing.type !== ListingTypeEnum.OTHER_SERVICES && (
+            <span className="text-[22px] mt-3 max-md:text-base max-md:mt-1">
+              {transformedListing.breed}
+            </span>
+          )}
           {transformedListing.location && !transformedListing.fields?.hideAddress && (
             <span className='max-md:text-xs'>{transformedListing.location}</span>
           )}
