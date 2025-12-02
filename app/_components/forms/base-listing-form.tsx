@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import DynamicFormField from "@/_components/common/dynamic-form-field";
 import { ListingField, ListingType } from "@/_config/listing-types";
@@ -128,6 +128,7 @@ export default function BaseListingForm({
   const [showMotherSection, setShowMotherSection] = useState(false);
   const [showFatherSection, setShowFatherSection] = useState(false);
   const [showStudSection, setShowStudSection] = useState(false);
+  const [uploadingFields, setUploadingFields] = useState<Set<string>>(new Set()); // Track which fields have uploads in progress
 
   // Helper function to get dynamic labels based on gender selection
   const getDynamicLabel = (fieldName: string, defaultLabel: string) => {
@@ -157,6 +158,22 @@ export default function BaseListingForm({
       [fieldName]: pendingUrls
     }));
   };
+
+  // Handle upload state changes from file fields
+  const handleUploadStateChange = useCallback((fieldName: string, isUploading: boolean) => {
+    setUploadingFields(prev => {
+      const newSet = new Set(prev);
+      if (isUploading) {
+        newSet.add(fieldName);
+      } else {
+        newSet.delete(fieldName);
+      }
+      return newSet;
+    });
+  }, []);
+
+  // Check if any uploads are in progress
+  const isAnyUploadInProgress = uploadingFields.size > 0;
 
   const deleteAllPendingFiles = async () => {
     const allPendingUrls = Object.values(pendingDeletions).flat();
@@ -246,6 +263,7 @@ export default function BaseListingForm({
                 onPendingDeletionsChange={handlePendingDeletions}
                 getDynamicLabel={getDynamicLabel}
                 getFieldValue={(fieldName) => formData[fieldName]}
+                onUploadStateChange={handleUploadStateChange}
               />
             ))}
           </div>
@@ -265,6 +283,7 @@ export default function BaseListingForm({
                 layout="double"
                 getDynamicLabel={getDynamicLabel}
                 getFieldValue={(fieldName) => formData[fieldName]}
+                onUploadStateChange={handleUploadStateChange}
               />
             ))}
             
@@ -281,6 +300,7 @@ export default function BaseListingForm({
                       error={errors[field.name]}
                       layout="single"
                       getDynamicLabel={getDynamicLabel}
+                      onUploadStateChange={handleUploadStateChange}
                     />
                   </div>
                 ))}
@@ -295,6 +315,7 @@ export default function BaseListingForm({
                       error={errors[field.name]}
                       layout="single"
                       getDynamicLabel={getDynamicLabel}
+                      onUploadStateChange={handleUploadStateChange}
                     />
                   </div>
                 ))}
@@ -312,6 +333,7 @@ export default function BaseListingForm({
                           error={errors[field.name]}
                           layout="double"
                           getDynamicLabel={getDynamicLabel}
+                          onUploadStateChange={handleUploadStateChange}
                         />
                       ))}
                     </div>
@@ -625,6 +647,7 @@ export default function BaseListingForm({
     showFatherSection,
     setShowFatherSection,
     showStudSection,
+    isAnyUploadInProgress,
     setShowStudSection,
     pendingDeletions,
     setPendingDeletions

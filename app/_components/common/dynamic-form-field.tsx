@@ -25,9 +25,10 @@ interface DynamicFormFieldProps {
   onPendingDeletionsChange?: (fieldName: string, pendingUrls: string[]) => void;
   getDynamicLabel?: (fieldName: string, defaultLabel: string) => string;
   getFieldValue?: (fieldName: string) => any; // Optional function to get other field values
+  onUploadStateChange?: (fieldName: string, isUploading: boolean) => void; // Callback to notify parent of upload state
 }
 
-export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange, getDynamicLabel, getFieldValue }: DynamicFormFieldProps) {
+export default function DynamicFormField({ field, value, onChange, error, layout = 'single', category, onPendingDeletionsChange, getDynamicLabel, getFieldValue, onUploadStateChange }: DynamicFormFieldProps) {
   const [fileNames, setFileNames] = useState<string[]>([]);
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<Set<string>>(new Set());
@@ -105,6 +106,29 @@ export default function DynamicFormField({ field, value, onChange, error, layout
     }
   }, [value]);
 
+  // Notify parent whenever upload state changes (for file fields only)
+  // Use refs to track previous state and callback to avoid infinite loops
+  const prevUploadingSizeRef = useRef<number>(0);
+  const callbackRef = useRef(onUploadStateChange);
+  
+  // Update callback ref when it changes
+  useEffect(() => {
+    callbackRef.current = onUploadStateChange;
+  }, [onUploadStateChange]);
+  
+  useEffect(() => {
+    if (field.type === 'file' && callbackRef.current) {
+      const currentSize = uploadingFiles.size;
+      const prevSize = prevUploadingSizeRef.current;
+      
+      // Only call if the size actually changed
+      if (currentSize !== prevSize) {
+        prevUploadingSizeRef.current = currentSize;
+        callbackRef.current(field.name, currentSize > 0);
+      }
+    }
+  }, [uploadingFiles.size, field.type, field.name]);
+
   // Set up a periodic check for stuck uploads (files that have been uploading too long)
   useEffect(() => {
     if (uploadingFiles.size === 0) return;
@@ -136,6 +160,10 @@ export default function DynamicFormField({ field, value, onChange, error, layout
         if (stuckFiles.length > 0) {
           const newSet = new Set(prev);
           stuckFiles.forEach(name => newSet.delete(name));
+          // Notify parent of upload state change
+          if (onUploadStateChange) {
+            onUploadStateChange(field.name, newSet.size > 0);
+          }
           return newSet;
         }
         return prev;
@@ -226,6 +254,10 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           const newSet = new Set(prev);
           newSet.delete(result.fileName);
           console.log('Removed from uploading:', result.fileName, 'Remaining:', Array.from(newSet));
+          // Notify parent of upload state change
+          if (onUploadStateChange) {
+            onUploadStateChange(field.name, newSet.size > 0);
+          }
           return newSet;
         });
       },
@@ -291,6 +323,10 @@ export default function DynamicFormField({ field, value, onChange, error, layout
               fileUploadMapRef.current.delete(name);
               uploadStartTimesRef.current.delete(name);
             });
+            // Notify parent of upload state change
+            if (onUploadStateChange) {
+              onUploadStateChange(field.name, newSet.size > 0);
+            }
             return newSet;
           }
           
@@ -318,6 +354,10 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       setUploadingFiles(prev => {
         const newSet = new Set(prev);
         newSet.add(fileName);
+        // Notify parent of upload state change
+        if (onUploadStateChange) {
+          onUploadStateChange(field.name, newSet.size > 0);
+        }
         return newSet;
       });
       
@@ -495,6 +535,10 @@ export default function DynamicFormField({ field, value, onChange, error, layout
       const newSet = new Set(prev);
       newFileNames.forEach(name => newSet.add(name));
       console.log('Added to uploading set:', Array.from(newSet));
+      // Notify parent of upload state change
+      if (onUploadStateChange) {
+        onUploadStateChange(field.name, newSet.size > 0);
+      }
       return newSet;
     });
 

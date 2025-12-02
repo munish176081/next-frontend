@@ -1612,12 +1612,34 @@ export default function PuppyLitterListingForm({
             
             if (individualPuppyFields.length > 0) {
               const field = individualPuppyFields[0];
+              
+              // Modify the field configuration to remove "both" option from gender field
+              const modifiedField = {
+                ...field,
+                repeaterConfig: field.repeaterConfig ? {
+                  ...field.repeaterConfig,
+                  subFieldGroup: field.repeaterConfig.subFieldGroup?.map((subField: any) => {
+                    if (subField.name === 'puppyGender') {
+                      // Filter out "both" option for add-individually
+                      return {
+                        ...subField,
+                        options: subField.options?.filter((opt: any) => {
+                          const value = typeof opt === 'string' ? opt : opt.value;
+                          return value !== 'both';
+                        })
+                      };
+                    }
+                    return subField;
+                  })
+                } : undefined
+              };
+              
               return (
                 <div className="grid grid-cols-1 gap-6 w-full max-md:gap-4 mb-6">
                   <div key={field.name} className="w-full">
                     <div className="space-y-4 p-4 border-2 border-bcolor rounded-lg bg-gray-50">
                       <IndividualPuppiesField
-                        field={field}
+                        field={modifiedField}
                         value={formData[field.name]}
                         onChange={handleFieldChange}
                         error={errors[field.name]}
@@ -1882,8 +1904,8 @@ export default function PuppyLitterListingForm({
       <LoadingButton
         className="w-full h-20 bg-black text-white text-[22px] rounded-full mt-7 max-md:h-12 max-md:text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleSubmit}
-        disabled={isSubmitting || isSubmitted}
-        loading={isSubmitting}
+        disabled={isSubmitting || isSubmitted || (baseForm as any).isAnyUploadInProgress}
+        loading={isSubmitting || (baseForm as any).isAnyUploadInProgress}
       >
         Submit
       </LoadingButton>

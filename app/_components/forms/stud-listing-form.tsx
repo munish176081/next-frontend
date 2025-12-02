@@ -1057,7 +1057,7 @@ export default function StudListingForm({
       <LoadingButton
         className="w-full h-20 bg-black text-white text-[22px] rounded-full mt-7 max-md:h-12 max-md:text-base hover:bg-gray-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         onClick={handleSubmit}
-        disabled={isSubmitting || isSubmitted}
+        disabled={isSubmitting || isSubmitted || baseForm.isAnyUploadInProgress}
         loading={isSubmitting}
       >
         Submit
