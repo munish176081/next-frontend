@@ -135,7 +135,7 @@ export const DashboardLayout = ({
                   {title}
                 </span> */}
                 {showTimeFilter && (
-                  <select className="text-lg max-md:text-xs placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 rounded-full border-[#CBCACA] border-[1px] w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium max-md:w-[120px] max-md:h-[34px] max-md:px-2 bg-white">
+                  <select className="hidden text-lg max-md:text-xs placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 rounded-full border-[#CBCACA] border-[1px] w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium max-md:w-[120px] max-md:h-[34px] max-md:px-2 bg-white">
                     <option>Last Week</option>
                     <option>Last Month</option>
                   </select>

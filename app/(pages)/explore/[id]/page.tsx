@@ -1071,7 +1071,78 @@ const ExploreDetail = () => {
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
         <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Individual Puppies</span>
         <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:grid-cols-1 max-md:gap-4 max-md:mt-4">
-          {listing.fields.individualPuppies.map((puppy: any, index: number) => {
+          {(() => {
+  const listLitterOption = transformedListing?.fields?.listLitterOption;
+  const puppies = listing?.fields?.individualPuppies || [];
+
+  // SAME-DETAILS → Only 1 combined card
+  if (listLitterOption === "same-details" && puppies.length > 0) {
+    const firstPuppy = puppies[0];
+    const allMicrochips = puppies
+      .map(p => p.microchipNumber)
+      .filter(Boolean);
+
+    const puppyImages = Array.isArray(firstPuppy.puppyImages)
+      ? firstPuppy.puppyImages.filter((img: string) => {
+            if (!img) return false;
+            const lowerImg = img.toLowerCase();
+            return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+          })
+      : [];
+    if (puppyImages.length === 0) return null;
+
+    return (
+      <div className="overflow-hidden flex flex-col gap-2 w-full">
+        <span className="text-[32px] font-medium flex justify-center">
+          All Puppies (Same Details)
+        </span>
+
+        <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col">
+          <div className="relative w-full h-[350px] rounded-2xl overflow-hidden">
+            {puppyImages.length > 1 ? (
+              <Swiper slidesPerView={1}>
+                {puppyImages.map((img, i) => (
+                  <SwiperSlide key={i}>
+                    <Image src={img} fill className="object-cover" alt={`Puppy image ${i}`} />
+                  </SwiperSlide>
+                ))}
+              </Swiper>
+            ) : (
+              <Image src={puppyImages[0]} fill className="object-cover" alt="Puppy" />
+            )}
+          </div>
+
+          <ul className="list-disc list-inside text-xs text-[#8A8585]">
+            {allMicrochips.length > 0 && (
+              <li>Microchip Numbers: {allMicrochips.join(", ")}</li>
+            )}
+            {firstPuppy.puppyGender && <li>Gender: {firstPuppy.puppyGender}</li>}
+            {firstPuppy.puppyColour && <li>Color: {firstPuppy.puppyColour}</li>}
+            {firstPuppy.puppyDateOfBirth && (
+              <li>Date of Birth: {(() => {
+                try {
+                  const date = new Date(firstPuppy.puppyDateOfBirth);
+                  if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+                  }
+                  return firstPuppy.puppyDateOfBirth;
+                } catch (e) {
+                  return firstPuppy.puppyDateOfBirth;
+                }
+              })()}</li>
+            )}
+            {firstPuppy.vaccinationStatus && (
+              <li>Vaccination Status: {firstPuppy.vaccinationStatus}</li>
+            )}
+          </ul>
+        </div>
+      </div>
+    );
+  }
+
+  // ADD-INDIVIDUALLY → Show your existing loop
+  if (listLitterOption === "add-individually") {
+    {listing.fields.individualPuppies.map((puppy: any, index: number) => {
             // Filter out non-image files from puppyImages
             const puppyImages = Array.isArray(puppy.puppyImages) 
               ? puppy.puppyImages.filter((img: string) => {
@@ -1173,7 +1244,11 @@ const ExploreDetail = () => {
                 </div>
               </div>
             );
-          })}
+    })}
+  }
+
+  //return null;
+})()}
         </div>
       </section>
       )}

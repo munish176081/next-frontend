@@ -82,7 +82,7 @@ const Chat = () => {
         <div className="w-full p-6 max-md:p-4 max-md:rounded-[20px] rounded-40 bg-white overflow-y-auto flex flex-col max-md:overflow-visible">
           <div className="flex items-center justify-between pb-4">
             <span className="text-[32px] max-md:text-lg font-semibold flex items-center gap-2"><span onClick={() => setIsVisible(false)} className={`size-7 max-md:flex items-center justify-center rounded-full bg-black hidden ${!isVisible ? 'max-md:hidden' : ''}`}><svg width="5" height="9" viewBox="0 0 5 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4.42969 1.34872L0.609917 4.96745L4.42969 8.58618" stroke="white" stroke-width="0.734151" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/></svg></span> Inbox</span>
-            <select className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 max-md:h-9 max-md:w-28 rounded-full border-[#CBCACA] border-[1px] bg-white w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium">
+            <select className="hidden text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-4 h-14 max-md:h-9 max-md:w-28 rounded-full border-[#CBCACA] border-[1px] bg-white w-40 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium">
               <option>Last Week</option>
               <option>Last Month</option>
             </select>
