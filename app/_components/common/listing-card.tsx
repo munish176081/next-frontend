@@ -138,9 +138,18 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
         gender = 'stud';
       } else if (fields?.bitchImages && fields.bitchImages.length > 0) {
         gender = 'bitch';
-      } else if (fields?.dogImages && fields.dogImages.length > 0) {
-        // If only dogImages, we can't determine gender, so use a default
-        gender = 'stud'; // Default to stud for now
+      } else {
+        // Check title for keywords as a fallback
+        const titleLower = (title || '').toLowerCase();
+        if (titleLower.includes('bitch')) {
+          gender = 'bitch';
+        } else if (titleLower.includes('stud')) {
+          gender = 'stud';
+        } else if (fields?.dogImages && fields.dogImages.length > 0) {
+          // If only dogImages and no other indicators, default to 'stud' for backward compatibility
+          // But this should ideally be fixed by ensuring gender is always saved
+          gender = 'stud';
+        }
       }
     }
     
@@ -148,12 +157,12 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     const getGenderDisplay = (gender: string) => {
       if (gender === 'stud') return 'Stud';
       if (gender === 'bitch') return 'Bitch';
-      return 'Unknown';
+      return 'Stud'; // Default to Stud if unknown (for backward compatibility)
     };
     
     return {
       dogName: fields?.dogName || title || 'Unknown Dog',
-      gender: getGenderDisplay(gender || 'Unknown'),
+      gender: getGenderDisplay(gender || 'stud'),
       age: fields?.age || age || 'Unknown Age',
       studFee: price || 0
     };
@@ -319,11 +328,13 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
           <div className="absolute w-20 h-20 z-10 flex items-center justify-center">
              {/* top-6 -left-7 */}
             <span className="bg-yellow-400 text-sm font-semibold text-black -rotate-45 whitespace-nowrap px-10 block text-center w-min">
-            {/* {listing.type === 'PUPPY_LITTER_LISTING'
-                        ? "Litter Listing"
-                        : listingType || badge} */}
-            
-            {getListingLabel(listing.type)}
+            {listing.type === 'STUD_LISTING' ? (
+              <span className="text-sm font-semibold text-black">
+                {studInfo?.gender || 'Stud'} listing
+              </span>
+            ) : (
+              getListingLabel(listing.type)
+            )}
             </span>
           </div>
         )}
