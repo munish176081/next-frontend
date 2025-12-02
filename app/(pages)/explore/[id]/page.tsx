@@ -14,7 +14,7 @@ import { usePublicListing, useSimilarListings } from "@/_services/hooks/listings
 import { useSellerListings } from "@/_services/hooks/listings/use-seller-listings";
 import { useParams } from "next/navigation";
 import { formatListingType } from "@/_utils/listing";
-import { ListingTypeEnum, getListingLabel } from "@/_types/listing";
+import { ListingTypeEnum, getListingLabel, getSingleListingTitle } from "@/_types/listing";
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -362,7 +362,7 @@ const ExploreDetail = () => {
     
     // Add header
     details.push({ label: "Attribute", value: "Details", title: true });
-    
+
     // Helper function to format field values
     const formatValue = (value: any): string => {
       if (value === null || value === undefined || value === '') {
@@ -424,7 +424,29 @@ const ExploreDetail = () => {
         details.push({ label, value });
       }
     });
-    
+
+    // SAME-DETAILS → extract 1st index
+    const listLitterOption = transformedListing?.fields.listLitterOption;
+    if (listLitterOption === "same-details"){
+      const firstPuppy = listing?.fields?.individualPuppies?.[0] ?? {};
+
+      // Map fields using firstPuppy
+      const litterFields: Record<string, () => string> = {
+        'Gender': () => firstPuppy?.puppyGender ?? 'N/A',
+        'Color': () => firstPuppy?.puppyColour ?? 'N/A',
+        'Date of Birth': () => firstPuppy?.puppyDateOfBirth ?? 'N/A',
+        'Vaccination Status': () => firstPuppy?.vaccinationStatus ?? 'N/A'
+      };
+
+      // Add litter listing data
+      Object.entries(litterFields).forEach(([label, getValue]) => {
+        const value = getValue();
+        if (value) {
+          details.push({ label, value });
+        }
+      });
+    }
+
     // Add all other fields from listing.fields
     if (transformedListing.fields && typeof transformedListing.fields === 'object') {
       const fieldKeys = Object.keys(transformedListing.fields);
@@ -450,11 +472,6 @@ const ExploreDetail = () => {
         'fixedPrice', // remove duplicate pricing
         'listLitterOption', // Internal field
       ];
-
-      // remove breed for other service
-      if(transformedListing.type == ListingTypeEnum.OTHER_SERVICES){
-        excludeFields.push('breed');
-      }
       
       // Special handling for specific fields
       const specialFieldLabels: Record<string, string> = {
@@ -507,7 +524,6 @@ const ExploreDetail = () => {
     }
     
     // Add litter size if available
-    const listLitterOption = transformedListing?.fields.listLitterOption;
     if (transformedListing.fields?.litterSize && listLitterOption !== 'add-individually') {
       details.push({ label: 'Litter Size', value: String(transformedListing.fields.litterSize) });
     }
@@ -561,7 +577,9 @@ const ExploreDetail = () => {
         details.push({ label: 'Delivery Options', value: deliveryOptions });
       }
     }
-    console.log('transformedListing.listingType',transformedListing.listingType)
+
+    // console.log('data details', details)
+    // console.log('transformedListing.listingType',transformedListing.listingType)
     return details;
   })() : [];
 
@@ -1065,7 +1083,9 @@ const ExploreDetail = () => {
       {/* Individual Puppies Section */}
       {listing?.fields?.individualPuppies && 
        Array.isArray(listing.fields.individualPuppies) && 
-       listing.fields.individualPuppies.length > 0 && (
+       listing.fields.individualPuppies.length > 0 
+       && listing?.fields?.listLitterOption != "same-details" 
+       && (
       <section className="container relative overflow-hidden p-8 border border-black/20 rounded-40 bg-white max-md:p-4">
         <img className="mix-blend-multiply absolute top-0 left-0" src="/images/vectors/parentLeft.png" />
         <img className="mix-blend-multiply absolute top-0 right-0 max-md:bottom-0 max-md:top-auto" src="/images/vectors/parentRight.png" />
@@ -1427,7 +1447,10 @@ const ExploreDetail = () => {
         <img className="mix-blend-multiply absolute bottom-0 max-md:max-w-52 max-md:top-0 max-md:my-auto max-md:-ml-4" src="/images/vectors/gradientLeft.png" />
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
         <div className="container relative z-10">
-          <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">{(transformedListing.type == ListingTypeEnum.OTHER_SERVICES) ? 'Service Details' : 'Puppy Details'}</span>
+          <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">
+            {/* {(transformedListing.type == ListingTypeEnum.OTHER_SERVICES) ? 'Service Details' : 'Puppy Details'} */}
+            {getSingleListingTitle(transformedListing)}
+          </span>
           {dogDetails.map((item, index) => {
             if (item.label === "Dog Images" || item.label === "Dog Name" || item.label === "Semen Images" || item.label === "Hide Address" || item.label === "Listing Type" || item.label === "Location" || item.title) {
               return (

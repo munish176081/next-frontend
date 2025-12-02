@@ -25,6 +25,23 @@ export const getListingLabel = (type?: string): string => {
   return ListingTypeLabel[type as ListingTypeEnum] ?? type;
 };
 
+// single listing page details title
+export const getSingleListingTitle = (listing: any): string => {
+  // If OTHER_SERVICES type
+  if (listing.type === ListingTypeEnum.OTHER_SERVICES) {
+    return 'Service Details';
+  }
+
+  // If listLitterOption exists, customize title
+  const listLitterOption = listing?.fields?.listLitterOption;
+  switch (listLitterOption) {
+    case 'same-details':
+      return 'Litter Details';
+    default:
+      return 'Puppy Details';
+  }
+};
+
 export enum ListingTypeShortCodeEnum {
   SEMEN_LISTING = 'semen_listing',
   PUPPY_LISTING = 'puppy_listing',
