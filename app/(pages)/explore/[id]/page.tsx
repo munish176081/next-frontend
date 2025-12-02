@@ -429,12 +429,27 @@ const ExploreDetail = () => {
     const listLitterOption = transformedListing?.fields.listLitterOption;
     if (listLitterOption === "same-details"){
       const firstPuppy = listing?.fields?.individualPuppies?.[0] ?? {};
+      const formatDob = (() => {
+        try {
+          const date = new Date(firstPuppy?.puppyDateOfBirth);
+          if (!isNaN(date.getTime())) {
+            return date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          }
+          return firstPuppy?.puppyDateOfBirth ?? 'N/A';
+        } catch {
+          return firstPuppy?.puppyDateOfBirth ?? 'N/A';
+        }
+      })();
 
       // Map fields using firstPuppy
       const litterFields: Record<string, () => string> = {
         'Gender': () => firstPuppy?.puppyGender ?? 'N/A',
         'Color': () => firstPuppy?.puppyColour ?? 'N/A',
-        'Date of Birth': () => firstPuppy?.puppyDateOfBirth ?? 'N/A',
+        'Date of Birth': () => formatDob ?? 'N/A',
         'Vaccination Status': () => firstPuppy?.vaccinationStatus ?? 'N/A'
       };
 
