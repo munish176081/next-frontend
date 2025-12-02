@@ -113,7 +113,12 @@ const ExploreDetail = () => {
   // Transform API data to match the design expectations
   const transformedListing = listing ? {
     title: listing.title || "Untitled Listing",
-    breed: listing.breed || "Unknown Breed",
+    //breed: listing.breed || "Unknown Breed",
+    breed: (() => {
+      if (listing.type == ListingTypeEnum.OTHER_SERVICES) return;
+      return listing.breed || "Unknown Breed";
+    })(),
+    type : listing.type || "Unknown Type",
     location: listing.location || "Location not specified",
     price: (() => {
       if (typeof listing.price === 'number') return listing.price;
@@ -352,6 +357,7 @@ const ExploreDetail = () => {
 
   // Generate dog details dynamically from API data
   const dogDetails = transformedListing ? (() => {
+   
     const details: Array<{ label: string; value: string; title?: boolean }> = [];
     
     // Add header
@@ -441,8 +447,14 @@ const ExploreDetail = () => {
         'minPrice', // Part of pricing
         'maxPrice', // Part of pricing
         'pricingOption', // Internal field
+        'fixedPrice', // remove duplicate pricing
         'listLitterOption', // Internal field
       ];
+
+      // remove breed for other service
+      if(transformedListing.type == ListingTypeEnum.OTHER_SERVICES){
+        excludeFields.push('breed');
+      }
       
       // Special handling for specific fields
       const specialFieldLabels: Record<string, string> = {
@@ -495,7 +507,8 @@ const ExploreDetail = () => {
     }
     
     // Add litter size if available
-    if (transformedListing.fields?.litterSize) {
+    const listLitterOption = transformedListing?.fields.listLitterOption;
+    if (transformedListing.fields?.litterSize && listLitterOption !== 'add-individually') {
       details.push({ label: 'Litter Size', value: String(transformedListing.fields.litterSize) });
     }
     
@@ -548,7 +561,7 @@ const ExploreDetail = () => {
         details.push({ label: 'Delivery Options', value: deliveryOptions });
       }
     }
-    
+    console.log('transformedListing.listingType',transformedListing.listingType)
     return details;
   })() : [];
 
@@ -1410,7 +1423,7 @@ const ExploreDetail = () => {
         <img className="mix-blend-multiply absolute bottom-0 max-md:max-w-52 max-md:top-0 max-md:my-auto max-md:-ml-4" src="/images/vectors/gradientLeft.png" />
         <img className="mix-blend-multiply absolute right-0 top-0 max-md:hidden" src="/images/vectors/gradientRight.png" />
         <div className="container relative z-10">
-          <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">Puppy Details</span>
+          <span className="text-[40px] font-semibold flex justify-center w-full max-md:text-[32px]">{(transformedListing.type == ListingTypeEnum.OTHER_SERVICES) ? 'Service Details' : 'Puppy Details'}</span>
           {dogDetails.map((item, index) => {
             if (item.label === "Dog Images" || item.label === "Dog Name" || item.label === "Semen Images" || item.label === "Hide Address" || item.label === "Listing Type" || item.label === "Location" || item.title) {
               return (

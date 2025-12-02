@@ -663,11 +663,19 @@ export default function DynamicFormField({ field, value, onChange, error, layout
           }
           
           // For expectedDateOfBirth fields, prevent past dates (only allow future dates)
-          const futureDateFields = ['expectedDateOfBirth', 'collectionDate'];
+          const futureDateFields = ['expectedDateOfBirth'];
           if (futureDateFields.includes(field.name) && !field.validation?.min) {
             // Set min date to today to prevent past dates
             minDate = new Date();
             minDate.setHours(0, 0, 0, 0); // Set to start of today
+          }
+
+          // CollectionDate → allow only past (including today)
+          const pastOnlyFields = ['collectionDate','puppyDateOfBirth'];
+          if (pastOnlyFields.includes(field.name)) {
+            // Set max date = today → blocks future dates
+            maxDate = new Date();
+            maxDate.setHours(23, 59, 59, 999);
           }
           
           return (

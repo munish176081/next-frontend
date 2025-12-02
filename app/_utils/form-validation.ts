@@ -74,7 +74,7 @@ export const validateField = (field: ListingField, value: any): string | null =>
         }
       }
       // For expectedDateOfBirth fields, prevent past dates (only allow future dates)
-      const futureDateFields = ['expectedDateOfBirth', 'collectionDate'];
+      const futureDateFields = ['expectedDateOfBirth'];
       if (value && futureDateFields.includes(field.name)) {
         const selectedDate = new Date(value);
         const today = new Date();
@@ -82,6 +82,14 @@ export const validateField = (field: ListingField, value: any): string | null =>
         if (selectedDate < today) {
           return `${field.label} cannot be in the past`;
         }
+      }
+
+      // collectionDate → cannot be in the future
+      const futureNotAllowed = ['collectionDate','puppyDateOfBirth'];
+      const selectedDate = new Date(value);
+      const today = new Date();
+      if (futureNotAllowed.includes(field.name) && selectedDate > today) {
+        return `${field.label} cannot be in the future`;
       }
       break;
   }

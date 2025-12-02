@@ -1051,16 +1051,11 @@ export const LISTING_TYPES: ListingType[] = [
         options: ['Select Timeline', 'Immediately', 'Within 1 month', 'Within 3 months', 'Within 6 months', 'No rush'],
         fieldCategory: 'dynamic'
       },
-      CONTACT_FIELDS.contactName,
-      CONTACT_FIELDS.contactEmail,
-      CONTACT_FIELDS.contactPhone
-    ],
-    optionalFields: [
       {
         name: 'images',
         label: 'Upload Images',
         type: 'file',
-        required: false,
+        required: true,
         fileConfig: {
           multiple: true,
           accept: 'image/*,video/*',
@@ -1070,6 +1065,11 @@ export const LISTING_TYPES: ListingType[] = [
         },
         fieldCategory: 'dynamic'
       },
+      CONTACT_FIELDS.contactName,
+      CONTACT_FIELDS.contactEmail,
+      CONTACT_FIELDS.contactPhone
+    ],
+    optionalFields: [
       {
         name: 'specificColor',
         label: 'Specific Colour / Temperament',
