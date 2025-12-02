@@ -529,6 +529,16 @@ export function ListingPaymentModal({
     onOpenChange(false);
   };
 
+  // Only allow closing via explicit close button, not via outside click or ESC
+  const handleOpenChange = (newOpen: boolean) => {
+    // Only process open changes (when opening), ignore close attempts from outside/ESC
+    // The modal can only be closed via the handleClose function (close button)
+    if (newOpen) {
+      onOpenChange(newOpen);
+    }
+    // If newOpen is false, ignore it - this prevents closing from outside clicks or ESC
+  };
+
   const stripePromise = getStripe();
 
   useEffect(() => {
@@ -546,8 +556,12 @@ export function ListingPaymentModal({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-[600px] w-full max-h-[95vh] overflow-y-auto p-0 bg-white rounded-xl shadow-xl border-0">
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent 
+        className="max-w-[600px] w-full max-h-[95vh] overflow-y-auto p-0 bg-white rounded-xl shadow-xl border-0"
+        onInteractOutside={(e) => e.preventDefault()}
+        onEscapeKeyDown={(e) => e.preventDefault()}
+      >
         {/* Header with Close Button */}
         <div className="sticky top-0 bg-white border-b border-gray-200 px-5 sm:px-6 py-4 z-10">
           <div className="flex items-center justify-between">

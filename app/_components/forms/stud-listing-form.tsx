@@ -79,14 +79,17 @@ export default function StudListingForm({
       }
     });
 
-    // Get first image
+    // Get first image or video
     const allImages: string[] = [];
+    const allVideos: string[] = [];
     const dynamicFields = getDynamicFields(selectedListingType);
     dynamicFields.forEach(field => {
       if (field.type === 'file' && formData[field.name]) {
         const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
         if (field.fileConfig?.accept?.includes('image/*')) {
           allImages.push(...files);
+        } else if (field.fileConfig?.accept?.includes('video/*')) {
+          allVideos.push(...files);
         }
       }
     });
@@ -95,7 +98,7 @@ export default function StudListingForm({
       title: commonData.title || '',
       breed: commonData.breed || '',
       location: commonData.location || '',
-      image: allImages[0] || undefined,
+      image: allImages[0] || allVideos[0] || undefined,
     };
   };
 
@@ -287,6 +290,45 @@ export default function StudListingForm({
       throw error;
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  // Update existing draft listing with current form data
+  const updateDraftListing = async (listingId: string): Promise<void> => {
+    try {
+      const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments, metadata, motherInfo, fatherInfo, studInfo, price } = extractFormData();
+
+      const updateData: UpdateListingDto = {
+        title: commonData.title,
+        description: commonData.description,
+        price: price ? parseFloat(price) : undefined,
+        breed: commonData.breed,
+        breedId: breedId,
+        location: commonData.location,
+        fields: dynamicData,
+        contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+        motherInfo: Object.values(motherInfo).some(v => v) ? motherInfo : undefined,
+        fatherInfo: Object.values(fatherInfo).some(v => v) ? fatherInfo : undefined,
+        studInfo: Object.values(studInfo).some(v => v) ? studInfo : undefined,
+        images: allImages.length > 0 ? allImages : undefined,
+        videos: allVideos.length > 0 ? allVideos : undefined,
+        documents: allDocuments.length > 0 ? allDocuments : undefined,
+        metadata: Object.keys(metadata).length > 0 ? metadata : undefined,
+        tags: baseForm.extractTags(commonData, dynamicData),
+      };
+
+      await updateListingMutation.mutateAsync({
+        id: listingId,
+        data: updateData,
+      });
+    } catch (error: any) {
+      console.error('Error updating draft listing:', error);
+      toast({
+        title: 'Error updating draft listing',
+        description: error.message || 'Failed to update draft listing.',
+        variant: 'destructive',
+      });
+      throw error;
     }
   };
 
@@ -604,11 +646,27 @@ export default function StudListingForm({
         return;
       }
     } else {
-      // Reuse existing draft - update form data in session storage
+      // Reuse existing draft - update form data in session storage and update draft in database
       sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
       // Ensure state is synced with sessionStorage
       if (!draftListingId && existingDraftId) {
         setDraftListingId(existingDraftId);
+      }
+      // Update the draft listing in database with current form data
+      try {
+        setIsSubmitting(true);
+        await updateDraftListing(existingDraftId);
+        console.log('✅ Draft listing updated successfully with ID:', existingDraftId);
+        setIsSubmitting(false);
+      } catch (error: any) {
+        console.error('❌ Error updating draft listing:', error);
+        setIsSubmitting(false);
+        toast({
+          title: 'Warning: Could not update draft listing',
+          description: 'Your changes are saved in session. The draft will be updated when you complete payment.',
+          variant: 'default',
+        });
+        // Continue anyway - the form data is in sessionStorage and will be used during payment
       }
     }
 

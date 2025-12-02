@@ -77,14 +77,17 @@ export default function ServicesListingForm({
       }
     });
 
-    // Get first image
+    // Get first image or video
     const allImages: string[] = [];
+    const allVideos: string[] = [];
     const dynamicFields = getDynamicFields(selectedListingType);
     dynamicFields.forEach(field => {
       if (field.type === 'file' && formData[field.name]) {
         const files = Array.isArray(formData[field.name]) ? formData[field.name] : [];
         if (field.fileConfig?.accept?.includes('image/*')) {
           allImages.push(...files);
+        } else if (field.fileConfig?.accept?.includes('video/*')) {
+          allVideos.push(...files);
         }
       }
     });
@@ -93,7 +96,7 @@ export default function ServicesListingForm({
       title: commonData.title || '',
       breed: commonData.breed || '',
       location: commonData.location || '',
-      image: allImages[0] || undefined,
+      image: allImages[0] || allVideos[0] || undefined,
     };
   };
 
@@ -205,6 +208,40 @@ export default function ServicesListingForm({
 
     const createdListing = await createListingMutation.mutateAsync(listingData);
     return createdListing.id;
+  };
+
+  // Update existing draft listing with current form data
+  const updateDraftListing = async (listingId: string): Promise<void> => {
+    try {
+      const { commonData, contactInfo, dynamicData, allImages, allVideos, allDocuments } = extractFormData();
+
+      const updateData: UpdateListingDto = {
+        title: commonData.title,
+        description: commonData.description,
+        breed: commonData.breed,
+        breedId: breedId,
+        location: commonData.location,
+        fields: dynamicData,
+        contactInfo: Object.keys(contactInfo).length > 0 ? contactInfo : undefined,
+        images: allImages.length > 0 ? allImages : undefined,
+        videos: allVideos.length > 0 ? allVideos : undefined,
+        documents: allDocuments.length > 0 ? allDocuments : undefined,
+        tags: baseForm.extractTags(commonData, dynamicData),
+      };
+
+      await updateListingMutation.mutateAsync({
+        id: listingId,
+        data: updateData,
+      });
+    } catch (error: any) {
+      console.error('Error updating draft listing:', error);
+      toast({
+        title: 'Error updating draft listing',
+        description: error.message || 'Failed to update draft listing.',
+        variant: 'destructive',
+      });
+      throw error;
+    }
   };
 
   // Activate listing after payment success
@@ -469,11 +506,27 @@ export default function ServicesListingForm({
         return;
       }
     } else {
-      // Reuse existing draft - update form data in session storage
+      // Reuse existing draft - update form data in session storage and update draft in database
       sessionStorage.setItem('pendingFormData', JSON.stringify(formData));
       // Ensure state is synced with sessionStorage
       if (!draftListingId && existingDraftId) {
         setDraftListingId(existingDraftId);
+      }
+      // Update the draft listing in database with current form data
+      try {
+        setIsSubmitting(true);
+        await updateDraftListing(existingDraftId);
+        console.log('✅ Draft listing updated successfully with ID:', existingDraftId);
+        setIsSubmitting(false);
+      } catch (error: any) {
+        console.error('❌ Error updating draft listing:', error);
+        setIsSubmitting(false);
+        toast({
+          title: 'Warning: Could not update draft listing',
+          description: 'Your changes are saved in session. The draft will be updated when you complete payment.',
+          variant: 'default',
+        });
+        // Continue anyway - the form data is in sessionStorage and will be used during payment
       }
     }
 
