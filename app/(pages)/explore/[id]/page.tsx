@@ -719,7 +719,7 @@ const ExploreDetail = () => {
         gender = 'bitch';
       } else {
         // Check title for keywords as a fallback
-        const titleLower = (title || '').toLowerCase();
+        const titleLower = (listing?.title || '').toLowerCase();
         if (titleLower.includes('bitch')) {
           gender = 'bitch';
         } else if (titleLower.includes('stud')) {
