@@ -192,6 +192,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       color = "DEFAULT",
       disabled,
       placeholder,
+      required = false,
       label,
       error,
       clearable,
@@ -214,7 +215,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     if (unstyled) {
       return (
         <div className={className}>
-          {label && <label className={labelClassName}>{label}</label>}
+          {label && <label className={labelClassName}>{label}{required && <span className="text-red-500 ml-1">*</span>}</label>}
           <input
             ref={ref}
             type={type}
@@ -237,6 +238,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
               className={clsx("block", labelClasses.size[size], labelClassName)}
             >
               {label}
+              {required && <span className="text-red-500 ml-1">*</span>}
             </span>
           )}
           <div

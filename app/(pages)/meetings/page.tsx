@@ -85,8 +85,8 @@ function Meetings() {
           <select className="text-lg max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 h-[70px] rounded-full border-none w-52 max-md:h-12 appearance-none bg-selectArrow2 bg-no-repeat bg-[90%] font-medium">
             <option>Add Listing</option>
           </select>
-          <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative"><img className="w-8 max-md:w-5 invert" src="/images/vectors/search.svg" /></span>
-          <span className="h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative"><span className="w-6 h-6 max-md:w-3 max-md:h-3 absolute rounded-full bg-CPrimary right-0 top-0"></span><img className="w-8 max-md:w-5" src="/images/vectors/notification.svg" /></span>
+          <span className="hidden h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative"><img className="w-8 max-md:w-5 invert" src="/images/vectors/search.svg" /></span>
+          <span className="hidden h-[70px] w-[70px] min-w-[70px] max-md:h-12 max-md:w-12 max-md:min-w-12 bg-white rounded-full items-center justify-center flex cursor-pointer relative"><span className="w-6 h-6 max-md:w-3 max-md:h-3 absolute rounded-full bg-CPrimary right-0 top-0"></span><img className="w-8 max-md:w-5" src="/images/vectors/notification.svg" /></span>
         </div>
       </section>
       <section className="container relative flex gap-6 items-start">

@@ -179,6 +179,7 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
     ...props
 }, ref) => {
     const [isFocused, setIsFocused] = useState(false);
+    const [phoneValid, setPhoneValid] = useState(true);
 
     const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
         setIsFocused(true);
@@ -204,8 +205,13 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
         // Add country code to the final value for form submission
         const finalValue = addCountryCode(formattedValue);
         
-        // Always update the value to allow typing
+        //console.log('final', finalValue);
+        
+        const isValidAUPhone = /^\+61\s(?:\d\s?){9,10}$/.test(finalValue);
+
         onChange?.(finalValue);
+
+        setPhoneValid?.(isValidAUPhone);
     };
 
     // Extract the number part without country code for display
@@ -272,6 +278,11 @@ const PhoneInput = forwardRef<HTMLInputElement, PhoneInputProps>(({
                     {...props}
                 />
             </div>
+
+            {/* phone not valid */}
+            {!phoneValid && (
+              <div className="text-red-dark py-1 px-2">Please enter a valid phone number</div>
+            )}
 
             {/* Error Message */}
             {error && <FieldError error={error} />}

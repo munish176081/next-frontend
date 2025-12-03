@@ -468,6 +468,14 @@ export default function BaseListingForm({
             if (typeof maxLen === 'number' && str.length > maxLen) {
               newErrors[field.name] = `${field.label} must be at most ${maxLen} characters`;
             }
+
+            // Email validation only for contactEmail field
+            if (field.name === 'contactEmail') {
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+              if (!emailRegex.test(str)) {
+                newErrors[field.name] = `Please enter a valid email address`;
+              }
+            }
           }
         } else if (!value || value.toString().trim() === '') {
           newErrors[field.name] = `${field.label} is required`;

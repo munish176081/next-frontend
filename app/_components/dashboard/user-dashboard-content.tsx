@@ -258,7 +258,7 @@ export const UserDashboardContent = () => {
                           {formatDate(subscription.currentPeriodEnd)}
                         </td>
                         <td className="px-1 whitespace-nowrap py-3 text-sm font-medium whitespace-nowrap text-center">
-                          <span className={`min-h-6 text-[10px] rounded-full w-14 mx-auto flex items-center justify-center ${statusStyles[subscription.status] || statusStyles.cancelled}`}>
+                          <span className={`min-h-6 text-[10px] rounded-full w-full mx-auto flex items-center justify-center ${statusStyles[subscription.status] || statusStyles.cancelled}`}>
                             {status}
                           </span>
                         </td>

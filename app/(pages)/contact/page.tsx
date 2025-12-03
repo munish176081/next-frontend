@@ -10,14 +10,19 @@ import { useContact } from "@/_services/hooks/contact/use-contact";
 import { parseAxiosError } from "@/_utils/parse-axios-error";
 import { contactFormSchema, ContactFormType } from "@/_config/validate-schema";
 import PhoneNumber from "@/_components/ui/form-fields/phone-number";
+import ReCAPTCHA from "react-google-recaptcha";
 import Link from "next/link";
+import { useRef } from "react";
 
+const RECAPTCHA_SITE_KEY = process.env.NEXT_PUBLIC_RECAPTCHA_SITE_KEY;
 function Contact() {
+  const recaptchaRef = useRef<ReCAPTCHA>(null);
   const {
     register,
     handleSubmit,
     reset,
     control,
+    setValue,
     formState: { errors },
   } = useForm<ContactFormType>({
     resolver: zodResolver(contactFormSchema),
@@ -26,9 +31,22 @@ function Contact() {
   const { mutate: submitContact, isPending } = useContact();
 
   async function handleFormSubmit(data: ContactFormType) {
+    const { recaptchaToken } = data;
+
+    // Only require reCAPTCHA if site key is configured
+    if (RECAPTCHA_SITE_KEY && !recaptchaToken) {
+      toast({
+        title: "Error",
+        description: "Please complete the reCAPTCHA verification.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     await submitContact(data, {
       onSuccess: () => {
         reset();
+        recaptchaRef.current?.reset();
         toast({
           title: "Success",
           description: "Your message has been sent successfully!",
@@ -53,23 +71,40 @@ function Contact() {
             <span className="text-5xl font-light max-md:text-[32px] max-md:leading-snug">
               <strong className="font-medium relative">
                 Get in touch
-                <img className="absolute w-full max-w-60 max-md:-bottom-2" src="/images/vectors/contactTypeLine.svg" />
-              </strong> with <strong className="font-semibold">Pups4Sale</strong>
+                <img
+                  className="absolute w-full max-w-60 max-md:-bottom-2"
+                  src="/images/vectors/contactTypeLine.svg"
+                />
+              </strong>{" "}
+              with <strong className="font-semibold">Pups4Sale</strong>
             </span>
             <span className="text-lg leading-normal mt-6 relative max-md:text-xs max-md:mt-2">
-              Need <strong className="font-semibold">help</strong> with <strong className="font-semibold">buying, selling,</strong> or <strong className="font-semibold">listing</strong> a puppy?<br /> 
-              Our <strong className="font-semibold">team</strong> is available <strong className="font-semibold">24/7</strong> to assist you. 
-              <img className="absolute -right-24 top-3 max-md:w-[35px] max-md:-top-[75px] max-md:-right-[15px]" src="/images/vectors/line-9.svg" />
+              Need <strong className="font-semibold">help</strong> with{" "}
+              <strong className="font-semibold">buying, selling,</strong> or{" "}
+              <strong className="font-semibold">listing</strong> a puppy?
+              <br />
+              Our <strong className="font-semibold">team</strong> is available{" "}
+              <strong className="font-semibold">24/7</strong> to assist you.
+              <img
+                className="absolute -right-24 top-3 max-md:w-[35px] max-md:-top-[75px] max-md:-right-[15px]"
+                src="/images/vectors/line-9.svg"
+              />
             </span>
-            <span className="text-[40px] font-medium mt-10 max-md:text-[28px] max-md:mt-4">Send Us a Message</span>
-            
-            <form noValidate onSubmit={handleSubmit((d) => handleFormSubmit(d))} className="w-full">
+            <span className="text-[40px] font-medium mt-10 max-md:text-[28px] max-md:mt-4">
+              Send Us a Message
+            </span>
+
+            <form
+              noValidate
+              onSubmit={handleSubmit((d) => handleFormSubmit(d))}
+              className="w-full"
+            >
               <div className="flex gap-6 w-full max-md:flex-col max-md:gap-0">
                 <div className="flex flex-col w-full">
                   <Input
                     unstyled
                     type="text"
-                    label="Your First Name *"
+                    label="Your First Name"
                     labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
                     inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
                     error={errors?.firstName?.message}
@@ -82,7 +117,7 @@ function Contact() {
                   <Input
                     unstyled
                     type="text"
-                    label="Your Last Name *"
+                    label="Your Last Name"
                     labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
                     inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
                     error={errors?.lastName?.message}
@@ -92,11 +127,11 @@ function Contact() {
                   />
                 </div>
               </div>
-              
+
               <Input
                 unstyled
                 type="email"
-                label="Your Email *"
+                label="Your Email"
                 labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
                 inputClassName="text-base max-md:text-xs max-md:px-4 placeholder:text-[#4B4A4A8C] font-normal outline-none px-6 w-full h-[70px] rounded-full border border-[#B5B5B5] max-md:h-12"
                 error={errors?.email?.message}
@@ -108,7 +143,7 @@ function Contact() {
                 name="phone"
                 control={control}
                 render={({ field }) => (
-                  <PhoneInput 
+                  <PhoneInput
                     label="Phone Number"
                     unstyled
                     labelClassName="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm"
@@ -132,21 +167,49 @@ function Contact() {
                 placeholder="Enter your Subject"
                 {...register("subject")}
               />
-              
+
               <div className="flex flex-col w-full">
-                <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">Your Message *</label>
-                <textarea 
-                  placeholder="Enter your Message" 
+                <label className="mt-6 max-md:mt-3 mb-2 flex font-medium max-md:text-sm">
+                  Your Message <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  placeholder="Enter your Message"
                   className={`text-base max-md:text-xs max-md:p-4 max-md:rounded-2xl placeholder:text-[#4B4A4A8C] font-normal outline-none p-6 w-full h-60 rounded-40 border ${
-                    errors?.message ? 'border-red-500' : 'border-[#B5B5B5]'
+                    errors?.message ? "border-red-500" : "border-[#B5B5B5]"
                   }`}
                   {...register("message")}
                 />
                 {errors?.message && (
-                  <span className="text-red-500 text-sm mt-1">{errors.message.message}</span>
+                  <span className="text-red-500 text-sm mt-1">
+                    {errors.message.message}
+                  </span>
                 )}
               </div>
-              
+              {RECAPTCHA_SITE_KEY && (
+                <div className="mt-4 mb-4">
+                  <ReCAPTCHA
+                    ref={recaptchaRef}
+                    sitekey={RECAPTCHA_SITE_KEY}
+                    onChange={(token) => {
+                      setValue("recaptchaToken", token || "", {
+                        shouldValidate: true,
+                      });
+                    }}
+                    onExpired={() => {
+                      setValue("recaptchaToken", "", { shouldValidate: true });
+                    }}
+                    onError={() => {
+                      setValue("recaptchaToken", "", { shouldValidate: true });
+                    }}
+                  />
+                  {errors?.recaptchaToken && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {errors.recaptchaToken.message}
+                    </p>
+                  )}
+                </div>
+              )}
+
               <LoadingButton
                 loading={isPending}
                 type="submit"
@@ -156,19 +219,25 @@ function Contact() {
               </LoadingButton>
             </form>
           </div>
-          
+
           <div className="flex w-5/12 max-md:w-full flex-col gap-6">
             <div className="flex w-full rounded-40 bg-white flex-col items-start overflow-hidden min-h-max">
               <img src="/images/vectors/contact.png" />
             </div>
             <div className="flex w-full h-full rounded-40 bg-white flex-col items-start overflow-hidden px-16 justify-between pt-14 pb-8 relative max-md:gap-6 max-md:px-4 max-md:py-6">
-              <img className="absolute left-0 top-0" src="/images/vectors/contactVector.png" />
+              <img
+                className="absolute left-0 top-0"
+                src="/images/vectors/contactVector.png"
+              />
               <div className="flex gap-4 items-center max-md:flex-col max-md:text-center max-md:w-full max-md:gap-2">
                 <span className="w-[70px] h-[70px] rounded-full bg-CPrimary/20 flex items-center justify-center">
                   <img src="/images/vectors/message.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Email</strong> <Link href="mailto:admin@pups4sale.com.au">admin@pups4sale.com.au</Link>
+                  <strong className="text-black font-medium">Email</strong>{" "}
+                  <Link href="mailto:admin@pups4sale.com.au">
+                    admin@pups4sale.com.au
+                  </Link>
                 </span>
               </div>
               <div className="flex gap-4 items-center max-md:flex-col max-md:text-center max-md:w-full max-md:gap-2">
@@ -176,7 +245,8 @@ function Contact() {
                   <img src="/images/vectors/phone.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Phone</strong> <Link href="tel:0425408058">0425408058</Link>
+                  <strong className="text-black font-medium">Phone</strong>{" "}
+                  <Link href="tel:0425408058">0425408058</Link>
                 </span>
               </div>
               <div className="flex gap-4 items-center max-md:flex-col max-md:text-center max-md:w-full max-md:gap-2">
@@ -184,24 +254,42 @@ function Contact() {
                   <img src="/images/vectors/address.png" />
                 </span>
                 <span className="flex flex-col text-[#555555] text-[22px] max-md:text-[18px]">
-                  <strong className="text-black font-medium">Address</strong> 5/337 Settlement Rd, Thomastown, VIC, 3074
+                  <strong className="text-black font-medium">Address</strong>{" "}
+                  5/337 Settlement Rd, Thomastown, VIC, 3074
                 </span>
               </div>
             </div>
           </div>
         </section>
       </div>
-      
+
       <section className="rounded-40 container max-2xl:w-auto max-md:my-0 max-2xl:my-4 my-10 py-8 overflow-hidden border border-black/20 bg-white flex flex-col relative justify-center max-md:py-4 max-2xl:mx-4">
         <div className="backdrop-blur-2xl bg-[#FAFAFA]/50 border border-black/20 rounded-3xl p-8 absolute max-md:static max-md:w-auto max-md:mx-4 max-md:p-4 max-md:gap-3 max-md:mb-4 top-4 z-20 m-auto right-4 flex flex-col gap-5 h-[calc(100%-32px)] w-[540px]">
-          <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">Subscribe and get exclusive deals & offer</span>
-          <span className="max-md:text-xs">Subscribe to our email & get updates right in your inbox</span>
-          <input type="text" placeholder="Full Name" className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12" />
-          <input type="text" placeholder="Email" className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12" />
-          <button className="h-20 max-md:h-12 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold mt-auto">Subscribe</button>
+          <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">
+            Subscribe and get exclusive deals & offer
+          </span>
+          <span className="max-md:text-xs">
+            Subscribe to our email & get updates right in your inbox
+          </span>
+          <input
+            type="text"
+            placeholder="Full Name"
+            className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12"
+          />
+          <input
+            type="text"
+            placeholder="Email"
+            className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12"
+          />
+          <button className="h-20 max-md:h-12 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold mt-auto">
+            Subscribe
+          </button>
         </div>
         <div className="max-md:h-[300px] w-full max-md:flex max-md:justify-center">
-          <img className="h-full max-w-max" src="/images/cta-block/background.png" />
+          <img
+            className="h-full max-w-max"
+            src="/images/cta-block/background.png"
+          />
         </div>
       </section>
     </>

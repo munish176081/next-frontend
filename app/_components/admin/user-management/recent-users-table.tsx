@@ -55,14 +55,14 @@ export const RecentUsersTable = () => {
       role: user?.role?.charAt(0).toUpperCase() + user?.role?.slice(1).replace('_', ' ') || 'N/A',
       joined: joinedText,
       status: user?.status?.charAt(0).toUpperCase() + user?.status?.slice(1).replace('_', ' ') || 'N/A',
-      action: "•••"
+      //action: "•••"
     };
   }) || [];
 
   return (
     <DashboardCard title="Recent Users" className="w-full mt-auto">
       <DashboardTable
-        headers={["NAME", "EMAIL", "ROLE", "JOINED", "STATUS", "ACTION"]}
+        headers={["NAME", "EMAIL", "ROLE", "JOINED", "STATUS"]}
         data={userRows}
       />
     </DashboardCard>

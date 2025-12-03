@@ -330,6 +330,9 @@ export const contactFormSchema = z.object({
     .min(1, "Phone number is required"),
   subject: z.string().optional(),
   message: z.string().min(1, "Message is required"),
+  recaptchaToken: z
+      .string()
+      .min(1, { message: "Please complete the reCAPTCHA verification." })
 });
 
 export const updateUserProfileSchema = z.object({
