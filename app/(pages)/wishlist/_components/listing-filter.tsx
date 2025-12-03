@@ -143,12 +143,27 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
     }
 
     router.push(`${Routes.public.explore}?${params.toString()}`);
+    
+    // Close filter after applying (especially important on mobile)
+    setShowFilterBtn(false);
   }
   return (
     <form noValidate onSubmit={handleSubmit((d) => handleFormSubmit(d))} className={`min-w-80 w-80 p-4 rounded-3xl bg-white border border-black/20 flex flex-col gap-4 sticky top-6 max-h-[calc(100vh-50px)]
     
     max-md:!fixed max-md:z-50 max-md:max-h-screen max-md:top-0 max-md:border-none max-md:rounded-none max-md:w-full max-md:left-0 ${showFilterBtn ? "" : "max-md:hidden"}`}>
-      <span className="text-2xl font-semibold flex justify-between">Filter <span onClick={() => setShowFilterBtn(false)} className="hidden max-md:flex w-8 h-8 p-1.5 justify-center items-center"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512"><path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/></svg></span></span>
+      <span className="text-2xl font-semibold flex justify-between items-center">
+        Filter 
+        <button 
+          type="button"
+          onClick={() => setShowFilterBtn(false)} 
+          className="w-8 h-8 p-1.5 justify-center items-center flex hover:bg-gray-100 rounded-full transition-colors"
+          aria-label="Close filter"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" className="w-full h-full">
+            <path d="M342.6 150.6c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L192 210.7 86.6 105.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3L146.7 256 41.4 361.4c-12.5 12.5-12.5 32.8 0 45.3s32.8 12.5 45.3 0L192 301.3 297.4 406.6c12.5 12.5 32.8 12.5 45.3 0s12.5-32.8 0-45.3L237.3 256 342.6 150.6z"/>
+          </svg>
+        </button>
+      </span>
       <div className="flex flex-col h-[calc(100%-112px)] overflow-y-auto -mr-4 pr-4 gap-6 pb-3">
         <Controller name="types" control={control} render={({ field }) => (
           <div className="flex flex-col gap-2">

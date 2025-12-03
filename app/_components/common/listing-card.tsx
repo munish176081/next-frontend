@@ -245,6 +245,33 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
       return listing.metadata.images[0];
     }
     
+    // For PUPPY_LISTING, try to get image from fields.puppyImages or metadata.images
+    if (type === ListingTypeEnum.PUPPY_LISTING) {
+      // First check fields.puppyImages (filter out videos)
+      if (fields?.puppyImages && Array.isArray(fields.puppyImages)) {
+        const puppyImageFiles = fields.puppyImages.filter((img: string) => {
+          if (!img) return false;
+          const lowerImg = img.toLowerCase();
+          return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+        });
+        if (puppyImageFiles.length > 0) {
+          return puppyImageFiles[0];
+        }
+      }
+      
+      // Then check metadata.images
+      if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
+        const metadataImageFiles = listing.metadata.images.filter((img: string) => {
+          if (!img) return false;
+          const lowerImg = img.toLowerCase();
+          return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+        });
+        if (metadataImageFiles.length > 0) {
+          return metadataImageFiles[0];
+        }
+      }
+    }
+    
     // First try the main image prop
     if (image) return image;
     
@@ -252,7 +279,15 @@ export const ListingCard = ({ listing, currentUserId }: ListingCardProps) => {
     if (type === 'PUPPY_LITTER_LISTING' && puppyBirthDates.length > 0) {
       const firstPuppy = puppyBirthDates[0];
       if (firstPuppy.puppyImages && firstPuppy.puppyImages.length > 0) {
-        return firstPuppy.puppyImages[0];
+        // Filter out videos from puppyImages
+        const puppyImageFiles = firstPuppy.puppyImages.filter((img: string) => {
+          if (!img) return false;
+          const lowerImg = img.toLowerCase();
+          return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+        });
+        if (puppyImageFiles.length > 0) {
+          return puppyImageFiles[0];
+        }
       }
     }
     

@@ -148,10 +148,12 @@ export default function UserProfile() {
                     key={listing.id} 
                     listing={{ 
                       ...listing, 
+                      image: listing.featuredImage || listing.image || listing.metadata?.images?.[0] || null,
                       favourite: false,
                       individualPuppies: listing.fields?.individualPuppies || [],
                       fields: listing.fields || {},
-                      userId: listing.userId || listing.user?.id || user?.id
+                      userId: listing.userId || listing.user?.id || user?.id,
+                      metadata: listing.metadata || {}
                     }} 
                     currentUserId={currentUser?.id}
                   />
@@ -170,10 +172,12 @@ export default function UserProfile() {
                     key={listing.id} 
                     listing={{ 
                       ...listing, 
+                      image: listing.featuredImage || listing.image || listing.metadata?.images?.[0] || null,
                       favourite: false,
                       individualPuppies: listing.fields?.individualPuppies || [],
                       fields: listing.fields || {},
-                      userId: listing.userId || listing.user?.id || user?.id
+                      userId: listing.userId || listing.user?.id || user?.id,
+                      metadata: listing.metadata || {}
                     }} 
                     currentUserId={currentUser?.id}
                   />
@@ -193,10 +197,12 @@ export default function UserProfile() {
             key={listing.id} 
             listing={{ 
               ...listing, 
+              image: listing.featuredImage || listing.image || listing.metadata?.images?.[0] || null,
               favourite: false,
               individualPuppies: listing.fields?.individualPuppies || [],
               fields: listing.fields || {},
-              userId: listing.userId || listing.user?.id || user?.id
+              userId: listing.userId || listing.user?.id || user?.id,
+              metadata: listing.metadata || {}
             }} 
             currentUserId={currentUser?.id}
           />
