@@ -92,10 +92,10 @@ export const DashboardLayout = ({
           {/* Main Dashboard Section */}
           <section className="container relative flex gap-4 items-start">
             {/* Sidebar Navigation */}
-            <div className={`${isSidebarCollapsed ? 'w-24' : 'w-max'} min-w-max rounded-40 bg-white flex flex-col gap-4 p-4 max-md:fixed max-md:flex-row max-md:shadow-section max-md:bottom-4 max-md:left-4 max-md:w-[calc(100%-32px)] z-20 max-md:rounded-full max-md:justify-between relative`}>
+            <div className={`${isSidebarCollapsed ? 'w-24' : 'w-max'} min-w-max rounded-40 bg-white flex flex-col gap-4 p-4 max-md:fixed max-md:flex-row max-md:shadow-section max-md:bottom-4 max-md:left-4 max-md:w-[calc(100%-32px)] z-20 max-md:rounded-full max-md:justify-between relative max-md:min-w-[auto] max-md:overflow-x-auto`}>
               <button
                 onClick={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-                className="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 z-10 border border-gray-200"
+                className="absolute -right-3 top-1/2 transform -translate-y-1/2 bg-white rounded-full p-2 shadow-md hover:bg-gray-100 z-10 border border-gray-200 max-md:hidden"
               >
                 {isSidebarCollapsed ? (
                   <ChevronRight className="w-5 h-5 text-gray-600" />
