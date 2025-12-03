@@ -241,8 +241,6 @@ export const getListingPricingDisplay = (listingReference: {
     startingPrice: listingReference.fields?.startingPrice // For Other Services listings
   };
 
-  console.log(pricingData, "SUSHILssss", listingReference.fields  ) ; 
-
   return getPricingDisplay(pricingData);
 };
 

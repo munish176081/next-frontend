@@ -698,6 +698,54 @@ const ExploreDetail = () => {
       </div>
     );
   }
+
+  // Get stud-specific information
+  const isStudListing = listing?.type === ListingTypeEnum.STUD_LISTING;
+  console.log('isStudListing',listing);
+  const fields = listing?.fields;
+  console.log('fields isStudListing',fields);
+  const getStudInfo = () => {
+    if (!isStudListing) return null;
+    
+    // Try to get gender from various possible locations
+    let gender = fields?.gender;
+    
+    // If not found in fields, try to determine from other indicators
+    if (!gender) {
+      // Check if there are stud-specific images vs bitch-specific images
+      if (fields?.studImages && fields.studImages.length > 0) {
+        gender = 'stud';
+      } else if (fields?.bitchImages && fields.bitchImages.length > 0) {
+        gender = 'bitch';
+      } else {
+        // Check title for keywords as a fallback
+        const titleLower = (title || '').toLowerCase();
+        if (titleLower.includes('bitch')) {
+          gender = 'bitch';
+        } else if (titleLower.includes('stud')) {
+          gender = 'stud';
+        } else if (fields?.dogImages && fields.dogImages.length > 0) {
+          // If only dogImages and no other indicators, default to 'stud' for backward compatibility
+          // But this should ideally be fixed by ensuring gender is always saved
+          gender = 'stud';
+        }
+      }
+    }
+    
+    // Format gender display
+    const getGenderDisplay = (gender: string) => {
+      if (gender === 'stud') return 'Stud';
+      if (gender === 'bitch') return 'Bitch';
+      return 'Stud';
+    };
+    
+    return {
+      dogName: fields?.dogName || 'Unknown Dog',
+      gender: getGenderDisplay(gender || 'stud'),
+      age: fields?.age || 'Unknown Age',
+    };
+  };
+  const studInfo = getStudInfo();
   return (
     <>
       <section className="container relative overflow-hidden p-8 rounded-40 bg-white grid grid-cols-2 gap-8 items-start max-md:grid-cols-1 max-md:p-4 max-md:rounded-[20px]">
@@ -761,6 +809,12 @@ const ExploreDetail = () => {
                   // if (listing?.type === ListingTypeEnum.WANTED_LISTING) {
                   //   return 'Wanted Puppy';
                   // }
+
+                  // stud / bitch listing
+                  if (listing?.type === ListingTypeEnum.STUD_LISTING) {
+                    return `${studInfo?.gender || 'Stud'} listing`;
+                  }
+
                   return getListingLabel(listing?.type);
                   // Use formatted listing type with "Listing" suffix
                   //return `${transformedListing.listingType} Listing`;
