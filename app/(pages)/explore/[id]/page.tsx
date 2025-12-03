@@ -701,9 +701,9 @@ const ExploreDetail = () => {
 
   // Get stud-specific information
   const isStudListing = listing?.type === ListingTypeEnum.STUD_LISTING;
-  console.log('isStudListing',listing);
+  //console.log('isStudListing',listing);
   const fields = listing?.fields;
-  console.log('fields isStudListing',fields);
+  //console.log('fields isStudListing',fields);
   const getStudInfo = () => {
     if (!isStudListing) return null;
     

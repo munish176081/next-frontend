@@ -210,7 +210,7 @@ export const ListingFilter = ({ showFilterBtn, setShowFilterBtn }: ListingFilter
         <button 
           type="button"
           onClick={() => setShowFilterBtn(false)} 
-          className="w-8 h-8 p-1.5 justify-center items-center flex hover:bg-gray-100 rounded-full transition-colors"
+          className="w-8 h-8 p-1.5 justify-center items-center flex hover:bg-gray-100 rounded-full transition-colors lg:hidden"
           aria-label="Close filter"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 384 512" className="w-full h-full">
