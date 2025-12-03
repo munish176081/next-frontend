@@ -356,11 +356,6 @@ export default function PuppyListingForm({
       } as CreateListingDto & { status?: ListingStatusEnum };
 
       const createdListing = await createListingMutation.mutateAsync(listingData);
-      toast({
-        title: 'Awaiting Payment',
-        description: 'Your listing will enter admin review once payment is complete.',
-        variant: 'default',
-      });
       return createdListing.id;
     } catch (error: any) {
       console.error('Error creating draft listing:', error);
@@ -437,15 +432,28 @@ export default function PuppyListingForm({
         data: updateData,
       });
 
+      console.log('✅ [activateListing] Payment processed successfully, showing toast', {
+        listingId,
+        isPayPal,
+        subscriptionId,
+        paymentId
+      });
+
       toast({
         title: 'Payment Successful!',
         description: 'Your listing has been submitted and is pending admin approval. You will be notified once it is approved.',
         variant: 'success',
       });
+      
+      console.log('✅ [activateListing] Toast called');
 
       setIsSubmitted(true);
       await baseForm.deleteAllPendingFiles();
-      router.push(`/account/listings`);
+      
+      // Delay navigation slightly to ensure toast is visible
+      setTimeout(() => {
+        router.push(`/account/listings`);
+      }, 500);
     } catch (error: any) {
       console.error('Error updating listing:', error);
       toast({
@@ -741,9 +749,19 @@ export default function PuppyListingForm({
       // For PayPal, the webhook might take a moment, so we'll poll for status updates
       const isPayPal = paymentData.paymentMethod === 'paypal';
       
+      console.log('🔔 [handlePaymentSuccess] About to activate listing', {
+        listingId,
+        isPayPal,
+        paymentId: paymentData.paymentId,
+        subscriptionId,
+        paymentMethod: paymentData.paymentMethod
+      });
+      
       // For PayPal: Keep as DRAFT (will show "Payment Processing" until webhook processes)
       // For Stripe: Set to PENDING_REVIEW immediately
       await activateListing(listingId, subscriptionId, paymentData.paymentId, isPayPal);
+      
+      console.log('✅ [handlePaymentSuccess] activateListing completed');
       
       // For PayPal subscriptions, poll for status update from webhook
       if (isPayPal && isSubscription) {
@@ -977,11 +995,27 @@ export default function PuppyListingForm({
                       if (isSinglePuppy) {
                         // For single puppy, show simple layout without repeater
                         const groupFields = field.repeaterConfig?.subFieldGroup || [];
+                        
+                        // Modify groupFields to remove "both" option from gender field
+                        const modifiedGroupFields = groupFields.map((groupField: any) => {
+                          if (groupField.name === 'puppyGender') {
+                            // Filter out "both" option for single puppy
+                            return {
+                              ...groupField,
+                              options: groupField.options?.filter((opt: any) => {
+                                const value = typeof opt === 'string' ? opt : opt.value;
+                                return value !== 'both';
+                              })
+                            };
+                          }
+                          return groupField;
+                        });
+                        
                         return (
                           <div key={field.name} className="w-full">
                             <div className="space-y-4 p-4 border-2 border-bcolor rounded-lg bg-gray-50">
                               <div className="grid grid-cols-1 gap-4">
-                                {groupFields.map((groupField: any) => (
+                                {modifiedGroupFields.map((groupField: any) => (
                                   <DynamicFormField
                                     key={groupField.name}
                                     field={groupField}

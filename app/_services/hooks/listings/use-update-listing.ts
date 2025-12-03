@@ -13,7 +13,7 @@ export const useUpdateListing = () => {
 
   return useMutation({
     mutationFn: updateListing,
-    onSuccess: (data, { id }) => {
+    onSuccess: (data, { id, data: updateData }) => {
       // Invalidate and refetch user listings
       queryClient.invalidateQueries({ queryKey: ['current-user-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
@@ -29,10 +29,16 @@ export const useUpdateListing = () => {
       queryClient.invalidateQueries({ queryKey: ['seller-listings'] });
       queryClient.invalidateQueries({ queryKey: ['search-listings'] });
       
-      toast({
-        title: "Success",
-        description: "Listing updated successfully!",
-      });
+      // Don't show default toast if this is a payment activation (has subscriptionId or paymentId)
+      // The form will show a custom "Payment Successful!" toast instead
+      const isPaymentActivation = (updateData as any)?.subscriptionId || (updateData as any)?.paymentId;
+      
+      if (!isPaymentActivation) {
+        toast({
+          title: "Success",
+          description: "Listing updated successfully!",
+        });
+      }
     },
     onError: (error: any) => {
       toast({

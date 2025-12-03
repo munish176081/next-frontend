@@ -196,6 +196,10 @@ export default function WantedListingForm({
 
         // Navigate to explore detail page
         router.push(`/account/listings`);
+        toast({
+          title: 'Awaiting approval',
+          description: 'Your listing will enter admin review before it is live',
+        });
       }
 
     } catch (error) {

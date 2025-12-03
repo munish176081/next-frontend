@@ -505,11 +505,13 @@ export function ListingPaymentModal({
     handleClose();
   };
 
-  const handlePayPalSuccess = (capturedPaymentId: string) => {
+  const handlePayPalSuccess = (capturedPaymentId: string, subscriptionIdParam?: string) => {
+    const isSubscription = hasStripePriceId(listingType) || hasPayPalPlanId(listingType);
     onPaymentSuccess({
       isFeatured: includeFeatured,
       paymentMethod: "paypal",
       paymentId: capturedPaymentId,
+      subscriptionId: isSubscription ? (subscriptionIdParam || capturedPaymentId) : undefined,
     });
     handleClose();
   };
@@ -800,7 +802,7 @@ export function ListingPaymentModal({
                   amount={includeFeatured && canAddFeatured ? priceBreakdown.total : priceBreakdown.basePrice}
                   listingType={listingType}
                   onSuccess={(paymentId, subscriptionId) => {
-                    handlePayPalSuccess(paymentId);
+                    handlePayPalSuccess(paymentId, subscriptionId);
                     // If subscriptionId is provided, store it
                     if (subscriptionId) {
                       setSubscriptionId(subscriptionId);

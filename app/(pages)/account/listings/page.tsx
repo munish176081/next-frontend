@@ -1,5 +1,6 @@
 "use client";
 import { Suspense, useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
 import { useUserListings } from "@/_services/hooks/user/use-user-listings";
 import { useDeleteListing } from "@/_services/hooks/listings/use-delete-listing";
 import { usePublishListing } from "@/_services/hooks/listings/use-publish-listing";
@@ -45,6 +46,8 @@ const availabilityOptions = [
 ];
 
 function UserListingsPage() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const { data: listings, isLoading, error, refetch } = useUserListings();
   const deleteListingMutation = useDeleteListing();
   const publishListingMutation = usePublishListing();
@@ -57,6 +60,42 @@ function UserListingsPage() {
   const [newAvailability, setNewAvailability] =
     useState<ListingAvailabilityEnum>(ListingAvailabilityEnum.AVAILABLE);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [hasShownPaymentToast, setHasShownPaymentToast] = useState(false);
+
+  // Check for payment success query parameter and show toast
+  useEffect(() => {
+    const paymentStatus = searchParams.get('payment');
+    
+    if (paymentStatus === 'success' && !hasShownPaymentToast) {
+      setHasShownPaymentToast(true);
+      
+      // Show success toast
+      toast({
+        title: 'Payment Successful!',
+        description: 'Your listing has been submitted and is pending admin approval. You will be notified once it is approved.',
+        variant: 'success',
+      });
+      
+      // Remove query parameter from URL without reloading
+      const newUrl = window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+      
+      // Refetch listings to get updated status
+      refetch();
+    } else if (paymentStatus === 'canceled' && !hasShownPaymentToast) {
+      setHasShownPaymentToast(true);
+      
+      toast({
+        title: 'Payment Canceled',
+        description: 'Your payment was canceled. You can try again when you\'re ready.',
+        variant: 'default',
+      });
+      
+      // Remove query parameter from URL without reloading
+      const newUrl = window.location.pathname;
+      router.replace(newUrl, { scroll: false });
+    }
+  }, [searchParams, hasShownPaymentToast, router, refetch]);
 
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this listing?")) {

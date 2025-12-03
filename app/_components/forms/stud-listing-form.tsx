@@ -274,11 +274,6 @@ export default function StudListingForm({
       };
 
       const createdListing = await createListingMutation.mutateAsync(listingData);
-      toast({
-        title: 'Awaiting Payment',
-        description: 'Your listing will enter admin review once payment is complete.',
-        variant: 'default',
-      });
       return createdListing.id;
     } catch (error: any) {
       console.error('Error creating draft listing:', error);
@@ -356,15 +351,28 @@ export default function StudListingForm({
         data: updateData,
       });
 
+      console.log('✅ [activateListing] Payment processed successfully, showing toast', {
+        listingId,
+        isPayPal,
+        subscriptionId,
+        paymentId
+      });
+
       toast({
         title: 'Payment Successful!',
         description: 'Your listing has been submitted and is pending admin approval. You will be notified once it is approved.',
         variant: 'success',
       });
+      
+      console.log('✅ [activateListing] Toast called');
 
       setIsSubmitted(true);
       await baseForm.deleteAllPendingFiles();
-      router.push(`/account/listings`);
+      
+      // Delay navigation slightly to ensure toast is visible
+      setTimeout(() => {
+        router.push(`/account/listings`);
+      }, 500);
     } catch (error: any) {
       console.error('Error updating listing:', error);
       toast({
@@ -698,9 +706,19 @@ export default function StudListingForm({
       // For PayPal, the webhook might take a moment, so we'll poll for status updates
       const isPayPal = paymentData.paymentMethod === 'paypal';
       
+      console.log('🔔 [handlePaymentSuccess] About to activate listing', {
+        listingId,
+        isPayPal,
+        paymentId: paymentData.paymentId,
+        subscriptionId,
+        paymentMethod: paymentData.paymentMethod
+      });
+      
       // For PayPal: Keep as DRAFT (will show "Payment Processing" until webhook processes)
       // For Stripe: Set to PENDING_REVIEW immediately
       await activateListing(listingId, subscriptionId, paymentData.paymentId, isPayPal);
+      
+      console.log('✅ [handlePaymentSuccess] activateListing completed');
       
       // For PayPal subscriptions, poll for status update from webhook
       if (isPayPal && isSubscription) {

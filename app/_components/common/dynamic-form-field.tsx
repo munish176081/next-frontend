@@ -1043,8 +1043,8 @@ export default function DynamicFormField({ field, value, onChange, error, layout
               </div>
             )}
 
-            {/* File Validation Errors */}
-            {fileValidationErrors.length > 0 && (
+            {/* File Validation Errors - Only show after form validation (when error prop is present) */}
+            {fileValidationErrors.length > 0 && error && (
               <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg">
                 <div className="flex items-start">
                   <svg className="h-5 w-5 text-red-400 mt-0.5 mr-2 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">

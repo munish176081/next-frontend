@@ -18,10 +18,10 @@ export const useCreateListing = () => {
       queryClient.invalidateQueries({ queryKey: ['current-user-listings'] });
       queryClient.invalidateQueries({ queryKey: ['listing-stats'] });
       
-      toast({
-        title: "Success",
-        description: "Listing created successfully!",
-      });
+      // toast({
+      //   title: "Success",
+      //   description: "Listing created successfully!",
+      // });
     },
     onError: (error: any) => {
       toast({

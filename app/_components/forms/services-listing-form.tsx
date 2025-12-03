@@ -246,24 +246,52 @@ export default function ServicesListingForm({
 
   // Activate listing after payment success
   // Link payment/subscription to listing after payment success (listing remains in PENDING_REVIEW for admin approval)
-  const activateListing = async (listingId: string, subscriptionId?: string, isPayPal: boolean = false) => {
-    const updateData: UpdateListingDto & { status?: ListingStatusEnum; subscriptionId?: string } = {};
+  const activateListing = async (listingId: string, subscriptionId?: string, paymentId?: string, isPayPal: boolean = false) => {
+    try {
+      const updateData: UpdateListingDto & { status?: ListingStatusEnum; subscriptionId?: string; paymentId?: string } = {};
 
-    if (subscriptionId) {
-      updateData.subscriptionId = subscriptionId;
+      if (subscriptionId) {
+        updateData.subscriptionId = subscriptionId;
+      } else if (paymentId) {
+        updateData.paymentId = paymentId;
+      }
+
+      // For PayPal: Keep status as DRAFT until webhook processes it (will show "Payment Processing")
+      // For Stripe: Set to PENDING_REVIEW immediately (webhook processes faster)
+      if (!isPayPal) {
+        updateData.status = ListingStatusEnum.PENDING_REVIEW;
+      }
+      // For PayPal, don't set status - let webhook change it from DRAFT to PENDING_REVIEW
+
+      await updateListingMutation.mutateAsync({
+        id: listingId,
+        data: updateData,
+      });
+
+      console.log('✅ [activateListing] Payment processed successfully, showing toast', {
+        listingId,
+        isPayPal,
+        subscriptionId,
+        paymentId
+      });
+
+      // Show success toast for both PayPal and Stripe payments
+      toast({
+        title: 'Payment Successful!',
+        description: 'Your listing has been submitted and is pending admin approval. You will be notified once it is approved.',
+        variant: 'success',
+      });
+      
+      console.log('✅ [activateListing] Toast called');
+    } catch (error: any) {
+      console.error('Error updating listing:', error);
+      toast({
+        title: 'Error updating listing',
+        description: error.message || 'Failed to update listing after payment.',
+        variant: 'destructive',
+      });
+      throw error;
     }
-
-    // For PayPal: Keep status as DRAFT until webhook processes it (will show "Payment Processing")
-    // For Stripe: Set to PENDING_REVIEW immediately (webhook processes faster)
-    if (!isPayPal) {
-      updateData.status = ListingStatusEnum.PENDING_REVIEW;
-    }
-    // For PayPal, don't set status - let webhook change it from DRAFT to PENDING_REVIEW
-
-    await updateListingMutation.mutateAsync({
-      id: listingId,
-      data: updateData,
-    });
   };
 
   // Actual listing creation function (called after payment) - DEPRECATED, kept for compatibility
@@ -544,14 +572,26 @@ export default function ServicesListingForm({
 
       const isSubscription = isSubscriptionType(selectedListingType.id as ListingTypeEnum);
       const subscriptionId = paymentData.subscriptionId || (isSubscription ? paymentData.paymentId : undefined);
+      const paymentId = !isSubscription ? paymentData.paymentId : undefined;
       
       // For PayPal, the webhook might take a moment, so we'll poll for status updates
       const isPayPal = paymentData.paymentMethod === 'paypal';
       
-      // Activate the draft listing and link subscription
+      console.log('🔔 [handlePaymentSuccess] About to activate listing', {
+        listingId,
+        isPayPal,
+        paymentId,
+        subscriptionId,
+        paymentMethod: paymentData.paymentMethod
+      });
+      
+      // Activate the draft listing and link subscription/payment
       // For PayPal: Keep as DRAFT (will show "Payment Processing" until webhook processes)
       // For Stripe: Set to PENDING_REVIEW immediately
-      await activateListing(listingId, subscriptionId, isPayPal);
+      // This will show the toast message
+      await activateListing(listingId, subscriptionId, paymentId, isPayPal);
+      
+      console.log('✅ [handlePaymentSuccess] activateListing completed');
       
       // Update featured status if needed
       if (paymentData.isFeatured) {
@@ -603,8 +643,10 @@ export default function ServicesListingForm({
         console.warn('Some pending files could not be deleted:', deleteResult.message);
       }
 
-      // Navigate to explore detail page
-      router.push(`/account/listings`);
+      // Delay navigation slightly to ensure toast is visible
+      setTimeout(() => {
+        router.push(`/account/listings`);
+      }, 500);
     } catch (error: any) {
       console.error('Error activating listing:', error);
       toast({
