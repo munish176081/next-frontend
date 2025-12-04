@@ -124,6 +124,12 @@ export const sidebarConfig: SidebarConfig = {
         href: "/admin/listings",
         icon: ClipboardList,
         description: "Approve and manage listings"
+      },
+      {
+        name: "Enquiries",
+        href: "/admin/enquiries",
+        icon: ClipboardList,
+        description: "Approve and manage listings"
       }
     ]
   },
