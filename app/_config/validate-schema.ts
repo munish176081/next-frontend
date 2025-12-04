@@ -1,5 +1,15 @@
 import { z } from "zod";
 
+export const subscribeSchema = z.object({
+  name: z
+    .string()
+    .nonempty({ message: "Full name is required" })
+    .regex(/^[A-Za-z ]+$/, {
+      message: "Full name can only contain letters and spaces",
+    }),
+  email: z.string().email({ message: "Enter a valid email address" }),
+});
+
 const passwordSchema = z
   .string()
   .min(8, { message: "Password must be 8 character long." })
@@ -403,3 +413,4 @@ export type SignUpType = z.infer<typeof signUpSchema>;
 export type ListingFormType = z.infer<typeof listingFormSchema>;
 export type ContactFormType = z.infer<typeof contactFormSchema>;
 export type UpdateUserProfileType = z.infer<typeof updateUserProfileSchema>;
+export type SubscribeFormType = z.infer<typeof subscribeSchema>;

@@ -4,6 +4,7 @@ import { useBlogPostBySlug, useRelatedBlogPosts } from "@/_services/hooks/blogs/
 import { Autoplay, Navigation, Swiper, SwiperSlide } from "@/_components/ui/slider";
 import ActionIcon from "@/_components/ui/action-icon";
 import { useParams } from "next/navigation";
+import SubscribeBox from "@/_components/SubscribeBox";
 
 export const dynamic = 'force-dynamic';
 
@@ -217,18 +218,7 @@ function BlogDetailContent() {
 
       
       {/* Newsletter Subscription */}
-      <section className="rounded-40 container max-2xl:w-auto max-md:mb-0 py-8 overflow-hidden border border-black/20 bg-white flex flex-col relative justify-center max-md:py-4 max-2xl:mx-4">
-        <div className="backdrop-blur-2xl bg-[#FAFAFA]/50 border border-black/20 rounded-3xl p-8 absolute max-md:static max-md:w-auto max-md:mx-4 max-md:p-4 max-md:gap-3 max-md:mb-4 top-4 z-20 m-auto right-4 flex flex-col gap-5 h-[calc(100%-32px)] w-[540px]">
-          <span className="text-3xl max-md:text-[20px] max-md:leading-tight font-medium">Subscribe and get exclusive deals & offer</span>
-          <span className="max-md:text-xs">Subscribe to our email & get updates right in your inbox</span>
-          <input type="text" placeholder="Full Name" className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12" />
-          <input type="text" placeholder="Email" className="text-base placeholder:text-[#4B4A4A] bg-transparent font-normal outline-none px-6 w-full h-[70px] rounded-full border border-black max-md:h-12" />
-          <button className="h-20 max-md:h-12 max-md:text-base w-full rounded-full bg-black text-white text-xl font-semibold mt-auto">Subscribe</button>
-        </div>
-        <div className="max-md:h-[300px] w-full max-md:flex max-md:justify-center">
-          <img className="h-full max-w-max" src="/images/cta-block/background.png" />
-        </div>
-      </section>
+      <SubscribeBox />
     </>
   );
 }
