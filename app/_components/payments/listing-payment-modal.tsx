@@ -32,7 +32,14 @@ import {
   STRIPE_PRICE_IDS,
   PAYPAL_PLAN_IDS
 } from "@/_config/subscription-prices";
-import { CreditCard, Mail, X } from "lucide-react";
+import { CreditCard, Mail, X, Video } from "lucide-react";
+
+// Helper function to check if a URL is a video file
+function isVideoUrl(url: string): boolean {
+  if (!url) return false;
+  const lowerUrl = url.toLowerCase();
+  return !!lowerUrl.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)(\?|$)/);
+}
 
 // Helper function to get listing type display name
 function getListingTypeDisplayName(listingType: ListingTypeEnum): string {
@@ -64,6 +71,7 @@ interface ListingPaymentModalProps {
   listingBreed: string;
   listingLocation: string;
   listingImage?: string;
+  listingImages?: string[]; // All available images (prioritized over listingImage)
   listingId?: string; // For reactivation
   onPaymentSuccess: (paymentData: { isFeatured: boolean; paymentMethod: string; paymentId: string; subscriptionId?: string }) => void;
   onPaymentError?: (error: string) => void;
@@ -368,6 +376,7 @@ export function ListingPaymentModal({
   listingBreed,
   listingLocation,
   listingImage,
+  listingImages,
   listingId,
   onPaymentSuccess,
   onPaymentError,
@@ -590,18 +599,44 @@ export function ListingPaymentModal({
               <div className="flex gap-3">
                 {/* Image Container */}
                 <div className="relative w-20 h-20 sm:w-24 sm:h-24 flex-shrink-0 rounded-lg overflow-hidden border border-gray-200">
-                  {listingImage ? (
-                    <Image
-                      src={listingImage}
-                      alt={listingTitle || "Listing"}
-                      fill
-                      className="object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-gray-100">
-                      <Mail className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
-                    </div>
-                  )}
+                  {(() => {
+                    // Prioritize first image from listingImages array, fall back to listingImage
+                    const displayImage = listingImages && listingImages.length > 0 
+                      ? listingImages[0] 
+                      : listingImage;
+                    
+                    if (!displayImage) {
+                      return (
+                        <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                          <Mail className="w-8 h-8 text-gray-400" strokeWidth={1.5} />
+                        </div>
+                      );
+                    }
+                    
+                    if (isVideoUrl(displayImage)) {
+                      // Show video thumbnail
+                      return (
+                        <video
+                          src={displayImage}
+                          className="absolute inset-0 w-full h-full object-cover"
+                          preload="metadata"
+                          muted
+                          playsInline
+                          controls={false}
+                        />
+                      );
+                    }
+                    
+                    // Show image
+                    return (
+                      <Image
+                        src={displayImage}
+                        alt={listingTitle || "Listing"}
+                        fill
+                        className="object-cover"
+                      />
+                    );
+                  })()}
                 </div>
                 {/* Listing Info */}
                 <div className="flex-1 min-w-0">

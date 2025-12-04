@@ -186,6 +186,7 @@ const ListingDetail = ({ params: { id: listingId } }: PageProps) => {
           listingBreed={listing.breed || ''}
           listingLocation={listing.location || ''}
           listingImage={listing.metadata?.images?.[0]}
+          listingImages={listing.metadata?.images}
           listingId={listingId}
           onPaymentSuccess={handlePaymentSuccess}
           onPaymentError={(error) => {
