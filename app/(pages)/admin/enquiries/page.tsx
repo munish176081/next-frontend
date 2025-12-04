@@ -21,7 +21,7 @@ export default function EnquiriesPage() {
       setLoading(true);
 
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/contact/enquiries?page=${page}&limit=1`,
+        `${process.env.NEXT_PUBLIC_API_URL}/api/v1/contact/enquiries?page=${page}&limit=20`,
         { credentials: "include" }
       );
 
