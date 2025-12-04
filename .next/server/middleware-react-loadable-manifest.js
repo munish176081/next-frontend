@@ -1,0 +1,1 @@
+self.__REACT_LOADABLE_MANIFEST='{"app/_components/chat/ChatInterface.tsx -> @/_services/upload/upload-utils":{"id":15215,"files":[]},"app/_components/common/dynamic-form-field.tsx -> @/_components/ui/badge/badge-selector":{"id":59518,"files":["static/chunks/9518.d938098513052d61.js"]}}';
