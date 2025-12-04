@@ -97,6 +97,7 @@ export default function ServicesListingForm({
       breed: commonData.breed || '',
       location: commonData.location || '',
       image: allImages[0] || allVideos[0] || undefined,
+      images: allImages, // All available images
     };
   };
 
@@ -700,6 +701,7 @@ export default function ServicesListingForm({
         listingBreed={getListingPreviewData().breed}
         listingLocation={getListingPreviewData().location}
         listingImage={getListingPreviewData().image}
+        listingImages={getListingPreviewData().images}
         listingId={draftListingId || editId || undefined}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentError={(error) => {

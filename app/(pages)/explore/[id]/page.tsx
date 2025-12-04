@@ -185,6 +185,32 @@ const ExploreDetail = () => {
         }
       }
       
+      // For Stud/Bitch listings, extract images from dogImages, studImages, or bitchImages
+      if (listing.type === ListingTypeEnum.STUD_LISTING && listing.fields) {
+        let studImages: string[] = [];
+        
+        // Check studImages, bitchImages, or dogImages (in order of priority)
+        if (listing.fields.studImages && Array.isArray(listing.fields.studImages)) {
+          studImages = listing.fields.studImages;
+        } else if (listing.fields.bitchImages && Array.isArray(listing.fields.bitchImages)) {
+          studImages = listing.fields.bitchImages;
+        } else if (listing.fields.dogImages && Array.isArray(listing.fields.dogImages)) {
+          studImages = listing.fields.dogImages;
+        }
+        
+        // Filter out videos and keep only images
+        const validStudImages = studImages
+          .filter((img: string) => {
+            if (!img) return false;
+            const lowerImg = img.toLowerCase();
+            return !!lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
+          });
+        
+        if (validStudImages.length > 0) {
+          return validStudImages;
+        }
+      }
+      
       // For other listings or if no puppy images found, check metadata.images
       // Filter out non-image files (like PDFs)
       if (listing.metadata?.images && Array.isArray(listing.metadata.images) && listing.metadata.images.length > 0) {
@@ -242,6 +268,29 @@ const ExploreDetail = () => {
             return !!lowerFile.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)$/);
           });
         allVideos.push(...serviceVideos);
+      }
+      
+      // For Stud/Bitch listings, extract videos from dogImages, studImages, or bitchImages
+      if (listing.type === ListingTypeEnum.STUD_LISTING && listing.fields) {
+        let studFiles: string[] = [];
+        
+        // Check studImages, bitchImages, or dogImages (in order of priority)
+        if (listing.fields.studImages && Array.isArray(listing.fields.studImages)) {
+          studFiles = listing.fields.studImages;
+        } else if (listing.fields.bitchImages && Array.isArray(listing.fields.bitchImages)) {
+          studFiles = listing.fields.bitchImages;
+        } else if (listing.fields.dogImages && Array.isArray(listing.fields.dogImages)) {
+          studFiles = listing.fields.dogImages;
+        }
+        
+        const studVideos = studFiles
+          .filter((file: string) => {
+            if (!file) return false;
+            const lowerFile = file.toLowerCase();
+            return !!lowerFile.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)(\?|$)/);
+          });
+        
+        allVideos.push(...studVideos);
       }
       
       // Extract videos from metadata.videos
@@ -1161,23 +1210,30 @@ const ExploreDetail = () => {
         <span className="text-[40px] font-medium flex justify-center w-full max-md:text-[32px]">Individual Puppies</span>
         <div className="grid grid-cols-2 gap-6 relative z-10 mt-8 max-md:grid-cols-1 max-md:gap-4 max-md:mt-4">
             {listing.fields.individualPuppies.map((puppy: any, index: number) => {
-            // Filter out non-image files from puppyImages
-            const puppyImages = Array.isArray(puppy.puppyImages) 
-              ? puppy.puppyImages.filter((img: string) => {
-                  if (!img) return false;
-                  const lowerImg = img.toLowerCase();
-                  return lowerImg.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)$/);
-                })
+            // Combine images and videos from puppyImages
+            const puppyMedia = Array.isArray(puppy.puppyImages) 
+              ? puppy.puppyImages
+                  .filter((file: string) => {
+                    if (!file) return false;
+                    const lowerFile = file.toLowerCase();
+                    // Include both images and videos
+                    return lowerFile.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg|mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)(\?|$)/);
+                  })
+                  .map((file: string) => {
+                    const lowerFile = file.toLowerCase();
+                    const isVideo = !!lowerFile.match(/\.(mp4|avi|mov|wmv|flv|webm|mkv|3gp|ogg|m4v)(\?|$)/);
+                    return { url: file, type: isVideo ? 'video' as const : 'image' as const };
+                  })
               : [];
             
-            if (puppyImages.length === 0) return null;
+            if (puppyMedia.length === 0) return null;
             
             return (
               <div key={index} className="overflow-hidden flex flex-col gap-2 w-full">
                 <span className="text-[32px] font-medium flex justify-center max-md:text-[22px]">Puppy {index + 1}</span>
                 <div className="p-6 border border-black/20 rounded-40 bg-white gap-2 flex flex-col max-md:p-4 max-md:rounded-[20px]">
                   <div className="relative w-full h-[350px] max-md:h-[170px] rounded-2xl overflow-hidden">
-                    {puppyImages.length > 1 ? (
+                    {puppyMedia.length > 1 ? (
                       <>
                         <Swiper 
                           className="w-full h-full" 
@@ -1190,14 +1246,23 @@ const ExploreDetail = () => {
                             prevEl: `.puppy${index}PrevBtn-${listingId}` 
                           }}
                         >
-                          {puppyImages.map((image: string, imgIndex: number) => (
+                          {puppyMedia.map((item: { url: string; type: 'image' | 'video' }, imgIndex: number) => (
                             <SwiperSlide key={imgIndex} className="relative w-full h-full">
-                              <Image 
-                                src={image} 
-                                alt={`Puppy ${index + 1} image ${imgIndex + 1}`}
-                                fill
-                                className="object-cover"
-                              />
+                              {item.type === 'video' ? (
+                                <video 
+                                  src={item.url} 
+                                  controls
+                                  className="object-cover w-full h-full"
+                                  playsInline
+                                />
+                              ) : (
+                                <Image 
+                                  src={item.url} 
+                                  alt={`Puppy ${index + 1} image ${imgIndex + 1}`}
+                                  fill
+                                  className="object-cover"
+                                />
+                              )}
                             </SwiperSlide>
                           ))}
                         </Swiper>
@@ -1216,12 +1281,21 @@ const ExploreDetail = () => {
                       </>
                     ) : (
                       <span className="w-full h-full flex rounded-2xl overflow-hidden relative">
-                        <Image 
-                          src={puppyImages[0]} 
-                          alt={`Puppy ${index + 1}`}
-                          fill
-                          className="object-cover"
-                        />
+                        {puppyMedia[0].type === 'video' ? (
+                          <video 
+                            src={puppyMedia[0].url} 
+                            controls
+                            className="object-cover w-full h-full"
+                            playsInline
+                          />
+                        ) : (
+                          <Image 
+                            src={puppyMedia[0].url} 
+                            alt={`Puppy ${index + 1}`}
+                            fill
+                            className="object-cover"
+                          />
+                        )}
                       </span>
                     )}
                   </div>

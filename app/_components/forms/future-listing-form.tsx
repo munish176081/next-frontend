@@ -98,6 +98,7 @@ export default function FutureListingForm({
       breed: commonData.breed || '',
       location: commonData.location || '',
       image: allImages[0] || allVideos[0] || undefined,
+      images: allImages, // All available images
     };
   };
 
@@ -1066,6 +1067,7 @@ export default function FutureListingForm({
         listingBreed={getListingPreviewData().breed}
         listingLocation={getListingPreviewData().location}
         listingImage={getListingPreviewData().image}
+        listingImages={getListingPreviewData().images}
         onPaymentSuccess={handlePaymentSuccess}
         onPaymentError={(error) => {
           toast({
